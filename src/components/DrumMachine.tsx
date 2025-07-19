@@ -73,6 +73,11 @@ const DrumMachine = () => {
   const [midiAccess, setMidiAccess] = useState<MIDIAccess | null>(null);
   const [midiDevices, setMidiDevices] = useState<MIDIInput[]>([]);
   const [midiEnabled, setMidiEnabled] = useState(false);
+  const [midiMapping, setMidiMapping] = useState<{[key: number]: number}>({
+    36: 0, 37: 1, 38: 2, 39: 3, 40: 4, 41: 5, 42: 6, 43: 7,
+    44: 8, 45: 9, 46: 10, 47: 11, 48: 12, 49: 13, 50: 14, 51: 15
+  });
+  const [midiLearning, setMidiLearning] = useState<number | null>(null);
 
   // Audio effects state
   const [trackEffects, setTrackEffects] = useState<Array<{
@@ -630,21 +635,31 @@ const DrumMachine = () => {
     
     // Note On (144) or Note Off (128)
     if (status === 144 || status === 128) {
-      // Map MIDI notes 36-51 to drum pads 0-15 (standard GM drum mapping)
-      const padIndex = note - 36;
+      // Check if we're in MIDI learning mode
+      if (midiLearning !== null && status === 144 && velocity > 0) {
+        const newMapping = { ...midiMapping };
+        newMapping[note] = midiLearning;
+        setMidiMapping(newMapping);
+        setMidiLearning(null);
+        toast.success(`MIDI note ${note} mapped to pad ${midiLearning + 1}`);
+        return;
+      }
       
-      if (padIndex >= 0 && padIndex < 16) {
+      // Find pad index from MIDI mapping
+      const padIndex = midiMapping[note];
+      
+      if (padIndex !== undefined && padIndex >= 0 && padIndex < 16) {
         if (status === 144 && velocity > 0) {
           // Note On - trigger pad
-          handlePadPress(padIndex);
+          setSelectedPad(padIndex);
           playPad(padIndex, velocity);
           
           // Visual feedback
-          setTimeout(() => handlePadRelease(padIndex), 100);
+          setTimeout(() => setSelectedPad(null), 100);
         }
       }
     }
-  }, [playPad]);
+  }, [midiMapping, midiLearning, playPad]);
 
   const handlePlay = () => {
     if (audioContextRef.current?.state === 'suspended') {
@@ -1045,6 +1060,37 @@ const DrumMachine = () => {
             </div>
           </div>
 
+          {/* Center Track Controls */}
+          <div className="bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-purple-500/10 rounded-lg pointer-events-none"></div>
+            <div className="relative z-10">
+            <div className="space-y-3">
+              <div className="text-xs text-gray-400 mb-4">TRACK CONTROLS</div>
+              
+              {/* Track Volume Controls */}
+              <div className="grid grid-cols-4 gap-2">
+                {Array.from({length: 16}, (_, i) => (
+                  <VolumeKnob
+                    key={i}
+                    value={trackVolumes[i]}
+                    onChange={(value) => {
+                      const newVolumes = [...trackVolumes];
+                      newVolumes[i] = value;
+                      setTrackVolumes(newVolumes);
+                    }}
+                    size="sm"
+                    label={`T${i + 1}`}
+                  />
+                ))}
+              </div>
+
+            </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Row - Effects & MIDI */}
+        <div className="grid grid-cols-2 gap-4">
           {/* Effects Panel */}
           <div className="bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-red-500/10 rounded-lg pointer-events-none"></div>
@@ -1383,35 +1429,83 @@ const DrumMachine = () => {
               )}
             </div>
           </div>
-        </div>
 
-          {/* Center Track Controls */}
-          <div className="bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-purple-500/10 rounded-lg pointer-events-none"></div>
+          {/* MIDI Mapping Panel */}
+          <div className="bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
             <div className="relative z-10">
-            <div className="space-y-3">
-              <div className="text-xs text-gray-400 mb-4">TRACK CONTROLS</div>
+              <div className="text-xs text-gray-400 mb-2">MIDI MAPPING</div>
               
-              {/* Track Volume Controls */}
-              <div className="grid grid-cols-4 gap-2">
-                {Array.from({length: 16}, (_, i) => (
-                  <VolumeKnob
-                    key={i}
-                    value={trackVolumes[i]}
-                    onChange={(value) => {
-                      const newVolumes = [...trackVolumes];
-                      newVolumes[i] = value;
-                      setTrackVolumes(newVolumes);
-                    }}
-                    size="sm"
-                    label={`T${i + 1}`}
-                  />
-                ))}
+              {/* MIDI Status */}
+              <div className="mb-3 text-xs">
+                <div className={`flex items-center gap-2 ${midiEnabled ? 'text-green-400' : 'text-red-400'}`}>
+                  <div className={`w-2 h-2 rounded-full ${midiEnabled ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                  {midiEnabled ? `${midiDevices.length} device(s) connected` : 'MIDI not available'}
+                </div>
               </div>
 
-            </div>
+              {midiEnabled && (
+                <div className="space-y-2">
+                  {/* MIDI Learn */}
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs text-gray-300">MIDI Learn Mode</span>
+                    <div className="grid grid-cols-4 gap-1">
+                      {Array.from({length: 16}, (_, i) => (
+                        <Button
+                          key={i}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setMidiLearning(midiLearning === i ? null : i)}
+                          className={`h-6 text-xs ${
+                            midiLearning === i 
+                              ? 'bg-green-600 border-green-500 text-white' 
+                              : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
+                          }`}
+                        >
+                          {midiLearning === i ? 'LEARN' : `P${i + 1}`}
+                        </Button>
+                      ))}
+                    </div>
+                    {midiLearning !== null && (
+                      <div className="text-xs text-yellow-400 animate-pulse">
+                        Hit a MIDI note to map to Pad {midiLearning + 1}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Current Mapping Display */}
+                  <div className="space-y-1">
+                    <span className="text-xs text-gray-300">Current Mapping</span>
+                    <div className="max-h-32 overflow-y-auto text-xs space-y-1">
+                      {Object.entries(midiMapping).map(([note, pad]) => (
+                        <div key={note} className="flex justify-between items-center text-gray-400">
+                          <span>Note {note}</span>
+                          <span>→ Pad {pad + 1}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Reset Mapping */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setMidiMapping({
+                        36: 0, 37: 1, 38: 2, 39: 3, 40: 4, 41: 5, 42: 6, 43: 7,
+                        44: 8, 45: 9, 46: 10, 47: 11, 48: 12, 49: 13, 50: 14, 51: 15
+                      });
+                      toast.success('MIDI mapping reset to default');
+                    }}
+                    className="w-full h-6 text-xs bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
+                  >
+                    Reset to Default
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
+        </div>
 
           {/* Right Drum Pads */}
           <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden">
