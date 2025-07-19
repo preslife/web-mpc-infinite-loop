@@ -941,22 +941,38 @@ const DrumMachine = () => {
       if (padIndex !== undefined && padIndex >= 0 && padIndex < 16) {
         if (status === 144 && velocity > 0) {
           console.log('Triggering pad', padIndex, 'from MIDI note', note);
-          // Note On - use exact same logic as handlePadPress for consistency
-          handlePadPress(padIndex);
+          
+          // If sequencer is playing and we're in pattern recording mode, record the step
+          if (isPlaying && isPatternRecording && currentStep >= 0) {
+            const newPatterns = [...patterns];
+            newPatterns[padIndex] = [...newPatterns[padIndex]];
+            newPatterns[padIndex][currentStep] = {
+              active: true,
+              velocity: Math.round(velocity * trackVolumes[padIndex] / 127)
+            };
+            setPatterns(newPatterns);
+          }
+          
+          // Always play the pad when MIDI note is pressed, but respect sequencer timing
+          if (samples[padIndex]?.buffer) {
+            playPad(padIndex, velocity);
+          }
           
           // Visual feedback
           setSelectedPad(padIndex);
           setTimeout(() => setSelectedPad(null), 100);
         } else if (status === 128 || (status === 144 && velocity === 0)) {
           console.log('Releasing pad', padIndex, 'from MIDI note', note);
-          // Note Off - handle gate mode release
-          handlePadRelease(padIndex);
+          // Note Off - only handle gate release if sample is in gate mode
+          if (samples[padIndex]?.gateMode) {
+            handlePadRelease(padIndex);
+          }
         }
       } else {
         console.log('No mapping found for MIDI note', note);
       }
     }
-  }, [midiMapping, midiLearning, handlePadPress, handlePadRelease]);
+  }, [midiMapping, midiLearning, samples, isPlaying, isPatternRecording, currentStep, patterns, trackVolumes, playPad, handlePadRelease]);
 
   // Update MIDI event listeners when handleMIDIMessage changes
   useEffect(() => {
