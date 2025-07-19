@@ -998,8 +998,7 @@ const DrumMachine = () => {
               </div>
             ) : (
               <div className="h-full">
-                <div className="text-center mb-4">
-                  <h2 className="text-xl font-bold text-pink-300 mb-2 text-shadow-glow">AUDIO EDITOR</h2>
+                <div className="text-center mb-2">
                   <p className="text-gray-300 text-sm">
                     {selectedPad !== null && samples[selectedPad]?.buffer 
                       ? `Editing: ${samples[selectedPad].name}` 
