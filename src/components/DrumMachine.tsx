@@ -56,6 +56,7 @@ const DrumMachine = () => {
   const [editingSample, setEditingSample] = useState<number | null>(null);
   const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
   const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor'>('sequencer');
+  const [masterVolume, setMasterVolume] = useState([80]);
 
   // Neural generation state
   const [seedLength, setSeedLength] = useState(4);
@@ -244,8 +245,8 @@ const DrumMachine = () => {
     const endTime = sample.endTime * duration;
     const sliceDuration = endTime - startTime;
 
-    // Combine pattern velocity with track volume
-    const finalVolume = velocity / 127 * (trackVolumes[padIndex] / 100);
+    // Combine pattern velocity with track volume and master volume
+    const finalVolume = velocity / 127 * (trackVolumes[padIndex] / 100) * (masterVolume[0] / 100);
     gainNode.gain.value = finalVolume;
     source.connect(gainNode);
     gainNode.connect(audioContextRef.current.destination);
@@ -481,40 +482,40 @@ const DrumMachine = () => {
                   <p className="text-gray-300 text-sm">{currentPatternName}</p>
                 </div>
                 
-                <div className="h-full overflow-auto">
-                  <div className="flex gap-1 pb-2">
-                    {Array.from({length: sequencerLength}, (_, stepIndex) => (
-                      <div key={stepIndex} className="flex-shrink-0">
-                        <div className={`w-8 h-8 rounded text-xs flex items-center justify-center mb-2 transition-all duration-300 ${
-                          currentStep === stepIndex 
+                <div className="h-full">
+                  <div className="grid grid-cols-16 gap-1 overflow-x-auto">
+                    {/* Step numbers row */}
+                    <div className="col-span-16 grid grid-cols-16 gap-1 mb-2">
+                      {Array.from({length: sequencerLength}, (_, stepIndex) => (
+                        <div key={stepIndex} className={`
+                          h-6 rounded text-xs flex items-center justify-center transition-all duration-300
+                          ${currentStep === stepIndex 
                             ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/50 scale-110' 
                             : 'bg-gray-700/50 text-gray-400 backdrop-blur-sm'
-                        }`}>
+                          }
+                        `}>
                           {stepIndex + 1}
                         </div>
-                        <div className="space-y-1">
-                          {Array.from({length: 16}, (_, padIndex) => (
-                            <button
-                              key={padIndex}
-                              onClick={() => toggleStep(padIndex, stepIndex)}
-                              className={`w-8 h-3 rounded-sm transition-all duration-200 ${
-                                patterns[padIndex][stepIndex]?.active 
-                                  ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-md shadow-cyan-500/50' 
-                                  : 'bg-gray-600/50 hover:bg-gray-500/70 backdrop-blur-sm'
-                              }`}
-                              title={`Track ${padIndex + 1}, Step ${stepIndex + 1}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Track labels on the side */}
-                  <div className="mt-4 grid grid-cols-8 gap-1 text-xs text-gray-400">
-                    {Array.from({length: 16}, (_, i) => (
-                      <div key={i} className="text-center">
-                        {samples[i]?.buffer ? samples[i].name.substring(0, 3) : `${i + 1}`}
+                      ))}
+                    </div>
+                    
+                    {/* Track rows */}
+                    {Array.from({length: 16}, (_, padIndex) => (
+                      <div key={padIndex} className="col-span-16 grid grid-cols-16 gap-1 mb-1">
+                        {Array.from({length: sequencerLength}, (_, stepIndex) => (
+                          <button
+                            key={stepIndex}
+                            onClick={() => toggleStep(padIndex, stepIndex)}
+                            className={`
+                              h-6 rounded transition-all duration-200
+                              ${patterns[padIndex][stepIndex]?.active 
+                                ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-md shadow-cyan-500/50' 
+                                : 'bg-gray-600/50 hover:bg-gray-500/70 backdrop-blur-sm'
+                              }
+                            `}
+                            title={`Track ${padIndex + 1} (${samples[padIndex]?.name || 'Empty'}), Step ${stepIndex + 1}`}
+                          />
+                        ))}
                       </div>
                     ))}
                   </div>
@@ -578,26 +579,80 @@ const DrumMachine = () => {
           <div className="space-y-2">
             {/* Volume & Main Controls */}
             <div className="bg-gray-900 p-3 rounded border border-gray-700">
-              <div className="text-xs text-gray-400 mb-2">VOLUME</div>
-              <div className="w-16 h-16 bg-gray-700 rounded-full border-2 border-gray-600 mx-auto"></div>
+              <div className="text-xs text-gray-400 mb-2">MASTER VOLUME</div>
+              <div className="relative">
+                <div className="w-16 h-16 bg-gray-700 rounded-full border-2 border-gray-600 mx-auto flex items-center justify-center cursor-pointer">
+                  <div className="text-xs text-gray-300">{masterVolume[0]}</div>
+                </div>
+                <Slider
+                  value={masterVolume}
+                  onValueChange={setMasterVolume}
+                  max={100}
+                  step={1}
+                  className="absolute inset-0 opacity-0"
+                  orientation="vertical"
+                />
+              </div>
             </div>
 
             <div className="bg-gray-900 p-2 rounded border border-gray-700">
               <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">SWING</Button>
-                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">TEMPO</Button>
+                <Button 
+                  onClick={() => setSwing([swing[0] === 0 ? 50 : 0])}
+                  variant="outline" 
+                  size="sm" 
+                  className={`text-xs ${swing[0] > 0 ? 'bg-blue-600 border-blue-500' : 'bg-gray-800 border-gray-600'} text-gray-300`}
+                >
+                  SWING
+                </Button>
+                <Button 
+                  onClick={() => setBpm([bpm[0] === 120 ? 140 : 120])}
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                >
+                  TEMPO
+                </Button>
                 <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">LOCK</Button>
-                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">GRID</Button>
+                <Button 
+                  onClick={() => setSequencerLength(sequencerLength === 16 ? 32 : 16)}
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                >
+                  GRID
+                </Button>
               </div>
             </div>
 
             {/* Pattern Controls */}
             <div className="bg-gray-900 p-2 rounded border border-gray-700">
               <div className="space-y-2">
-                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">PATTERN</Button>
+                <Button 
+                  onClick={savePattern}
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                >
+                  SAVE
+                </Button>
                 <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">EVENTS</Button>
-                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">VARIATION</Button>
-                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">DUPLICATE</Button>
+                <Button 
+                  onClick={randomizePattern}
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                >
+                  RANDOM
+                </Button>
+                <Button 
+                  onClick={clearPattern}
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                >
+                  CLEAR
+                </Button>
               </div>
             </div>
 
@@ -605,8 +660,22 @@ const DrumMachine = () => {
             <div className="bg-gray-900 p-2 rounded border border-gray-700">
               <div className="space-y-2">
                 <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">SELECT</Button>
-                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">SOLO</Button>
-                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">MUTE</Button>
+                <Button 
+                  onClick={() => setTrackSolos(trackSolos.map(() => false))}
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                >
+                  UNSOLO
+                </Button>
+                <Button 
+                  onClick={() => setTrackMutes(trackMutes.map(() => false))}
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                >
+                  UNMUTE
+                </Button>
               </div>
             </div>
 
