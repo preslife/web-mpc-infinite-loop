@@ -85,6 +85,8 @@ export const VolumeKnob = ({ value, onChange, size = 'md', label }: VolumeKnobPr
         className="volume-knob-slider"
         style={{
           transform: `rotate(90deg) scale(${currentScale})`,
+          width: size === 'sm' ? '4em' : '10em',
+          height: size === 'sm' ? '4em' : '10em',
           '--vol': value,
           '--c1': '#00ddff',
           '--mut': '#39c1ff'
