@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 import { WaveformEditor } from './WaveformEditor';
 import { MixerPanel } from './MixerPanel';
 import { PatternManager } from './PatternManager';
+import { AudioExporter } from './AudioExporter';
+import { VisualFeedback, WaveformVisualizer } from './VisualFeedback';
 import { VolumeKnob } from './VolumeKnob';
 import { useNavigate } from 'react-router-dom';
 import * as mm from '@magenta/music';
@@ -66,7 +68,7 @@ const DrumMachine = () => {
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
   const [pendingSample, setPendingSample] = useState<{ sample: Sample; padIndex: number } | null>(null);
   const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
-  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'mixer' | 'patterns'>('sequencer');
+  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'mixer' | 'patterns' | 'export'>('sequencer');
   const [masterVolume, setMasterVolume] = useState(0.8);
 
   // Neural generation state
@@ -1113,6 +1115,30 @@ const DrumMachine = () => {
             >
               EDITOR
             </Button>
+            <Button 
+              onClick={() => setDisplayMode('patterns')}
+              variant={displayMode === 'patterns' ? 'default' : 'outline'}
+              size="sm" 
+              className={`text-xs transition-all duration-300 ${
+                displayMode === 'patterns' 
+                  ? 'bg-purple-500/20 border-purple-400 text-purple-300 shadow-lg shadow-purple-500/25' 
+                  : 'bg-gray-800 border-gray-600 text-gray-300'
+              }`}
+            >
+              PATTERNS
+            </Button>
+            <Button 
+              onClick={() => setDisplayMode('export')}
+              variant={displayMode === 'export' ? 'default' : 'outline'}
+              size="sm" 
+              className={`text-xs transition-all duration-300 ${
+                displayMode === 'export' 
+                  ? 'bg-orange-500/20 border-orange-400 text-orange-300 shadow-lg shadow-orange-500/25' 
+                  : 'bg-gray-800 border-gray-600 text-gray-300'
+              }`}
+            >
+              EXPORT
+            </Button>
           </div>
 
           {/* Display Content */}
@@ -1284,6 +1310,52 @@ const DrumMachine = () => {
                   }}
                 />
               </div>
+            ) : displayMode === 'patterns' ? (
+              <div className="h-full overflow-auto">
+                <PatternManager
+                  currentPattern={patterns}
+                  currentBpm={bpm[0]}
+                  currentSwing={swing[0]}
+                  onLoadPattern={(pattern) => {
+                    setPatterns(pattern.steps);
+                    setBpm([pattern.bpm]);
+                    setSwing([pattern.swing]);
+                    setCurrentPatternName(pattern.name);
+                    toast.success(`Loaded pattern "${pattern.name}"`);
+                  }}
+                  onSavePattern={(name, description, genre) => {
+                    const newPattern = {
+                      id: Date.now().toString(),
+                      name,
+                      description,
+                      steps: patterns,
+                      bpm: bpm[0],
+                      swing: swing[0],
+                      genre,
+                      author: 'User',
+                      createdAt: new Date().toISOString().split('T')[0],
+                      trackCount: patterns.filter(track => track.some(step => step.active)).length
+                    };
+                    setSavedPatterns([...savedPatterns, newPattern]);
+                    setCurrentPatternName(name);
+                    toast.success(`Saved pattern "${name}"`);
+                  }}
+                />
+              </div>
+            ) : displayMode === 'export' ? (
+              <div className="h-full overflow-auto p-4">
+                <AudioExporter
+                  patterns={patterns}
+                  samples={samples}
+                  bpm={bpm[0]}
+                  sequencerLength={sequencerLength}
+                  trackVolumes={trackVolumes}
+                  trackMutes={trackMutes}
+                  trackSolos={trackSolos}
+                  masterVolume={masterVolume}
+                  swing={swing[0]}
+                />
+              </div>
             ) : (
               <div className="h-full">
                 {pendingSample ? (
@@ -1434,6 +1506,15 @@ const DrumMachine = () => {
                   {bpm[0]} BPM • {sequencerLength} Steps
                   {isPatternRecording && <div className="text-xs text-red-400 mt-1">Press pads to record</div>}
                 </div>
+              </div>
+
+              {/* Waveform Visualizer */}
+              <div className="text-center">
+                <div className="text-xs text-gray-400 mb-2">WAVEFORM</div>
+                <WaveformVisualizer 
+                  isPlaying={isPlaying} 
+                  className="mx-auto" 
+                />
               </div>
 
               {/* Quick Actions */}
@@ -2271,6 +2352,15 @@ const DrumMachine = () => {
           </div>
         </div>
       )}
+      
+      {/* Visual Feedback Overlay */}
+      <VisualFeedback
+        isPlaying={isPlaying}
+        currentStep={currentStep}
+        bpm={bpm[0]}
+        sequencerLength={sequencerLength}
+        patterns={patterns}
+      />
     </div>
   );
 };
