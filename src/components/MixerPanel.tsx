@@ -142,42 +142,12 @@ const ChannelStrip = ({
   onMuteChange, 
   onSoloChange 
 }: ChannelStripProps) => {
-  const [amplitude, setAmplitude] = useState(0);
-  const meterRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let lastPeak = 0;
-    let currentAmplitude = 100;
-
-    const meterInterval = setInterval(() => {
-      if (Math.ceil(currentAmplitude) >= lastPeak) { lastPeak = 0; }
-      currentAmplitude += (lastPeak - currentAmplitude) * 0.5;
-      setAmplitude(currentAmplitude);
-      
-      if (meterRef.current) {
-        meterRef.current.style.clipPath = `inset(0 ${100 - currentAmplitude}% 0 0)`;
-      }
-    }, 30);
-
-    const peakInterval = setInterval(() => {
-      lastPeak = Math.random() * 100;
-    }, Math.random() * 300 + 100);
-
-    return () => {
-      clearInterval(meterInterval);
-      clearInterval(peakInterval);
-    };
-  }, []);
 
   return (
     <div className="channelstrip">
       <div className="label">{label}</div>
       
       <Fader value={value} onChange={onValueChange} label={label} />
-      
-      <div className="horizontal-meter">
-        <div ref={meterRef} className="activity" />
-      </div>
       
       <button 
         className={mute ? 'active' : ''} 

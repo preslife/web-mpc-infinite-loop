@@ -645,7 +645,7 @@ const DrumMachine = () => {
     const sliceDuration = endTime - startTime;
 
     // Combine pattern velocity with track volume and master volume
-    const finalVolume = velocity / 127 * (trackVolumes[padIndex] / 100) * (masterVolume[0] / 100);
+    const finalVolume = velocity / 127 * (trackVolumes[padIndex] / 100) * masterVolume;
     gainNode.gain.value = finalVolume;
     source.connect(gainNode);
     gainNode.connect(audioContextRef.current.destination);
