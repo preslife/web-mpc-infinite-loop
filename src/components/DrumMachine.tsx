@@ -498,7 +498,7 @@ const DrumMachine = () => {
                 
                 <div className="h-full overflow-auto">
                   {/* Step numbers row */}
-                  <div className="flex gap-1 mb-2 overflow-x-auto">
+                  <div className="flex gap-1 mb-2 pl-16 overflow-x-auto">
                     {Array.from({length: sequencerLength}, (_, stepIndex) => (
                       <div key={stepIndex} className={`
                         w-8 h-6 rounded text-xs flex items-center justify-center flex-shrink-0 transition-all duration-300
@@ -512,10 +512,16 @@ const DrumMachine = () => {
                     ))}
                   </div>
                   
-                  {/* Track rows */}
+                  {/* Track rows with labels */}
                   <div className="space-y-1">
                     {Array.from({length: 16}, (_, padIndex) => (
-                      <div key={padIndex} className="flex gap-1 overflow-x-auto">
+                      <div key={padIndex} className="flex items-center gap-1 overflow-x-auto">
+                        {/* Track label on the left */}
+                        <div className="w-14 flex-shrink-0 text-xs text-gray-400 truncate">
+                          {samples[padIndex]?.name || `T${padIndex + 1}`}
+                        </div>
+                        
+                        {/* Step buttons */}
                         {Array.from({length: sequencerLength}, (_, stepIndex) => (
                           <button
                             key={stepIndex}
@@ -526,23 +532,16 @@ const DrumMachine = () => {
                                 ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-md shadow-cyan-500/50' 
                                 : 'bg-gray-600/50 hover:bg-gray-500/70 backdrop-blur-sm'
                               }
+                              ${currentStep === stepIndex && patterns[padIndex][stepIndex]?.active
+                                ? 'ring-2 ring-red-400 ring-opacity-75'
+                                : ''
+                              }
                             `}
                             title={`Track ${padIndex + 1} (${samples[padIndex]?.name || 'Empty'}), Step ${stepIndex + 1}`}
                           />
                         ))}
                       </div>
                     ))}
-                  </div>
-                  
-                  {/* Track labels */}
-                  <div className="mt-2 text-xs text-gray-400">
-                    <div className="grid grid-cols-4 gap-1">
-                      {Array.from({length: 16}, (_, i) => (
-                        <div key={i} className="text-center truncate">
-                          T{i + 1}: {samples[i]?.buffer ? samples[i].name.substring(0, 6) : 'Empty'}
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </div>
               </div>
