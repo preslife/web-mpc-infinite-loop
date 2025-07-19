@@ -655,7 +655,8 @@ const DrumMachine = () => {
           patterns.forEach((pattern, padIndex) => {
             const shouldPlay = pattern[nextStep]?.active && samples[padIndex]?.buffer && !trackMutes[padIndex] && (trackSolos.every(s => !s) || trackSolos[padIndex]);
             if (shouldPlay) {
-              playPad(padIndex, pattern[nextStep].velocity);
+              // Use the sample's gate mode setting for pattern playback
+              playPad(padIndex, pattern[nextStep].velocity, samples[padIndex]?.gateMode);
             }
           });
           
@@ -677,26 +678,29 @@ const DrumMachine = () => {
     };
   }, [isPlaying, bpm, patterns, samples, sequencerLength, swing, trackMutes, trackSolos]);
 
-  const playPad = useCallback((padIndex: number, velocity: number = 80) => {
+  const playPad = useCallback((padIndex: number, velocity: number = 80, forceGateMode?: boolean) => {
     if (!audioContextRef.current || !samples[padIndex]?.buffer) return;
 
     // Check mute/solo state
     const shouldPlay = !trackMutes[padIndex] && (trackSolos.every(s => !s) || trackSolos[padIndex]);
     if (!shouldPlay) return;
 
-    // Use the sample's gate mode setting
-    const sampleGateMode = samples[padIndex]?.gateMode ?? true;
+    // Use the sample's gate mode setting, or forced gate mode for pattern playback
+    const sampleGateMode = forceGateMode ?? samples[padIndex]?.gateMode ?? true;
     
-    // ALWAYS stop any currently playing source for this pad to prevent overlap
-    const currentSource = playingSources.get(padIndex);
-    if (currentSource) {
-      currentSource.stop();
-      setPlayingSources(prev => {
-        const newMap = new Map(prev);
-        newMap.delete(padIndex);
-        return newMap;
-      });
+    // Stop any currently playing source for this pad if in gate mode
+    if (sampleGateMode) {
+      const currentSource = playingSources.get(padIndex);
+      if (currentSource) {
+        currentSource.stop();
+        setPlayingSources(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(padIndex);
+          return newMap;
+        });
+      }
     }
+    
     const source = audioContextRef.current.createBufferSource();
     const gainNode = audioContextRef.current.createGain();
     source.buffer = samples[padIndex].buffer;
