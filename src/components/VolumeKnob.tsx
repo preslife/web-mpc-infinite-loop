@@ -14,9 +14,9 @@ export const VolumeKnob = ({ value, onChange, size = 'md', label }: VolumeKnobPr
   const initialValueRef = useRef<number>(0);
 
   const sizeClasses = {
-    sm: { container: 'w-16 h-16', knob: 'w-16 h-16', number: 'text-xs w-6 h-6', glow: 'w-20 h-20' },
-    md: { container: 'w-20 h-20', knob: 'w-20 h-20', number: 'text-sm w-7 h-7', glow: 'w-24 h-24' },
-    lg: { container: 'w-24 h-24', knob: 'w-24 h-24', number: 'text-base w-8 h-8', glow: 'w-28 h-28' }
+    sm: { container: 'w-16 h-16', knob: 'w-16 h-16', number: 'text-xs w-6 h-6' },
+    md: { container: 'w-20 h-20', knob: 'w-20 h-20', number: 'text-sm w-7 h-7' },
+    lg: { container: 'w-24 h-24', knob: 'w-24 h-24', number: 'text-base w-8 h-8' }
   };
 
   const calculateAngle = useCallback((e: MouseEvent, rect: DOMRect) => {
@@ -72,31 +72,33 @@ export const VolumeKnob = ({ value, onChange, size = 'md', label }: VolumeKnobPr
       {label && <div className="text-xs text-gray-400">{label}</div>}
       
       <div className={`relative ${sizeClasses[size].container}`}>
-        {/* Progress ring */}
+        {/* Outer ring with progress indicator */}
         <div 
-          className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${sizeClasses[size].glow} rounded-full z-0`}
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full rounded-full"
           style={{
-            background: `radial-gradient(circle at 50% 50%, #333333 40%, transparent 41%), conic-gradient(from 0deg, transparent 0%, transparent ${(value / 100) * 100}%, #00ddff ${(value / 100) * 100}%, #00ddff ${(value / 100) * 100 + 1}%, transparent ${(value / 100) * 100 + 2}%, transparent 100%)`,
+            background: `radial-gradient(circle at 50% 50%, #333333 70%, transparent 71%), conic-gradient(from 0deg, transparent 0%, transparent ${(value / 100) * 100}%, #00ddff ${(value / 100) * 100}%, #00ddff ${(value / 100) * 100 + 1}%, transparent ${(value / 100) * 100 + 2}%, transparent 100%)`,
             border: '2px solid #00bcd420'
           }}
         />
         
-        {/* Main knob container */}
+        {/* Main knob */}
         <div 
           ref={knobRef}
           className={`relative ${sizeClasses[size].knob} rounded-full cursor-pointer select-none`}
           style={{
             background: 'linear-gradient(145deg, #525252 0%, #373737 100%)',
-            boxShadow: '0 -20px 20px #757575, 0 20px 35px #111111, inset 0 5px 6px #979797, inset 0 -5px 6px #242424'
+            boxShadow: isDragging 
+              ? '0px -20px 20px #757575, 0px 20px 35px #111111, inset 0px 5px 6px #979797, inset 0px -5px 6px #242424'
+              : '0px -20px 20px #757575, 0px 20px 35px #111111, inset 0px 5px 6px #979797, inset 0px -5px 6px #242424'
           }}
           onMouseDown={handleMouseDown}
         >
           {/* Knob indicator */}
           <div 
-            className="absolute top-3 left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full transition-all duration-200"
+            className="absolute top-3 left-1/2 w-6 h-6 rounded-full transition-all duration-200"
             style={{
               background: `radial-gradient(circle at 50% 45%, ${isDragging ? '#c7e6ff' : '#39c1ff'} 4px, transparent 5px), radial-gradient(circle at 50% 50%, #404040 4px, transparent 6px), radial-gradient(circle at 50% 40%, #1118 4px, transparent 5px), linear-gradient(0deg, #373737, #2e2e2e)`,
-              boxShadow: '0 -1px 1px #111, 0 1px 1px #555',
+              boxShadow: '0px -1px 1px #111, 0px 1px 1px #555',
               border: `2px solid ${isDragging ? '#00ddff' : '#2e2e2e'}`,
               transform: `translateX(-50%) rotate(${rotation}deg)`
             }}
@@ -110,9 +112,9 @@ export const VolumeKnob = ({ value, onChange, size = 'md', label }: VolumeKnobPr
             background: '#282828',
             color: isDragging ? '#c7eaff' : '#39c1ff',
             fontFamily: '"Alarm Clock", "Orbitron", monospace',
-            boxShadow: '0 0 10px #000 inset, 0 0 100px -80px #39c1ff inset',
+            boxShadow: '0px 0px 10px 0px #000000 inset, 0px 0px 100px -80px #39c1ff inset',
             border: '2px solid #0001',
-            textShadow: '0 0 3px #000, 0 0 2px #000, 0 0 3px #39c1ff',
+            textShadow: '0px 0px 3px #000000, 0px 0px 2px #000000, 0px 0px 3px #39c1ff',
             filter: 'drop-shadow(-1px -2px 1px #111) drop-shadow(0px 1px 1px #404040)'
           }}
         >
