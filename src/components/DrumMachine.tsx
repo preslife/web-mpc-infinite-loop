@@ -1156,25 +1156,13 @@ const DrumMachine = () => {
             ) : (
               <div className="h-full">
                 {pendingSample ? (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
-                      <h3 className="text-lg font-semibold text-accent">Confirm Sample for Pad {pendingSample.padIndex + 1}</h3>
-                      <p className="text-sm text-muted-foreground">Please review and adjust the sample before loading it to the pad.</p>
-                      <div className="flex gap-2 mt-2">
-                        <Button onClick={confirmPendingSample} variant="default" size="sm">
-                          Confirm & Load
-                        </Button>
-                        <Button onClick={cancelPendingSample} variant="outline" size="sm">
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
                     <WaveformEditor
                       sample={pendingSample.sample}
                       onSampleUpdate={updateSample}
+                      onConfirm={confirmPendingSample}
+                      showConfirm={true}
                       onClose={cancelPendingSample}
                     />
-                  </div>
                 ) : (
                   <>
                     <div className="text-center mb-2">

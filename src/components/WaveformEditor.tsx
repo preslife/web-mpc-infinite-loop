@@ -16,9 +16,11 @@ interface WaveformEditorProps {
   sample: Sample;
   onSampleUpdate: (sample: Sample) => void;
   onClose: () => void;
+  onConfirm?: () => void;
+  showConfirm?: boolean;
 }
 
-export const WaveformEditor = ({ sample, onSampleUpdate, onClose }: WaveformEditorProps) => {
+export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, showConfirm }: WaveformEditorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -189,9 +191,16 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose }: WaveformEdit
     <div className="glass-panel glass-glow p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Edit Sample: {sample.name}</h3>
-        <Button onClick={onClose} variant="outline" size="sm">
-          Close
-        </Button>
+        <div className="flex gap-2">
+          {showConfirm && onConfirm && (
+            <Button onClick={onConfirm} variant="default" size="sm">
+              Confirm & Load
+            </Button>
+          )}
+          <Button onClick={onClose} variant="outline" size="sm">
+            Close
+          </Button>
+        </div>
       </div>
 
       {/* Waveform Display */}
