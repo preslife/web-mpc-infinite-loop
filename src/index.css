@@ -48,6 +48,10 @@
       hsla(var(--glass-hue2), 84%, 68%, 0.05) 50%,
       hsla(var(--glass-hue1), 85%, 65%, 0.1) 100%);
     
+    /* Text glow effects */
+    --text-glow-cyan: 0 0 20px hsl(186 85% 65% / 0.5);
+    --text-glow-pink: 0 0 20px hsl(322 84% 68% / 0.5);
+    
     --gradient-glass-border: linear-gradient(135deg,
       hsla(var(--glass-hue1), 85%, 65%, 0.3) 0%,
       hsla(var(--glass-hue2), 84%, 68%, 0.2) 50%,
@@ -195,5 +199,14 @@
 
   .neon-border:hover::after {
     opacity: 1;
+  }
+
+  /* Text glow utilities */
+  .text-shadow-glow {
+    text-shadow: var(--text-glow-cyan);
+  }
+  
+  .text-shadow-glow-pink {
+    text-shadow: var(--text-glow-pink);
   }
 }

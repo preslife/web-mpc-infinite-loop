@@ -55,6 +55,7 @@ const DrumMachine = () => {
   const [currentPatternName, setCurrentPatternName] = useState('Pattern 1');
   const [editingSample, setEditingSample] = useState<number | null>(null);
   const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
+  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor'>('sequencer');
 
   // Neural generation state
   const [seedLength, setSeedLength] = useState(4);
@@ -438,15 +439,110 @@ const DrumMachine = () => {
         </div>
 
         {/* Main Display Area */}
-        <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-48">
-          <div className="bg-gray-800 h-full rounded border border-gray-600 p-4 flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-white mb-2">MASCHINE</h1>
-              <p className="text-gray-400 text-sm">Drums • {currentPatternName}</p>
-              <div className="mt-4 text-gray-300 text-xs">
-                BPM: {bpm[0]} • Steps: {sequencerLength} • Swing: {swing[0]}%
+        <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-96 relative overflow-hidden">
+          {/* Neon glass effect overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
+          
+          {/* Toggle buttons */}
+          <div className="flex gap-2 mb-4 relative z-10">
+            <Button 
+              onClick={() => setDisplayMode('sequencer')}
+              variant={displayMode === 'sequencer' ? 'default' : 'outline'}
+              size="sm" 
+              className={`text-xs transition-all duration-300 ${
+                displayMode === 'sequencer' 
+                  ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-lg shadow-cyan-500/25' 
+                  : 'bg-gray-800 border-gray-600 text-gray-300'
+              }`}
+            >
+              SEQUENCER
+            </Button>
+            <Button 
+              onClick={() => setDisplayMode('editor')}
+              variant={displayMode === 'editor' ? 'default' : 'outline'}
+              size="sm" 
+              className={`text-xs transition-all duration-300 ${
+                displayMode === 'editor' 
+                  ? 'bg-pink-500/20 border-pink-400 text-pink-300 shadow-lg shadow-pink-500/25' 
+                  : 'bg-gray-800 border-gray-600 text-gray-300'
+              }`}
+            >
+              EDITOR
+            </Button>
+          </div>
+
+          {/* Display Content */}
+          <div className="bg-black/30 backdrop-blur-sm h-full rounded border border-gray-600/50 p-4 relative z-10 shadow-inner">
+            {displayMode === 'sequencer' ? (
+              <div className="h-full">
+                <div className="text-center mb-4">
+                  <h2 className="text-xl font-bold text-cyan-300 mb-2 text-shadow-glow">SEQUENCER</h2>
+                  <p className="text-gray-300 text-sm">{currentPatternName}</p>
+                </div>
+                
+                <div className="overflow-auto h-64">
+                  <div className="flex gap-1 pb-2 justify-center">
+                    {Array.from({length: sequencerLength}, (_, stepIndex) => (
+                      <div key={stepIndex} className="flex-shrink-0">
+                        <div className={`w-8 h-8 rounded text-xs flex items-center justify-center mb-2 transition-all duration-300 ${
+                          currentStep === stepIndex 
+                            ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/50 scale-110' 
+                            : 'bg-gray-700/50 text-gray-400 backdrop-blur-sm'
+                        }`}>
+                          {stepIndex + 1}
+                        </div>
+                        <div className="space-y-1">
+                          {Array.from({length: 16}, (_, padIndex) => (
+                            <button
+                              key={padIndex}
+                              onClick={() => toggleStep(padIndex, stepIndex)}
+                              className={`w-8 h-3 rounded-sm transition-all duration-200 ${
+                                patterns[padIndex][stepIndex]?.active 
+                                  ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-md shadow-cyan-500/50' 
+                                  : 'bg-gray-600/50 hover:bg-gray-500/70 backdrop-blur-sm'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="h-full">
+                <div className="text-center mb-4">
+                  <h2 className="text-xl font-bold text-pink-300 mb-2 text-shadow-glow">AUDIO EDITOR</h2>
+                  <p className="text-gray-300 text-sm">
+                    {selectedPad !== null && samples[selectedPad]?.buffer 
+                      ? `Editing: ${samples[selectedPad].name}` 
+                      : 'Select a pad to edit'
+                    }
+                  </p>
+                </div>
+                
+                {selectedPad !== null && samples[selectedPad]?.buffer ? (
+                  <WaveformEditor
+                    sample={samples[selectedPad]}
+                    onSampleUpdate={(updatedSample) => {
+                      const newSamples = [...samples];
+                      newSamples[selectedPad] = updatedSample;
+                      setSamples(newSamples);
+                      toast.success('Sample settings saved!');
+                    }}
+                    onClose={() => setSelectedPad(null)}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-48">
+                    <div className="text-center text-gray-400">
+                      <Edit className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>Click on a drum pad to edit its sample</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -549,31 +645,96 @@ const DrumMachine = () => {
             </div>
           </div>
 
-          {/* Center Sequencer */}
+          {/* Center Track Controls */}
           <div className="bg-gray-900 p-4 rounded border border-gray-700">
-            <div className="mb-4">
-              <div className="text-xs text-gray-400 mb-2">SEQUENCER - {sequencerLength} STEPS</div>
-              <div className="flex gap-1 overflow-x-auto pb-2">
-                {Array.from({length: sequencerLength}, (_, stepIndex) => (
-                  <div key={stepIndex} className="flex-shrink-0">
-                    <div className={`w-6 h-6 rounded text-xs flex items-center justify-center mb-1 ${
-                      currentStep === stepIndex ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-400'
-                    }`}>
-                      {stepIndex + 1}
-                    </div>
-                    <div className="space-y-1">
-                      {Array.from({length: 16}, (_, padIndex) => (
-                        <button
-                          key={padIndex}
-                          onClick={() => toggleStep(padIndex, stepIndex)}
-                          className={`w-6 h-2 rounded-sm ${
-                            patterns[padIndex][stepIndex]?.active 
-                              ? 'bg-blue-500' 
-                              : 'bg-gray-600 hover:bg-gray-500'
-                          }`}
+            <div className="space-y-3">
+              <div className="text-xs text-gray-400 mb-4">TRACK CONTROLS</div>
+              
+              {/* Track Volume Controls */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-gray-400 mb-2">VOLUMES</div>
+                  <div className="space-y-2">
+                    {Array.from({length: 8}, (_, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400 w-6">{i + 1}</span>
+                        <Slider
+                          value={[trackVolumes[i]]}
+                          onValueChange={(value) => {
+                            const newVolumes = [...trackVolumes];
+                            newVolumes[i] = value[0];
+                            setTrackVolumes(newVolumes);
+                          }}
+                          max={100}
+                          step={1}
+                          className="flex-1"
                         />
-                      ))}
-                    </div>
+                        <span className="text-xs text-gray-400 w-8">{trackVolumes[i]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-xs text-gray-400 mb-2">VOLUMES</div>
+                  <div className="space-y-2">
+                    {Array.from({length: 8}, (_, i) => (
+                      <div key={i + 8} className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400 w-6">{i + 9}</span>
+                        <Slider
+                          value={[trackVolumes[i + 8]]}
+                          onValueChange={(value) => {
+                            const newVolumes = [...trackVolumes];
+                            newVolumes[i + 8] = value[0];
+                            setTrackVolumes(newVolumes);
+                          }}
+                          max={100}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <span className="text-xs text-gray-400 w-8">{trackVolumes[i + 8]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Mute/Solo Buttons */}
+              <div className="grid grid-cols-16 gap-1 mt-4">
+                {Array.from({length: 16}, (_, i) => (
+                  <div key={i} className="flex flex-col gap-1">
+                    <Button
+                      onClick={() => {
+                        const newMutes = [...trackMutes];
+                        newMutes[i] = !newMutes[i];
+                        setTrackMutes(newMutes);
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className={`h-6 w-6 p-0 text-xs ${
+                        trackMutes[i] 
+                          ? 'bg-red-600 border-red-500 text-white' 
+                          : 'bg-gray-800 border-gray-600 text-gray-400'
+                      }`}
+                    >
+                      M
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        const newSolos = [...trackSolos];
+                        newSolos[i] = !newSolos[i];
+                        setTrackSolos(newSolos);
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className={`h-6 w-6 p-0 text-xs ${
+                        trackSolos[i] 
+                          ? 'bg-yellow-600 border-yellow-500 text-white' 
+                          : 'bg-gray-800 border-gray-600 text-gray-400'
+                      }`}
+                    >
+                      S
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -581,23 +742,28 @@ const DrumMachine = () => {
           </div>
 
           {/* Right Drum Pads */}
-          <div className="bg-gray-900 p-3 rounded border border-gray-700">
-            <div className="grid grid-cols-4 gap-2">
+          <div className="bg-gray-900 p-3 rounded border border-gray-700 relative overflow-hidden">
+            {/* Neon glow effect for pads */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-blue-500/5 to-cyan-500/5 rounded pointer-events-none"></div>
+            
+            <div className="grid grid-cols-4 gap-2 relative z-10">
               {Array.from({length: 16}, (_, i) => (
                 <button
                   key={i}
+                  onClick={() => setSelectedPad(i)}
                   onMouseDown={() => handlePadPress(i)}
                   onMouseUp={() => handlePadRelease(i)}
                   onMouseLeave={() => handlePadRelease(i)}
                   onTouchStart={() => handlePadPress(i)}
                   onTouchEnd={() => handlePadRelease(i)}
                   className={`
-                    h-16 w-16 rounded text-xs font-bold transition-all duration-150 active:scale-95 border
+                    h-16 w-16 rounded text-xs font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm
                     ${samples[i]?.buffer 
-                      ? getPadColor(i) + ' border-gray-600 text-white' 
-                      : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-gray-600'
+                      ? getPadColor(i) + ' border-gray-600 text-white shadow-lg' 
+                      : 'bg-gray-700/70 border-gray-600 text-gray-400 hover:bg-gray-600/70'
                     }
                     ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-red-500' : ''}
+                    ${selectedPad === i ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/50' : ''}
                   `}
                 >
                   {samples[i]?.buffer 
@@ -612,28 +778,101 @@ const DrumMachine = () => {
           </div>
         </div>
 
-        {/* Additional Controls (hidden but accessible for advanced features) */}
-        <div className="mt-4 p-2 bg-gray-900 rounded border border-gray-700">
-          <div className="flex gap-2 text-xs">
-            <Slider
-              value={bpm}
-              onValueChange={setBpm}
-              min={60}
-              max={200}
-              step={1}
-              className="w-32"
-            />
-            <span className="text-gray-400">BPM: {bpm[0]}</span>
-            
-            <Slider
-              value={swing}
-              onValueChange={setSwing}
-              min={0}
-              max={100}
-              step={1}
-              className="w-32"
-            />
-            <span className="text-gray-400">Swing: {swing[0]}%</span>
+        {/* Additional Controls */}
+        <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded pointer-events-none"></div>
+          
+          <div className="relative z-10">
+            <div className="grid grid-cols-3 gap-6">
+              {/* Global Controls */}
+              <div>
+                <div className="text-xs text-gray-400 mb-2">GLOBAL</div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400 w-12">BPM</span>
+                    <Slider
+                      value={bpm}
+                      onValueChange={setBpm}
+                      min={60}
+                      max={200}
+                      step={1}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-gray-400 w-8">{bpm[0]}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400 w-12">Swing</span>
+                    <Slider
+                      value={swing}
+                      onValueChange={setSwing}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-gray-400 w-8">{swing[0]}%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400 w-12">Steps</span>
+                    <Select value={sequencerLength.toString()} onValueChange={(value) => setSequencerLength(parseInt(value))}>
+                      <SelectTrigger className="flex-1 h-6 text-xs bg-gray-800 border-gray-600">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[8, 16, 32, 64].map(steps => (
+                          <SelectItem key={steps} value={steps.toString()}>{steps}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Neural Generation */}
+              <div>
+                <div className="text-xs text-gray-400 mb-2">NEURAL ENGINE</div>
+                <div className="space-y-2">
+                  <Button
+                    onClick={generateSequence}
+                    disabled={!neuralEnabled || isGenerating}
+                    className="w-full h-6 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
+                  >
+                    {isGenerating ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    {isGenerating ? 'Generating...' : 'Generate'}
+                  </Button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400 w-12">Temp</span>
+                    <Slider
+                      value={temperature}
+                      onValueChange={setTemperature}
+                      min={0.5}
+                      max={2.0}
+                      step={0.1}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-gray-400 w-8">{temperature[0].toFixed(1)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pattern Management */}
+              <div>
+                <div className="text-xs text-gray-400 mb-2">PATTERNS</div>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-1">
+                    <Button onClick={savePattern} variant="outline" size="sm" className="h-6 text-xs bg-gray-800 border-gray-600">
+                      <Save className="h-3 w-3" />
+                    </Button>
+                    <Button onClick={clearPattern} variant="outline" size="sm" className="h-6 text-xs bg-gray-800 border-gray-600">
+                      <RotateCcw className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <Button onClick={randomizePattern} variant="outline" size="sm" className="w-full h-6 text-xs bg-gray-800 border-gray-600">
+                    Randomize
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
