@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit } from 'lucide-react';
+import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit, RefreshCw, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { WaveformEditor } from './WaveformEditor';
+import * as mm from '@magenta/music';
 
 interface Sample {
   buffer: AudioBuffer | null;
@@ -47,14 +48,38 @@ const DrumMachine = () => {
   const [currentPatternName, setCurrentPatternName] = useState('Pattern 1');
   const [editingSample, setEditingSample] = useState<number | null>(null);
   const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
+  
+  // Neural generation state
+  const [seedLength, setSeedLength] = useState(4);
+  const [temperature, setTemperature] = useState([1.1]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const rnnRef = useRef<any>(null);
+  const [neuralEnabled, setNeuralEnabled] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingChunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize Web Audio API
+  // Initialize Web Audio API and Neural Network
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Initialize Magenta's Drums RNN model
+    const initializeRNN = async () => {
+      try {
+        const rnn = new mm.MusicRNN('https://storage.googleapis.com/download.magenta.tensorflow.org/tfjs_checkpoints/music_rnn/drum_kit_rnn');
+        await rnn.initialize();
+        rnnRef.current = rnn;
+        setNeuralEnabled(true);
+        toast.success('Neural drum engine loaded!');
+      } catch (error) {
+        console.warn('Neural features unavailable:', error);
+        toast.info('Neural features disabled - running in standard mode');
+      }
+    };
+    
+    initializeRNN();
+    
     return () => {
       if (audioContextRef.current) {
         audioContextRef.current.close();
@@ -336,6 +361,84 @@ const DrumMachine = () => {
     toast.success('Pattern exported');
   };
 
+  // Neural pattern generation
+  const generatePattern = async () => {
+    if (!rnnRef.current || !neuralEnabled) {
+      toast.error('Neural generation not available');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      // Convert our pattern format to Magenta's format
+      const seedPattern = patterns.slice(0, 9).map((track, trackIdx) => 
+        track.slice(0, seedLength).map((step, stepIdx) => 
+          step.active ? trackIdx : null
+        ).filter(note => note !== null)
+      );
+
+      // Flatten and convert to note sequence
+      const flatSeed: number[][] = Array(seedLength).fill(null).map(() => []);
+      seedPattern.forEach((track, trackIdx) => {
+        track.forEach((stepIdx) => {
+          if (typeof stepIdx === 'number') {
+            flatSeed[stepIdx % seedLength].push(trackIdx);
+          }
+        });
+      });
+
+      const noteSequence = mm.sequences.quantizeNoteSequence({
+        ticksPerQuarter: 220,
+        totalTime: seedLength / 2,
+        timeSignatures: [{ time: 0, numerator: 4, denominator: 4 }],
+        tempos: [{ time: 0, qpm: bpm[0] }],
+        notes: flatSeed.flatMap((step, index) =>
+          step.map(drumIdx => ({
+            pitch: [36, 38, 42, 46, 41, 43, 45, 49, 51][drumIdx] || 36,
+            startTime: index * 0.5,
+            endTime: (index + 1) * 0.5
+          }))
+        )
+      }, 1);
+
+      // Generate continuation
+      const continuation = await rnnRef.current.continueSequence(
+        noteSequence,
+        sequencerLength - seedLength,
+        temperature[0]
+      );
+
+      // Convert back to our pattern format
+      const newPatterns = [...patterns];
+      const reverseMidiMapping = new Map([
+        [36, 0], [38, 1], [42, 2], [46, 3], [41, 4], [43, 5], [45, 6], [49, 7], [51, 8]
+      ]);
+
+      // Clear existing generated steps
+      for (let trackIdx = 0; trackIdx < 9; trackIdx++) {
+        for (let stepIdx = seedLength; stepIdx < sequencerLength; stepIdx++) {
+          newPatterns[trackIdx][stepIdx] = { active: false, velocity: 80 };
+        }
+      }
+
+      // Apply generated notes
+      continuation.notes.forEach(note => {
+        const drumIdx = reverseMidiMapping.get(note.pitch);
+        const stepIdx = Math.floor(note.quantizedStartStep || 0) + seedLength;
+        if (drumIdx !== undefined && stepIdx < sequencerLength && stepIdx >= seedLength) {
+          newPatterns[drumIdx][stepIdx] = { active: true, velocity: 80 };
+        }
+      });
+
+      setPatterns(newPatterns);
+      toast.success('Neural pattern generated!');
+    } catch (error) {
+      toast.error('Generation failed: ' + (error as Error).message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const toggleStep = (padIndex: number, stepIndex: number) => {
     const newPatterns = [...patterns];
     newPatterns[padIndex] = [...newPatterns[padIndex]];
@@ -511,6 +614,51 @@ const DrumMachine = () => {
               ))}
             </div>
 
+            {neuralEnabled && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Neural:</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">Seed:</span>
+                  <input 
+                    type="number"
+                    value={seedLength}
+                    onChange={(e) => setSeedLength(Math.max(1, Math.min(parseInt(e.target.value) || 4, sequencerLength - 1)))}
+                    className="bg-background/50 border border-border rounded px-2 py-1 text-sm w-12"
+                    min="1"
+                    max={sequencerLength - 1}
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">Temp:</span>
+                  <div className="w-16">
+                    <Slider
+                      value={temperature}
+                      onValueChange={setTemperature}
+                      min={0.5}
+                      max={2}
+                      step={0.1}
+                      className="w-full"
+                    />
+                  </div>
+                  <span className="text-xs w-8">{temperature[0]}</span>
+                </div>
+                <Button 
+                  onClick={generatePattern} 
+                  variant="secondary" 
+                  size="sm"
+                  disabled={isGenerating}
+                  className="relative"
+                >
+                  {isGenerating ? (
+                    <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-1" />
+                  )}
+                  {isGenerating ? 'Generating...' : 'Generate'}
+                </Button>
+              </div>
+            )}
+
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Pattern:</span>
               <input 
@@ -551,28 +699,45 @@ const DrumMachine = () => {
         </div>
 
 
-        {/* Step Sequencer */}
+        {/* Neural Step Sequencer */}
         <div className="glass-panel glass-glow p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Step Sequencer</h2>
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              Step Sequencer 
+              {neuralEnabled && <Sparkles className="h-5 w-5 text-accent" />}
+            </h2>
+            {neuralEnabled && (
+              <div className="text-xs text-muted-foreground">
+                Seed: {seedLength} steps | Neural generation enabled
+              </div>
+            )}
           </div>
           
           <div className="space-y-2">
-            {/* Step indicators */}
-            <div className={`grid gap-1 mb-4 ${
-              sequencerLength === 16 ? 'grid-cols-16' : 
-              sequencerLength === 32 ? 'grid-cols-32' : 
-              'grid-cols-64'
-            }`}>
-              {Array.from({ length: sequencerLength }, (_, i) => (
-                <div
-                  key={i}
-                  className={`
-                    h-2 rounded-sm
-                    ${currentStep === i ? 'bg-step-playing' : 'bg-muted'}
-                  `}
+            {/* Step indicators with seed marker */}
+            <div className="relative mb-4">
+              <div className={`grid gap-1 ${
+                sequencerLength === 16 ? 'grid-cols-16' : 
+                sequencerLength === 32 ? 'grid-cols-32' : 
+                'grid-cols-64'
+              }`}>
+                {Array.from({ length: sequencerLength }, (_, i) => (
+                  <div
+                    key={i}
+                    className={`
+                      h-3 rounded-sm transition-all duration-200
+                      ${currentStep === i ? 'bg-step-playing ring-1 ring-step-playing' : 
+                        i < seedLength && neuralEnabled ? 'bg-accent' : 'bg-muted'}
+                    `}
+                  />
+                ))}
+              </div>
+              {neuralEnabled && seedLength > 0 && (
+                <div 
+                  className="absolute top-0 h-3 w-1 bg-primary"
+                  style={{ left: `calc(${(seedLength / sequencerLength) * 100}% - 2px)` }}
                 />
-              ))}
+              )}
             </div>
 
             {/* Pattern grid with track controls */}
@@ -632,28 +797,32 @@ const DrumMachine = () => {
                     {samples[padIndex]?.buffer ? trackVolumes[padIndex] : '--'}
                   </div>
 
-                  {/* Step buttons - scrollable container */}
+                  {/* Step buttons with 3D neural effect */}
                   <div className="flex-1 overflow-x-auto">
                     <div className={`grid gap-1 ${
                       sequencerLength === 16 ? 'grid-cols-16' : 
                       sequencerLength === 32 ? 'grid-cols-32' : 
                       'grid-cols-64'
-                    } min-w-fit`}>
+                    } min-w-fit perspective-1000`}>
                       {Array.from({ length: sequencerLength }, (_, stepIndex) => (
                         <button
                           key={stepIndex}
                           onClick={() => toggleStep(padIndex, stepIndex)}
                           disabled={!samples[padIndex]?.buffer}
                           className={`
-                            h-6 w-6 min-w-[1.5rem] rounded-sm transition-all duration-150 neon-border
+                            h-7 w-7 min-w-[1.75rem] rounded-sm transition-all duration-200 neon-border
+                            transform-style-preserve-3d hover:scale-105
                             ${patterns[padIndex][stepIndex]?.active 
-                              ? 'bg-step-active glass-glow text-primary-foreground' 
+                              ? stepIndex < seedLength && neuralEnabled
+                                ? 'bg-accent text-accent-foreground shadow-lg shadow-accent/50' 
+                                : 'bg-step-active glass-glow text-primary-foreground shadow-lg' 
                               : samples[padIndex]?.buffer 
-                                ? 'glass-panel hover:glass-glow' 
-                                : 'bg-muted/50 cursor-not-allowed'
+                                ? 'glass-panel hover:glass-glow bg-muted/20 border border-border/50' 
+                                : 'bg-muted/30 cursor-not-allowed border border-muted/30'
                             }
-                            ${currentStep === stepIndex ? 'ring-2 ring-step-playing glass-glow-strong' : ''}
+                            ${currentStep === stepIndex ? 'ring-2 ring-step-playing glass-glow-strong animate-pulse' : ''}
                             ${!samples[padIndex]?.buffer ? 'opacity-50' : ''}
+                            ${stepIndex < seedLength && neuralEnabled ? 'border-accent/50' : ''}
                           `}
                         />
                       ))}
