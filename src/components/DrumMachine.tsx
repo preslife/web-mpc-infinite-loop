@@ -540,7 +540,10 @@ const DrumMachine = () => {
               </Button>
               
               <Button 
-                onClick={() => setCurrentStep(-1)}
+                onClick={() => {
+                  setIsPlaying(false);
+                  setCurrentStep(-1);
+                }}
                 variant="outline"
                 size="lg"
                 className="h-12 w-12"
@@ -716,16 +719,12 @@ const DrumMachine = () => {
           <div className="space-y-2">
             {/* Step indicators with seed marker */}
             <div className="relative mb-4">
-              <div className={`grid gap-1 ${
-                sequencerLength === 16 ? 'grid-cols-16' : 
-                sequencerLength === 32 ? 'grid-cols-32' : 
-                'grid-cols-64'
-              }`}>
+              <div className="flex gap-1">
                 {Array.from({ length: sequencerLength }, (_, i) => (
                   <div
                     key={i}
                     className={`
-                      h-3 rounded-sm transition-all duration-200
+                      h-3 w-3 min-w-[0.75rem] rounded-sm transition-all duration-200
                       ${currentStep === i ? 'bg-step-playing ring-1 ring-step-playing' : 
                         i < seedLength && neuralEnabled ? 'bg-accent' : 'bg-muted'}
                     `}
@@ -798,12 +797,8 @@ const DrumMachine = () => {
                   </div>
 
                   {/* Step buttons with 3D neural effect */}
-                  <div className="flex-1 overflow-x-auto">
-                    <div className={`grid gap-1 ${
-                      sequencerLength === 16 ? 'grid-cols-16' : 
-                      sequencerLength === 32 ? 'grid-cols-32' : 
-                      'grid-cols-64'
-                    } min-w-fit perspective-1000`}>
+                   <div className="flex-1 overflow-x-auto">
+                     <div className="flex gap-1 min-w-fit perspective-1000">
                       {Array.from({ length: sequencerLength }, (_, stepIndex) => (
                         <button
                           key={stepIndex}
