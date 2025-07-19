@@ -74,6 +74,37 @@ const DrumMachine = () => {
   const [midiDevices, setMidiDevices] = useState<MIDIInput[]>([]);
   const [midiEnabled, setMidiEnabled] = useState(false);
 
+  // Audio effects state
+  const [trackEffects, setTrackEffects] = useState<Array<{
+    reverb: { enabled: boolean; roomSize: number; decay: number; wet: number };
+    delay: { enabled: boolean; time: number; feedback: number; wet: number };
+    filter: { enabled: boolean; frequency: number; resonance: number; type: 'lowpass' | 'highpass' | 'bandpass' };
+    eq: { enabled: boolean; low: number; mid: number; high: number };
+  }>>(Array(16).fill({
+    reverb: { enabled: false, roomSize: 0.5, decay: 2, wet: 0.3 },
+    delay: { enabled: false, time: 0.25, feedback: 0.3, wet: 0.3 },
+    filter: { enabled: false, frequency: 1000, resonance: 1, type: 'lowpass' },
+    eq: { enabled: false, low: 0, mid: 0, high: 0 }
+  }));
+  const [selectedEffectTrack, setSelectedEffectTrack] = useState<number | null>(null);
+
+  // Audio effect nodes
+  const effectNodesRef = useRef<Map<number, {
+    reverb?: ConvolverNode;
+    reverbGain?: GainNode;
+    reverbDry?: GainNode;
+    delay?: DelayNode;
+    delayGain?: GainNode;
+    delayFeedback?: GainNode;
+    delayWet?: GainNode;
+    delayDry?: GainNode;
+    filter?: BiquadFilterNode;
+    eqLow?: BiquadFilterNode;
+    eqMid?: BiquadFilterNode;
+    eqHigh?: BiquadFilterNode;
+    gainNode?: GainNode;
+  }>>(new Map());
+
   // Initialize Web Audio API and Neural Network
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -145,6 +176,155 @@ const DrumMachine = () => {
       setSavedPatterns(JSON.parse(storedPatterns));
     }
   }, []);
+
+  // Create reverb impulse response
+  const createReverbImpulse = useCallback((roomSize: number, decay: number) => {
+    if (!audioContextRef.current) return null;
+    
+    const sampleRate = audioContextRef.current.sampleRate;
+    const length = sampleRate * decay;
+    const impulse = audioContextRef.current.createBuffer(2, length, sampleRate);
+    
+    for (let channel = 0; channel < 2; channel++) {
+      const channelData = impulse.getChannelData(channel);
+      for (let i = 0; i < length; i++) {
+        const n = length - i;
+        channelData[i] = (Math.random() * 2 - 1) * Math.pow(n / length, roomSize);
+      }
+    }
+    return impulse;
+  }, []);
+
+  // Initialize audio effects for a track
+  const initializeTrackEffects = useCallback((trackIndex: number) => {
+    if (!audioContextRef.current) return;
+    
+    const context = audioContextRef.current;
+    const effects = trackEffects[trackIndex];
+    
+    // Create effect nodes
+    const nodes: any = {};
+    
+    // Reverb
+    if (effects.reverb.enabled) {
+      nodes.reverb = context.createConvolver();
+      nodes.reverbGain = context.createGain();
+      nodes.reverbDry = context.createGain();
+      
+      const impulse = createReverbImpulse(effects.reverb.roomSize, effects.reverb.decay);
+      if (impulse) nodes.reverb.buffer = impulse;
+      
+      nodes.reverbGain.gain.value = effects.reverb.wet;
+      nodes.reverbDry.gain.value = 1 - effects.reverb.wet;
+    }
+    
+    // Delay
+    if (effects.delay.enabled) {
+      nodes.delay = context.createDelay(1);
+      nodes.delayGain = context.createGain();
+      nodes.delayFeedback = context.createGain();
+      nodes.delayWet = context.createGain();
+      nodes.delayDry = context.createGain();
+      
+      nodes.delay.delayTime.value = effects.delay.time;
+      nodes.delayFeedback.gain.value = effects.delay.feedback;
+      nodes.delayWet.gain.value = effects.delay.wet;
+      nodes.delayDry.gain.value = 1 - effects.delay.wet;
+    }
+    
+    // Filter
+    if (effects.filter.enabled) {
+      nodes.filter = context.createBiquadFilter();
+      nodes.filter.type = effects.filter.type;
+      nodes.filter.frequency.value = effects.filter.frequency;
+      nodes.filter.Q.value = effects.filter.resonance;
+    }
+    
+    // EQ (3-band)
+    if (effects.eq.enabled) {
+      nodes.eqLow = context.createBiquadFilter();
+      nodes.eqMid = context.createBiquadFilter();
+      nodes.eqHigh = context.createBiquadFilter();
+      
+      nodes.eqLow.type = 'lowshelf';
+      nodes.eqLow.frequency.value = 320;
+      nodes.eqLow.gain.value = effects.eq.low;
+      
+      nodes.eqMid.type = 'peaking';
+      nodes.eqMid.frequency.value = 1000;
+      nodes.eqMid.Q.value = 1;
+      nodes.eqMid.gain.value = effects.eq.mid;
+      
+      nodes.eqHigh.type = 'highshelf';
+      nodes.eqHigh.frequency.value = 3200;
+      nodes.eqHigh.gain.value = effects.eq.high;
+    }
+    
+    effectNodesRef.current.set(trackIndex, nodes);
+  }, [trackEffects, createReverbImpulse]);
+
+  // Connect audio through effects chain
+  const connectEffectsChain = useCallback((source: AudioNode, trackIndex: number, destination: AudioNode) => {
+    const effects = effectNodesRef.current.get(trackIndex);
+    if (!effects) {
+      source.connect(destination);
+      return;
+    }
+    
+    let currentNode = source;
+    
+    // EQ first
+    if (effects.eqLow && effects.eqMid && effects.eqHigh) {
+      currentNode.connect(effects.eqLow);
+      effects.eqLow.connect(effects.eqMid);
+      effects.eqMid.connect(effects.eqHigh);
+      currentNode = effects.eqHigh;
+    }
+    
+    // Filter
+    if (effects.filter) {
+      currentNode.connect(effects.filter);
+      currentNode = effects.filter;
+    }
+    
+    // Create mixer for delay/reverb
+    const mixer = audioContextRef.current!.createGain();
+    currentNode.connect(mixer);
+    
+    // Delay
+    if (effects.delay && effects.delayGain && effects.delayFeedback && effects.delayWet && effects.delayDry) {
+      // Dry signal
+      mixer.connect(effects.delayDry);
+      effects.delayDry.connect(destination);
+      
+      // Wet signal
+      mixer.connect(effects.delay);
+      effects.delay.connect(effects.delayGain);
+      effects.delay.connect(effects.delayFeedback);
+      effects.delayFeedback.connect(effects.delay);
+      effects.delayGain.connect(effects.delayWet);
+      effects.delayWet.connect(destination);
+    }
+    
+    // Reverb
+    if (effects.reverb && effects.reverbGain && effects.reverbDry) {
+      // Dry signal
+      mixer.connect(effects.reverbDry);
+      effects.reverbDry.connect(destination);
+      
+      // Wet signal
+      mixer.connect(effects.reverb);
+      effects.reverb.connect(effects.reverbGain);
+      effects.reverbGain.connect(destination);
+    }
+    
+    // If no time-based effects, connect directly
+    if (!effects.delay && !effects.reverb) {
+      mixer.connect(destination);
+    }
+  }, []);
+
+  // Load saved patterns from localStorage on component mount
 
   // Save patterns to localStorage whenever savedPatterns changes
   useEffect(() => {
@@ -308,7 +488,7 @@ const DrumMachine = () => {
       };
     }
     source.start(0, startTime, gateMode ? undefined : sliceDuration);
-  }, [samples, trackVolumes, trackMutes, trackSolos, playingSources]);
+  }, [samples, trackVolumes, trackMutes, trackSolos, playingSources, initializeTrackEffects, connectEffectsChain]);
 
   const startRecording = async (padIndex: number) => {
     try {
@@ -865,6 +1045,346 @@ const DrumMachine = () => {
             </div>
           </div>
 
+          {/* Effects Panel */}
+          <div className="bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-red-500/10 rounded-lg pointer-events-none"></div>
+            <div className="relative z-10">
+              <div className="text-xs text-gray-400 mb-2">AUDIO EFFECTS</div>
+              
+              {/* Track selector */}
+              <div className="mb-3">
+                <Select 
+                  value={selectedEffectTrack?.toString() || ""} 
+                  onValueChange={(value) => setSelectedEffectTrack(parseInt(value))}
+                >
+                  <SelectTrigger className="h-6 text-xs bg-gray-800 border-gray-600">
+                    <SelectValue placeholder="Select track..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({length: 16}, (_, i) => (
+                      <SelectItem key={i} value={i.toString()}>Track {i + 1}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedEffectTrack !== null && (
+                <div className="space-y-2">
+                  {/* Reverb */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={trackEffects[selectedEffectTrack]?.reverb?.enabled}
+                        onChange={(e) => {
+                          const newEffects = [...trackEffects];
+                          newEffects[selectedEffectTrack] = {
+                            ...newEffects[selectedEffectTrack],
+                            reverb: { ...newEffects[selectedEffectTrack].reverb, enabled: e.target.checked }
+                          };
+                          setTrackEffects(newEffects);
+                        }}
+                        className="w-3 h-3"
+                      />
+                      <span className="text-xs text-gray-300">Reverb</span>
+                    </div>
+                    {trackEffects[selectedEffectTrack]?.reverb?.enabled && (
+                      <div className="grid grid-cols-3 gap-1 text-xs">
+                        <div>
+                          <span className="text-gray-400">Room</span>
+                          <Slider
+                            value={[trackEffects[selectedEffectTrack]?.reverb?.roomSize * 100]}
+                            onValueChange={([value]) => {
+                              const newEffects = [...trackEffects];
+                              newEffects[selectedEffectTrack] = {
+                                ...newEffects[selectedEffectTrack],
+                                reverb: { ...newEffects[selectedEffectTrack].reverb, roomSize: value / 100 }
+                              };
+                              setTrackEffects(newEffects);
+                            }}
+                            min={0}
+                            max={100}
+                            className="h-4"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Decay</span>
+                          <Slider
+                            value={[trackEffects[selectedEffectTrack]?.reverb?.decay]}
+                            onValueChange={([value]) => {
+                              const newEffects = [...trackEffects];
+                              newEffects[selectedEffectTrack] = {
+                                ...newEffects[selectedEffectTrack],
+                                reverb: { ...newEffects[selectedEffectTrack].reverb, decay: value }
+                              };
+                              setTrackEffects(newEffects);
+                            }}
+                            min={0.1}
+                            max={5}
+                            step={0.1}
+                            className="h-4"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Wet</span>
+                          <Slider
+                            value={[trackEffects[selectedEffectTrack]?.reverb?.wet * 100]}
+                            onValueChange={([value]) => {
+                              const newEffects = [...trackEffects];
+                              newEffects[selectedEffectTrack] = {
+                                ...newEffects[selectedEffectTrack],
+                                reverb: { ...newEffects[selectedEffectTrack].reverb, wet: value / 100 }
+                              };
+                              setTrackEffects(newEffects);
+                            }}
+                            min={0}
+                            max={100}
+                            className="h-4"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Delay */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={trackEffects[selectedEffectTrack]?.delay?.enabled}
+                        onChange={(e) => {
+                          const newEffects = [...trackEffects];
+                          newEffects[selectedEffectTrack] = {
+                            ...newEffects[selectedEffectTrack],
+                            delay: { ...newEffects[selectedEffectTrack].delay, enabled: e.target.checked }
+                          };
+                          setTrackEffects(newEffects);
+                        }}
+                        className="w-3 h-3"
+                      />
+                      <span className="text-xs text-gray-300">Delay</span>
+                    </div>
+                    {trackEffects[selectedEffectTrack]?.delay?.enabled && (
+                      <div className="grid grid-cols-3 gap-1 text-xs">
+                        <div>
+                          <span className="text-gray-400">Time</span>
+                          <Slider
+                            value={[trackEffects[selectedEffectTrack]?.delay?.time * 1000]}
+                            onValueChange={([value]) => {
+                              const newEffects = [...trackEffects];
+                              newEffects[selectedEffectTrack] = {
+                                ...newEffects[selectedEffectTrack],
+                                delay: { ...newEffects[selectedEffectTrack].delay, time: value / 1000 }
+                              };
+                              setTrackEffects(newEffects);
+                            }}
+                            min={10}
+                            max={1000}
+                            className="h-4"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Feedback</span>
+                          <Slider
+                            value={[trackEffects[selectedEffectTrack]?.delay?.feedback * 100]}
+                            onValueChange={([value]) => {
+                              const newEffects = [...trackEffects];
+                              newEffects[selectedEffectTrack] = {
+                                ...newEffects[selectedEffectTrack],
+                                delay: { ...newEffects[selectedEffectTrack].delay, feedback: value / 100 }
+                              };
+                              setTrackEffects(newEffects);
+                            }}
+                            min={0}
+                            max={90}
+                            className="h-4"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Wet</span>
+                          <Slider
+                            value={[trackEffects[selectedEffectTrack]?.delay?.wet * 100]}
+                            onValueChange={([value]) => {
+                              const newEffects = [...trackEffects];
+                              newEffects[selectedEffectTrack] = {
+                                ...newEffects[selectedEffectTrack],
+                                delay: { ...newEffects[selectedEffectTrack].delay, wet: value / 100 }
+                              };
+                              setTrackEffects(newEffects);
+                            }}
+                            min={0}
+                            max={100}
+                            className="h-4"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Filter */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={trackEffects[selectedEffectTrack]?.filter?.enabled}
+                        onChange={(e) => {
+                          const newEffects = [...trackEffects];
+                          newEffects[selectedEffectTrack] = {
+                            ...newEffects[selectedEffectTrack],
+                            filter: { ...newEffects[selectedEffectTrack].filter, enabled: e.target.checked }
+                          };
+                          setTrackEffects(newEffects);
+                        }}
+                        className="w-3 h-3"
+                      />
+                      <span className="text-xs text-gray-300">Filter</span>
+                    </div>
+                    {trackEffects[selectedEffectTrack]?.filter?.enabled && (
+                      <div className="space-y-1">
+                        <Select
+                          value={trackEffects[selectedEffectTrack]?.filter?.type}
+                          onValueChange={(value: 'lowpass' | 'highpass' | 'bandpass') => {
+                            const newEffects = [...trackEffects];
+                            newEffects[selectedEffectTrack] = {
+                              ...newEffects[selectedEffectTrack],
+                              filter: { ...newEffects[selectedEffectTrack].filter, type: value }
+                            };
+                            setTrackEffects(newEffects);
+                          }}
+                        >
+                          <SelectTrigger className="h-5 text-xs bg-gray-800 border-gray-600">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="lowpass">Low Pass</SelectItem>
+                            <SelectItem value="highpass">High Pass</SelectItem>
+                            <SelectItem value="bandpass">Band Pass</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="grid grid-cols-2 gap-1 text-xs">
+                          <div>
+                            <span className="text-gray-400">Freq</span>
+                            <Slider
+                              value={[trackEffects[selectedEffectTrack]?.filter?.frequency]}
+                              onValueChange={([value]) => {
+                                const newEffects = [...trackEffects];
+                                newEffects[selectedEffectTrack] = {
+                                  ...newEffects[selectedEffectTrack],
+                                  filter: { ...newEffects[selectedEffectTrack].filter, frequency: value }
+                                };
+                                setTrackEffects(newEffects);
+                              }}
+                              min={20}
+                              max={20000}
+                              className="h-4"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Res</span>
+                            <Slider
+                              value={[trackEffects[selectedEffectTrack]?.filter?.resonance]}
+                              onValueChange={([value]) => {
+                                const newEffects = [...trackEffects];
+                                newEffects[selectedEffectTrack] = {
+                                  ...newEffects[selectedEffectTrack],
+                                  filter: { ...newEffects[selectedEffectTrack].filter, resonance: value }
+                                };
+                                setTrackEffects(newEffects);
+                              }}
+                              min={0.1}
+                              max={20}
+                              step={0.1}
+                              className="h-4"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* EQ */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={trackEffects[selectedEffectTrack]?.eq?.enabled}
+                        onChange={(e) => {
+                          const newEffects = [...trackEffects];
+                          newEffects[selectedEffectTrack] = {
+                            ...newEffects[selectedEffectTrack],
+                            eq: { ...newEffects[selectedEffectTrack].eq, enabled: e.target.checked }
+                          };
+                          setTrackEffects(newEffects);
+                        }}
+                        className="w-3 h-3"
+                      />
+                      <span className="text-xs text-gray-300">EQ</span>
+                    </div>
+                    {trackEffects[selectedEffectTrack]?.eq?.enabled && (
+                      <div className="grid grid-cols-3 gap-1 text-xs">
+                        <div>
+                          <span className="text-gray-400">Low</span>
+                          <Slider
+                            value={[trackEffects[selectedEffectTrack]?.eq?.low]}
+                            onValueChange={([value]) => {
+                              const newEffects = [...trackEffects];
+                              newEffects[selectedEffectTrack] = {
+                                ...newEffects[selectedEffectTrack],
+                                eq: { ...newEffects[selectedEffectTrack].eq, low: value }
+                              };
+                              setTrackEffects(newEffects);
+                            }}
+                            min={-12}
+                            max={12}
+                            step={0.1}
+                            className="h-4"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Mid</span>
+                          <Slider
+                            value={[trackEffects[selectedEffectTrack]?.eq?.mid]}
+                            onValueChange={([value]) => {
+                              const newEffects = [...trackEffects];
+                              newEffects[selectedEffectTrack] = {
+                                ...newEffects[selectedEffectTrack],
+                                eq: { ...newEffects[selectedEffectTrack].eq, mid: value }
+                              };
+                              setTrackEffects(newEffects);
+                            }}
+                            min={-12}
+                            max={12}
+                            step={0.1}
+                            className="h-4"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-gray-400">High</span>
+                          <Slider
+                            value={[trackEffects[selectedEffectTrack]?.eq?.high]}
+                            onValueChange={([value]) => {
+                              const newEffects = [...trackEffects];
+                              newEffects[selectedEffectTrack] = {
+                                ...newEffects[selectedEffectTrack],
+                                eq: { ...newEffects[selectedEffectTrack].eq, high: value }
+                              };
+                              setTrackEffects(newEffects);
+                            }}
+                            min={-12}
+                            max={12}
+                            step={0.1}
+                            className="h-4"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
           {/* Center Track Controls */}
           <div className="bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-purple-500/10 rounded-lg pointer-events-none"></div>
@@ -1045,7 +1565,6 @@ const DrumMachine = () => {
                 Notes 36-51 → Pads 1-16
               </div>
             </div>
-          </div>
         </div>
       </div>
     </div>

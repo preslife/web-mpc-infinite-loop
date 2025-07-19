@@ -24,6 +24,8 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose }: WaveformEdit
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSource, setCurrentSource] = useState<AudioBufferSourceNode | null>(null);
   const [waveformData, setWaveformData] = useState<Float32Array | null>(null);
+  const [pitch, setPitch] = useState(1.0);
+  const [isNormalizing, setIsNormalizing] = useState(false);
 
   // Initialize audio context
   useEffect(() => {
