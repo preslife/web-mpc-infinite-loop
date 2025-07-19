@@ -309,7 +309,7 @@
 
 .volume-knob-number {
   position: absolute;
-  top: calc(100% + 10px);
+  bottom: -3em;
   left: 50%;
   transform: translateX(-50%) rotate(-90deg);
   width: 1.75em;
