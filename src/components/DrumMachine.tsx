@@ -1040,37 +1040,52 @@ const DrumMachine = () => {
               {/* Transport Buttons */}
               <div className="flex items-center gap-4">
                 {/* Play/Pause Button */}
-                <Button 
-                  onClick={isPlaying ? handlePause : handlePlay}
-                  variant="outline" 
-                  size="lg" 
-                  className={`h-14 w-14 rounded-full ${isPlaying ? 'bg-orange-600/20 border-orange-500/50 text-orange-300' : 'bg-green-600/20 border-green-500/50 text-green-300'} hover:scale-110 transition-all duration-200 shadow-lg`}
-                  title={isPlaying ? 'Pause sequencer' : 'Start sequencer'}
-                >
-                  {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
-                </Button>
+                <div className="text-center">
+                  <Button 
+                    onClick={isPlaying ? handlePause : handlePlay}
+                    variant="outline" 
+                    size="lg" 
+                    className={`h-14 w-14 rounded-full ${isPlaying ? 'bg-orange-600/20 border-orange-500/50 text-orange-300' : 'bg-green-600/20 border-green-500/50 text-green-300'} hover:scale-110 transition-all duration-200 shadow-lg`}
+                    title={isPlaying ? 'Pause sequencer' : 'Start sequencer'}
+                  >
+                    {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
+                  </Button>
+                  <div className="text-xs text-gray-400 mt-1 font-medium">
+                    {isPlaying ? 'PAUSE' : 'PLAY'}
+                  </div>
+                </div>
                 
                 {/* Stop Button */}
-                <Button 
-                  onClick={handleStop}
-                  variant="outline" 
-                  size="lg" 
-                  className="h-14 w-14 rounded-full bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30 hover:scale-110 transition-all duration-200 shadow-lg"
-                  title="Stop sequencer and reset to beginning"
-                >
-                  <Square className="h-7 w-7" />
-                </Button>
+                <div className="text-center">
+                  <Button 
+                    onClick={handleStop}
+                    variant="outline" 
+                    size="lg" 
+                    className="h-14 w-14 rounded-full bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30 hover:scale-110 transition-all duration-200 shadow-lg"
+                    title="Stop sequencer and reset to beginning"
+                  >
+                    <Square className="h-7 w-7" />
+                  </Button>
+                  <div className="text-xs text-red-400 mt-1 font-medium">
+                    STOP
+                  </div>
+                </div>
                 
                 {/* Pattern Record Button */}
-                <Button 
-                  onClick={() => setIsPatternRecording(!isPatternRecording)}
-                  variant="outline" 
-                  size="lg" 
-                  className={`h-14 w-14 rounded-full ${isPatternRecording ? 'bg-red-600/30 border-red-500 text-red-200 animate-pulse shadow-lg shadow-red-500/30' : 'bg-gray-600/20 border-gray-500/50 text-gray-300'} hover:scale-110 transition-all duration-200 shadow-lg`}
-                  title={isPatternRecording ? 'Stop pattern recording' : 'Start pattern recording (press pads while sequencer plays to record)'}
-                >
-                  <Mic className="h-7 w-7" />
-                </Button>
+                <div className="text-center">
+                  <Button 
+                    onClick={() => setIsPatternRecording(!isPatternRecording)}
+                    variant="outline" 
+                    size="lg" 
+                    className={`h-14 w-14 rounded-full ${isPatternRecording ? 'bg-red-600/30 border-red-500 text-red-200 animate-pulse shadow-lg shadow-red-500/30' : 'bg-gray-600/20 border-gray-500/50 text-gray-300'} hover:scale-110 transition-all duration-200 shadow-lg`}
+                    title={isPatternRecording ? 'Stop pattern recording' : 'Start pattern recording (press pads while sequencer plays to record)'}
+                  >
+                    <Mic className="h-7 w-7" />
+                  </Button>
+                  <div className={`text-xs mt-1 font-medium ${isPatternRecording ? 'text-red-400 animate-pulse' : 'text-gray-400'}`}>
+                    {isPatternRecording ? 'RECORDING' : 'RECORD'}
+                  </div>
+                </div>
               </div>
 
               {/* Pattern Target Selection */}
