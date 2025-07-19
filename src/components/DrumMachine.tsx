@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, Square, Mic, Volume2, Upload } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Sample {
@@ -12,6 +13,13 @@ interface Sample {
 interface PatternStep {
   active: boolean;
   velocity: number;
+}
+
+interface Pattern {
+  name: string;
+  steps: PatternStep[][];
+  bpm: number;
+  swing: number;
 }
 
 const DrumMachine = () => {
@@ -26,8 +34,13 @@ const DrumMachine = () => {
     Array(16).fill(null).map(() => Array(64).fill({ active: false, velocity: 80 }))
   );
   const [trackVolumes, setTrackVolumes] = useState<number[]>(Array(16).fill(80));
+  const [trackMutes, setTrackMutes] = useState<boolean[]>(Array(16).fill(false));
+  const [trackSolos, setTrackSolos] = useState<boolean[]>(Array(16).fill(false));
   const [selectedPad, setSelectedPad] = useState<number | null>(null);
   const [recordMode, setRecordMode] = useState(false);
+  const [swing, setSwing] = useState([0]);
+  const [savedPatterns, setSavedPatterns] = useState<Pattern[]>([]);
+  const [currentPatternName, setCurrentPatternName] = useState('Pattern 1');
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingChunksRef = useRef<Blob[]>([]);
@@ -43,31 +56,52 @@ const DrumMachine = () => {
     };
   }, []);
 
-  // Sequencer loop
+  // Sequencer loop with swing
   useEffect(() => {
     if (!isPlaying) return;
 
-    const stepTime = (60 / bpm[0] / 4) * 1000; // 16th notes
-    const interval = setInterval(() => {
-      setCurrentStep(prev => {
-        const nextStep = (prev + 1) % sequencerLength;
-        
-        // Play samples for active steps
-        patterns.forEach((pattern, padIndex) => {
-          if (pattern[nextStep]?.active && samples[padIndex]?.buffer) {
-            playPad(padIndex, pattern[nextStep].velocity);
-          }
+    const baseStepTime = (60 / bpm[0] / 4) * 1000; // 16th notes
+    let stepCounter = 0;
+    
+    const scheduleNextStep = () => {
+      const swingAmount = swing[0] / 100;
+      const isOffBeat = stepCounter % 2 === 1;
+      const swingDelay = isOffBeat ? baseStepTime * swingAmount * 0.1 : 0;
+      
+      setTimeout(() => {
+        setCurrentStep(prev => {
+          const nextStep = (prev + 1) % sequencerLength;
+          
+          // Play samples for active steps
+          patterns.forEach((pattern, padIndex) => {
+            const shouldPlay = pattern[nextStep]?.active && 
+                              samples[padIndex]?.buffer && 
+                              !trackMutes[padIndex] &&
+                              (trackSolos.every(s => !s) || trackSolos[padIndex]);
+            
+            if (shouldPlay) {
+              playPad(padIndex, pattern[nextStep].velocity);
+            }
+          });
+          
+          stepCounter++;
+          if (isPlaying) scheduleNextStep();
+          return nextStep;
         });
-        
-        return nextStep;
-      });
-    }, stepTime);
+      }, baseStepTime + swingDelay);
+    };
 
-    return () => clearInterval(interval);
-  }, [isPlaying, bpm, patterns, samples, sequencerLength]);
+    scheduleNextStep();
+  }, [isPlaying, bpm, patterns, samples, sequencerLength, swing, trackMutes, trackSolos]);
 
   const playPad = useCallback((padIndex: number, velocity: number = 80) => {
     if (!audioContextRef.current || !samples[padIndex]?.buffer) return;
+    
+    // Check mute/solo state
+    const shouldPlay = !trackMutes[padIndex] && 
+                      (trackSolos.every(s => !s) || trackSolos[padIndex]);
+    
+    if (!shouldPlay) return;
 
     const source = audioContextRef.current.createBufferSource();
     const gainNode = audioContextRef.current.createGain();
@@ -81,7 +115,7 @@ const DrumMachine = () => {
     gainNode.connect(audioContextRef.current.destination);
     
     source.start();
-  }, [samples, trackVolumes]);
+  }, [samples, trackVolumes, trackMutes, trackSolos]);
 
   const startRecording = async (padIndex: number) => {
     try {
@@ -179,6 +213,63 @@ const DrumMachine = () => {
     setTrackVolumes(newVolumes);
   };
 
+  const toggleMute = (padIndex: number) => {
+    const newMutes = [...trackMutes];
+    newMutes[padIndex] = !newMutes[padIndex];
+    setTrackMutes(newMutes);
+  };
+
+  const toggleSolo = (padIndex: number) => {
+    const newSolos = [...trackSolos];
+    newSolos[padIndex] = !newSolos[padIndex];
+    setTrackSolos(newSolos);
+  };
+
+  const clearPattern = () => {
+    setPatterns(Array(16).fill(null).map(() => Array(64).fill({ active: false, velocity: 80 })));
+    toast.success('Pattern cleared');
+  };
+
+  const savePattern = () => {
+    const pattern: Pattern = {
+      name: currentPatternName,
+      steps: patterns,
+      bpm: bpm[0],
+      swing: swing[0]
+    };
+    setSavedPatterns(prev => [...prev, pattern]);
+    toast.success(`Pattern "${currentPatternName}" saved`);
+  };
+
+  const loadPattern = (pattern: Pattern) => {
+    setPatterns(pattern.steps);
+    setBpm([pattern.bpm]);
+    setSwing([pattern.swing]);
+    setCurrentPatternName(pattern.name);
+    toast.success(`Pattern "${pattern.name}" loaded`);
+  };
+
+  const exportPattern = () => {
+    const pattern: Pattern = {
+      name: currentPatternName,
+      steps: patterns,
+      bpm: bpm[0],
+      swing: swing[0]
+    };
+    
+    const dataStr = JSON.stringify(pattern, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${currentPatternName}.json`;
+    link.click();
+    
+    URL.revokeObjectURL(url);
+    toast.success('Pattern exported');
+  };
+
   const toggleStep = (padIndex: number, stepIndex: number) => {
     const newPatterns = [...patterns];
     newPatterns[padIndex] = [...newPatterns[padIndex]];
@@ -212,7 +303,7 @@ const DrumMachine = () => {
 
         {/* Transport Controls */}
         <div className="glass-panel glass-glow p-6 mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <Button 
                 onClick={handlePlayStop}
@@ -249,19 +340,78 @@ const DrumMachine = () => {
               )}
             </div>
 
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium min-w-[60px]">BPM</span>
-              <div className="w-32">
-                <Slider
-                  value={bpm}
-                  onValueChange={setBpm}
-                  min={60}
-                  max={200}
-                  step={1}
-                  className="w-full"
-                />
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">BPM</span>
+                <div className="w-24">
+                  <Slider
+                    value={bpm}
+                    onValueChange={setBpm}
+                    min={60}
+                    max={200}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+                <span className="text-lg font-bold min-w-[40px] text-accent">{bpm[0]}</span>
               </div>
-              <span className="text-xl font-bold min-w-[40px] text-accent">{bpm[0]}</span>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Swing</span>
+                <div className="w-24">
+                  <Slider
+                    value={swing}
+                    onValueChange={setSwing}
+                    min={0}
+                    max={50}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+                <span className="text-sm min-w-[30px] text-accent">{swing[0]}%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Pattern Controls */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Pattern:</span>
+              <input 
+                value={currentPatternName}
+                onChange={(e) => setCurrentPatternName(e.target.value)}
+                className="bg-background/50 border border-border rounded px-2 py-1 text-sm w-24"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button onClick={savePattern} variant="outline" size="sm">
+                <Save className="h-4 w-4 mr-1" />
+                Save
+              </Button>
+              
+              <Select onValueChange={(value) => loadPattern(savedPatterns[parseInt(value)])}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Load..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {savedPatterns.map((pattern, index) => (
+                    <SelectItem key={index} value={index.toString()}>
+                      {pattern.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Button onClick={clearPattern} variant="outline" size="sm">
+                <RotateCcw className="h-4 w-4 mr-1" />
+                Clear
+              </Button>
+
+              <Button onClick={exportPattern} variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-1" />
+                Export
+              </Button>
             </div>
           </div>
         </div>
@@ -342,22 +492,44 @@ const DrumMachine = () => {
               ))}
             </div>
 
-            {/* Pattern grid with volume controls */}
+            {/* Pattern grid with track controls */}
             <div className="space-y-1 max-h-80 overflow-y-auto">
               {Array.from({ length: 16 }, (_, padIndex) => (
                 <div key={padIndex} className="flex items-center gap-2">
                   {/* Pad indicator */}
-                    <div className="w-8 flex items-center justify-center">
-                      <div className={`
-                        w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold glass-panel
-                        ${samples[padIndex]?.buffer 
-                          ? 'bg-gradient-active text-primary-foreground glass-glow' 
-                          : 'text-muted-foreground'
-                        }
-                      `}>
-                        {padIndex + 1}
-                      </div>
+                  <div className="w-8 flex items-center justify-center">
+                    <div className={`
+                      w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold glass-panel
+                      ${samples[padIndex]?.buffer 
+                        ? 'bg-gradient-active text-primary-foreground glass-glow' 
+                        : 'text-muted-foreground'
+                      }
+                    `}>
+                      {padIndex + 1}
                     </div>
+                  </div>
+
+                  {/* Mute button */}
+                  <Button
+                    size="sm"
+                    variant={trackMutes[padIndex] ? "destructive" : "outline"}
+                    onClick={() => toggleMute(padIndex)}
+                    disabled={!samples[padIndex]?.buffer}
+                    className="w-8 h-6 p-0"
+                  >
+                    <VolumeX className="h-3 w-3" />
+                  </Button>
+
+                  {/* Solo button */}
+                  <Button
+                    size="sm"
+                    variant={trackSolos[padIndex] ? "default" : "outline"}
+                    onClick={() => toggleSolo(padIndex)}
+                    disabled={!samples[padIndex]?.buffer}
+                    className="w-8 h-6 p-0 text-xs"
+                  >
+                    S
+                  </Button>
 
                   {/* Volume control */}
                   <div className="w-16 flex items-center">
