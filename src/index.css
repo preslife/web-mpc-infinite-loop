@@ -326,6 +326,7 @@
   border: 2px solid #0001;
   filter: var(--shd);
   text-shadow: 0px 0px 3px #000000, 0px 0px 2px #000000, 0px 0px 3px #39c1ff;
+  z-index: 10;
 }
 
 .volume-knob-number:after {
