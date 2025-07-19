@@ -6,6 +6,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit, RefreshCw, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { WaveformEditor } from './WaveformEditor';
+import { MixerPanel } from './MixerPanel';
 import { VolumeKnob } from './VolumeKnob';
 import * as mm from '@magenta/music';
 
@@ -62,8 +63,8 @@ const DrumMachine = () => {
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
   const [pendingSample, setPendingSample] = useState<{ sample: Sample; padIndex: number } | null>(null);
   const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
-  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor'>('sequencer');
-  const [masterVolume, setMasterVolume] = useState([80]);
+  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'mixer'>('sequencer');
+  const [masterVolume, setMasterVolume] = useState(0.8);
 
   // Neural generation state
   const [seedLength, setSeedLength] = useState(4);
@@ -965,8 +966,22 @@ const DrumMachine = () => {
           <div className="flex items-center justify-between">
             <div className="text-white font-bold text-lg tracking-wider">X BEAT STUDIO</div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">SEQUENCER</Button>
-              <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">MIXER</Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                onClick={() => setDisplayMode('sequencer')}
+              >
+                SEQUENCER
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                onClick={() => setDisplayMode('mixer')}
+              >
+                MIXER
+              </Button>
             </div>
           </div>
         </div>
@@ -990,6 +1005,18 @@ const DrumMachine = () => {
               }`}
             >
               SEQUENCER
+            </Button>
+            <Button 
+              onClick={() => setDisplayMode('mixer')}
+              variant={displayMode === 'mixer' ? 'default' : 'outline'}
+              size="sm" 
+              className={`text-xs transition-all duration-300 ${
+                displayMode === 'mixer' 
+                  ? 'bg-green-500/20 border-green-400 text-green-300 shadow-lg shadow-green-500/25' 
+                  : 'bg-gray-800 border-gray-600 text-gray-300'
+              }`}
+            >
+              MIXER
             </Button>
             <Button 
               onClick={() => {
@@ -1153,6 +1180,20 @@ const DrumMachine = () => {
                     ))}
                   </div>
                 </div>
+              </div>
+            ) : displayMode === 'mixer' ? (
+              <div className="h-full overflow-auto">
+                <MixerPanel
+                  samples={samples}
+                  volumes={trackVolumes.map(v => v / 100)}
+                  masterVolume={masterVolume}
+                  onVolumeChange={(index, volume) => {
+                    const newVolumes = [...trackVolumes];
+                    newVolumes[index] = volume * 100;
+                    setTrackVolumes(newVolumes);
+                  }}
+                  onMasterVolumeChange={setMasterVolume}
+                />
               </div>
             ) : (
               <div className="h-full">
@@ -1347,8 +1388,8 @@ const DrumMachine = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
               <div className="relative z-10">
                 <VolumeKnob
-                  value={masterVolume[0]}
-                  onChange={(value) => setMasterVolume([value])}
+                  value={masterVolume * 100}
+                  onChange={(value) => setMasterVolume(value / 100)}
                   size="lg"
                   label="MASTER VOLUME"
                 />
