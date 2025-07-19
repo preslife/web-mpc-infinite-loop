@@ -12,7 +12,7 @@ export const VolumeKnob = ({ value, onChange, size = 'md', label }: VolumeKnobPr
   const knobRef = useRef<HTMLDivElement>(null);
 
   const sizeMap = {
-    sm: { scale: 0.18 },  // Back to previous size for track controls
+    sm: { scale: 0.25 },  // Bigger for track controls
     md: { scale: 0.6 },   // Medium size 
     lg: { scale: 0.7 }    // Large but not too big for master volume
   };
