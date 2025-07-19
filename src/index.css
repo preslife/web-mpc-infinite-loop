@@ -2,39 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* MPC-inspired drum machine design system. All colors MUST be HSL. */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Dark MPC-style background */
+    --background: 220 25% 8%;
+    --foreground: 210 40% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Interface panels */
+    --card: 220 20% 12%;
+    --card-foreground: 210 40% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 25% 8%;
+    --popover-foreground: 210 40% 95%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Neon accent colors for pads and highlights */
+    --primary: 165 100% 45%;
+    --primary-foreground: 220 25% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary controls */
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 210 40% 95%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted elements */
+    --muted: 220 15% 15%;
+    --muted-foreground: 210 20% 70%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent highlights */
+    --accent: 50 100% 55%;
+    --accent-foreground: 220 25% 8%;
 
-    --destructive: 0 84.2% 60.2%;
+    /* Destructive/record */
+    --destructive: 0 85% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Borders and inputs */
+    --border: 220 15% 25%;
+    --input: 220 15% 20%;
+    --ring: 165 100% 45%;
+
+    /* Drum machine specific colors */
+    --pad-active: 165 100% 45%;
+    --pad-inactive: 220 15% 20%;
+    --step-active: 50 100% 55%;
+    --step-playing: 165 100% 45%;
+    --led-green: 120 100% 50%;
+    --led-red: 0 100% 50%;
+    --led-orange: 30 100% 50%;
+
+    /* Gradients for depth */
+    --gradient-pad: linear-gradient(135deg, hsl(var(--pad-inactive)), hsl(220 15% 25%));
+    --gradient-panel: linear-gradient(180deg, hsl(var(--card)), hsl(220 20% 10%));
+    --gradient-active: linear-gradient(135deg, hsl(var(--primary)), hsl(165 100% 35%));
+
+    /* Shadows for depth */
+    --shadow-pad: 0 4px 12px hsl(220 25% 5% / 0.5);
+    --shadow-panel: 0 8px 24px hsl(220 25% 5% / 0.6);
+    --shadow-glow: 0 0 20px hsl(var(--primary) / 0.4);
 
     --radius: 0.5rem;
 

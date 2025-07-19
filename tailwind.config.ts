@@ -61,7 +61,25 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Drum machine specific colors
+				'pad-active': 'hsl(var(--pad-active))',
+				'pad-inactive': 'hsl(var(--pad-inactive))',
+				'step-active': 'hsl(var(--step-active))',
+				'step-playing': 'hsl(var(--step-playing))',
+				'led-green': 'hsl(var(--led-green))',
+				'led-red': 'hsl(var(--led-red))',
+				'led-orange': 'hsl(var(--led-orange))'
+			},
+			backgroundImage: {
+				'gradient-pad': 'var(--gradient-pad)',
+				'gradient-panel': 'var(--gradient-panel)',
+				'gradient-active': 'var(--gradient-active)'
+			},
+			boxShadow: {
+				'pad': 'var(--shadow-pad)',
+				'panel': 'var(--shadow-panel)',
+				'glow': 'var(--shadow-glow)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
