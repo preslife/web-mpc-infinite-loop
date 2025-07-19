@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit, RefreshCw, Sparkles } from 'lucide-react';
+import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit, RefreshCw, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { WaveformEditor } from './WaveformEditor';
 import { VolumeKnob } from './VolumeKnob';
@@ -78,6 +78,7 @@ const DrumMachine = () => {
     44: 8, 45: 9, 46: 10, 47: 11, 48: 12, 49: 13, 50: 14, 51: 15
   });
   const [midiLearning, setMidiLearning] = useState<number | null>(null);
+  const [showMidiPanel, setShowMidiPanel] = useState(false);
 
   // Audio effects state
   const [trackEffects, setTrackEffects] = useState<Array<{
@@ -1125,10 +1126,10 @@ const DrumMachine = () => {
           </div>
         </div>
 
-        {/* Bottom Row - Effects & MIDI */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Bottom Row - Effects Panel */}
+        <div className="flex gap-4">
           {/* Effects Panel */}
-          <div className="bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden">
+          <div className="flex-1 bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-red-500/10 rounded-lg pointer-events-none"></div>
             <div className="relative z-10">
               <div className="text-xs text-gray-400 mb-2">AUDIO EFFECTS</div>
@@ -1466,80 +1467,17 @@ const DrumMachine = () => {
             </div>
           </div>
 
-          {/* MIDI Mapping Panel */}
-          <div className="bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
-            <div className="relative z-10">
-              <div className="text-xs text-gray-400 mb-2">MIDI MAPPING</div>
-              
-              {/* MIDI Status */}
-              <div className="mb-3 text-xs">
-                <div className={`flex items-center gap-2 ${midiEnabled ? 'text-green-400' : 'text-red-400'}`}>
-                  <div className={`w-2 h-2 rounded-full ${midiEnabled ? 'bg-green-400' : 'bg-red-400'}`}></div>
-                  {midiEnabled ? `${midiDevices.length} device(s) connected` : 'MIDI not available'}
-                </div>
-              </div>
-
-              {midiEnabled && (
-                <div className="space-y-2">
-                  {/* MIDI Learn */}
-                  <div className="flex flex-col gap-2">
-                    <span className="text-xs text-gray-300">MIDI Learn Mode</span>
-                    <div className="grid grid-cols-4 gap-1">
-                      {Array.from({length: 16}, (_, i) => (
-                        <Button
-                          key={i}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setMidiLearning(midiLearning === i ? null : i)}
-                          className={`h-6 text-xs ${
-                            midiLearning === i 
-                              ? 'bg-green-600 border-green-500 text-white' 
-                              : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
-                          }`}
-                        >
-                          {midiLearning === i ? 'LEARN' : `P${i + 1}`}
-                        </Button>
-                      ))}
-                    </div>
-                    {midiLearning !== null && (
-                      <div className="text-xs text-yellow-400 animate-pulse">
-                        Hit a MIDI note to map to Pad {midiLearning + 1}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Current Mapping Display */}
-                  <div className="space-y-1">
-                    <span className="text-xs text-gray-300">Current Mapping</span>
-                    <div className="max-h-32 overflow-y-auto text-xs space-y-1">
-                      {Object.entries(midiMapping).map(([note, pad]) => (
-                        <div key={note} className="flex justify-between items-center text-gray-400">
-                          <span>Note {note}</span>
-                          <span>→ Pad {pad + 1}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Reset Mapping */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setMidiMapping({
-                        36: 0, 37: 1, 38: 2, 39: 3, 40: 4, 41: 5, 42: 6, 43: 7,
-                        44: 8, 45: 9, 46: 10, 47: 11, 48: 12, 49: 13, 50: 14, 51: 15
-                      });
-                      toast.success('MIDI mapping reset to default');
-                    }}
-                    className="w-full h-6 text-xs bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
-                  >
-                    Reset to Default
-                  </Button>
-                </div>
-              )}
-            </div>
+          {/* MIDI Control Button */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMidiPanel(true)}
+              className="bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30 transition-all duration-200"
+            >
+              <span className="text-xs font-medium">MIDI MAP</span>
+            </Button>
+            <div className={`w-2 h-2 rounded-full ${midiEnabled ? 'bg-green-400' : 'bg-red-400'}`}></div>
           </div>
         </div>
 
@@ -1662,6 +1600,137 @@ const DrumMachine = () => {
             </div>
         </div>
       </div>
+
+      {/* MIDI Mapping Overlay Panel */}
+      {showMidiPanel && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gray-900/90 backdrop-blur-md border border-green-500/30 shadow-2xl shadow-green-500/20 rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto relative">
+            {/* Glassmorphism effects */}
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
+            
+            {/* Panel content */}
+            <div className="relative z-10">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">MIDI Mapping</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowMidiPanel(false);
+                    setMidiLearning(null);
+                  }}
+                  className="h-8 w-8 p-0 bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* MIDI Status */}
+              <div className="mb-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                <div className={`flex items-center gap-2 text-sm ${midiEnabled ? 'text-green-400' : 'text-red-400'}`}>
+                  <div className={`w-3 h-3 rounded-full ${midiEnabled ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                  {midiEnabled ? `${midiDevices.length} device(s) connected` : 'MIDI not available'}
+                </div>
+                {midiEnabled && midiDevices.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {midiDevices.map((device, index) => (
+                      <div key={index} className="text-xs text-gray-400 truncate">
+                        • {device.name || `Device ${index + 1}`}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {midiEnabled && (
+                <div className="space-y-4">
+                  {/* MIDI Learn */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-gray-300">MIDI Learn Mode</h3>
+                    <p className="text-xs text-gray-400">Click a pad button below, then hit a MIDI note to map it</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {Array.from({length: 16}, (_, i) => (
+                        <Button
+                          key={i}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setMidiLearning(midiLearning === i ? null : i)}
+                          className={`h-8 text-xs transition-all duration-200 ${
+                            midiLearning === i 
+                              ? 'bg-green-600 border-green-500 text-white shadow-lg shadow-green-500/30' 
+                              : 'bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:border-green-500/50'
+                          }`}
+                        >
+                          {midiLearning === i ? 'LEARN' : `P${i + 1}`}
+                        </Button>
+                      ))}
+                    </div>
+                    {midiLearning !== null && (
+                      <div className="text-xs text-yellow-400 animate-pulse p-2 bg-yellow-900/20 rounded border border-yellow-500/30">
+                        🎹 Hit a MIDI note to map to Pad {midiLearning + 1}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Current Mapping Display */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-gray-300">Current Mapping</h3>
+                    <div className="bg-gray-800/50 rounded-lg border border-gray-700/50 p-3 max-h-40 overflow-y-auto">
+                      <div className="space-y-2">
+                        {Object.entries(midiMapping).map(([note, pad]) => (
+                          <div key={note} className="flex justify-between items-center text-xs">
+                            <span className="text-gray-400">Note {note}</span>
+                            <span className="text-gray-300">→ Pad {pad + 1}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setMidiMapping({
+                          36: 0, 37: 1, 38: 2, 39: 3, 40: 4, 41: 5, 42: 6, 43: 7,
+                          44: 8, 45: 9, 46: 10, 47: 11, 48: 12, 49: 13, 50: 14, 51: 15
+                        });
+                        toast.success('MIDI mapping reset to default');
+                      }}
+                      className="flex-1 bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50"
+                    >
+                      Reset to Default
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowMidiPanel(false)}
+                      className="bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30"
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {!midiEnabled && (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 text-sm">
+                    MIDI is not available in this browser or device.
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2">
+                    Try using Chrome, Edge, or Firefox with a MIDI controller connected.
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
