@@ -143,6 +143,12 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
   };
 
   const playPreview = async () => {
+    console.log('playPreview called', { 
+      audioContext: !!audioContextRef.current, 
+      buffer: !!sample.buffer,
+      audioContextState: audioContextRef.current?.state 
+    });
+    
     if (!audioContextRef.current || !sample.buffer) {
       console.log('Missing audio context or buffer:', { 
         audioContext: !!audioContextRef.current, 
@@ -154,56 +160,74 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
     // Resume audio context if suspended (required by browsers)
     if (audioContextRef.current.state === 'suspended') {
       try {
+        console.log('Resuming audio context...');
         await audioContextRef.current.resume();
+        console.log('Audio context resumed, state:', audioContextRef.current.state);
       } catch (error) {
         console.error('Failed to resume audio context:', error);
-        toast.error('Failed to start audio playback');
         return;
       }
     }
 
     // Stop any currently playing source first (always stop for previews)
     if (currentSource) {
+      console.log('Stopping current source');
       currentSource.stop();
       setCurrentSource(null);
     }
 
     if (isPlaying) {
+      console.log('Already playing, stopping...');
       setIsPlaying(false);
       return;
     }
 
     try {
+      console.log('Creating audio source...');
       const source = audioContextRef.current.createBufferSource();
       source.buffer = sample.buffer;
 
       // Apply pitch adjustment
-      source.playbackRate.value = Math.pow(2, sample.pitch / 12);
+      const pitchRate = Math.pow(2, sample.pitch / 12);
+      source.playbackRate.value = pitchRate;
+      console.log('Applied pitch rate:', pitchRate);
 
       // Create gain node for volume control
       const gainNode = audioContextRef.current.createGain();
       gainNode.gain.value = sample.volume;
+      console.log('Applied volume:', sample.volume);
 
       const duration = sample.buffer.duration;
       const startTime = sample.startTime * duration;
       const endTime = sample.endTime * duration;
       const playDuration = endTime - startTime;
 
+      console.log('Play parameters:', { 
+        duration, 
+        startTime, 
+        endTime, 
+        playDuration,
+        sampleStartTime: sample.startTime,
+        sampleEndTime: sample.endTime
+      });
+
       // Connect: source -> gain -> destination
       source.connect(gainNode);
       gainNode.connect(audioContextRef.current.destination);
 
       source.onended = () => {
+        console.log('Audio playback ended');
         setIsPlaying(false);
         setCurrentSource(null);
       };
 
+      console.log('Starting audio playback...');
       source.start(0, startTime, playDuration);
       setCurrentSource(source);
       setIsPlaying(true);
+      console.log('Audio playback started');
     } catch (error) {
       console.error('Failed to play preview:', error);
-      toast.error('Failed to play preview');
       setIsPlaying(false);
     }
   };
