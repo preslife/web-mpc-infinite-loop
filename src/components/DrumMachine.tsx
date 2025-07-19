@@ -858,7 +858,7 @@ const DrumMachine = () => {
         </div>
 
         {/* Main Display Area */}
-        <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-96 relative overflow-hidden">
+        <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-[32rem] relative overflow-hidden">
           {/* Neon glass effect overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
