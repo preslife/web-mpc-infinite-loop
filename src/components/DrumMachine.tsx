@@ -24,6 +24,7 @@ const DrumMachine = () => {
   const [patterns, setPatterns] = useState<PatternStep[][]>(
     Array(16).fill(null).map(() => Array(16).fill({ active: false, velocity: 80 }))
   );
+  const [trackVolumes, setTrackVolumes] = useState<number[]>(Array(16).fill(80));
   const [selectedPad, setSelectedPad] = useState<number | null>(null);
   const [recordMode, setRecordMode] = useState(false);
 
@@ -71,13 +72,15 @@ const DrumMachine = () => {
     const gainNode = audioContextRef.current.createGain();
     
     source.buffer = samples[padIndex].buffer;
-    gainNode.gain.value = velocity / 127;
+    // Combine pattern velocity with track volume
+    const finalVolume = (velocity / 127) * (trackVolumes[padIndex] / 100);
+    gainNode.gain.value = finalVolume;
     
     source.connect(gainNode);
     gainNode.connect(audioContextRef.current.destination);
     
     source.start();
-  }, [samples]);
+  }, [samples, trackVolumes]);
 
   const startRecording = async (padIndex: number) => {
     try {
@@ -149,7 +152,7 @@ const DrumMachine = () => {
     if (recordMode) {
       startRecording(padIndex);
     } else if (samples[padIndex]?.buffer) {
-      playPad(padIndex);
+      playPad(padIndex, trackVolumes[padIndex]);
     } else {
       // Open file picker for empty pads
       setSelectedPad(padIndex);
@@ -167,6 +170,12 @@ const DrumMachine = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleTrackVolumeChange = (padIndex: number, volume: number[]) => {
+    const newVolumes = [...trackVolumes];
+    newVolumes[padIndex] = volume[0];
+    setTrackVolumes(newVolumes);
   };
 
   const toggleStep = (padIndex: number, stepIndex: number) => {
@@ -297,7 +306,7 @@ const DrumMachine = () => {
             />
           </div>
 
-          {/* Step Sequencer */}
+          {/* Step Sequencer with Volume Controls */}
           <div className="bg-gradient-panel rounded-lg p-6 shadow-panel">
             <h2 className="text-xl font-semibold mb-4">16-Step Sequencer</h2>
             <div className="space-y-2">
@@ -314,21 +323,42 @@ const DrumMachine = () => {
                 ))}
               </div>
 
-              {/* Pattern grid - Show all 16 pad tracks */}
-              <div className="space-y-1 max-h-64 overflow-y-auto">
+              {/* Pattern grid with volume controls */}
+              <div className="space-y-1 max-h-80 overflow-y-auto">
                 {Array.from({ length: 16 }, (_, padIndex) => (
                   <div key={padIndex} className="flex items-center gap-2">
-                    <div className="w-12 text-xs font-medium flex items-center justify-center">
+                    {/* Pad indicator */}
+                    <div className="w-8 flex items-center justify-center">
                       <div className={`
-                        w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold
+                        w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold
                         ${samples[padIndex]?.buffer 
                           ? 'bg-gradient-active text-primary-foreground' 
                           : 'bg-muted text-muted-foreground'
                         }
                       `}>
-                        {samples[padIndex]?.buffer ? (padIndex + 1) : (padIndex + 1)}
+                        {padIndex + 1}
                       </div>
                     </div>
+
+                    {/* Volume control */}
+                    <div className="w-16 flex items-center">
+                      <Slider
+                        value={[trackVolumes[padIndex]]}
+                        onValueChange={(value) => handleTrackVolumeChange(padIndex, value)}
+                        min={0}
+                        max={100}
+                        step={1}
+                        className="w-full"
+                        disabled={!samples[padIndex]?.buffer}
+                      />
+                    </div>
+
+                    {/* Volume display */}
+                    <div className="w-8 text-xs text-center">
+                      {samples[padIndex]?.buffer ? trackVolumes[padIndex] : '--'}
+                    </div>
+
+                    {/* Step buttons */}
                     <div className="grid grid-cols-16 gap-1 flex-1">
                       {Array.from({ length: 16 }, (_, stepIndex) => (
                         <button
