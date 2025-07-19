@@ -1088,6 +1088,35 @@ const DrumMachine = () => {
                 </div>
               </div>
 
+              {/* BPM and Steps Controls */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 w-8">BPM</span>
+                  <Slider
+                    value={bpm}
+                    onValueChange={setBpm}
+                    min={60}
+                    max={200}
+                    step={1}
+                    className="w-20"
+                  />
+                  <span className="text-xs text-gray-300 w-8">{bpm[0]}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 w-12">Steps</span>
+                  <Select value={sequencerLength.toString()} onValueChange={(value) => setSequencerLength(parseInt(value))}>
+                    <SelectTrigger className="w-16 h-6 text-xs bg-gray-800/50 border-gray-600">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[8, 16, 32, 64].map(steps => (
+                        <SelectItem key={steps} value={steps.toString()}>{steps}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               {/* Pattern Target Selection */}
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-400">Target:</span>
@@ -1731,18 +1760,6 @@ const DrumMachine = () => {
                 <div className="text-xs text-gray-400 mb-2">GLOBAL</div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 w-12">BPM</span>
-                    <Slider
-                      value={bpm}
-                      onValueChange={setBpm}
-                      min={60}
-                      max={200}
-                      step={1}
-                      className="flex-1"
-                    />
-                    <span className="text-xs text-gray-400 w-8">{bpm[0]}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400 w-12">Swing</span>
                     <Slider
                       value={swing}
@@ -1753,19 +1770,6 @@ const DrumMachine = () => {
                       className="flex-1"
                     />
                     <span className="text-xs text-gray-400 w-8">{swing[0]}%</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 w-12">Steps</span>
-                    <Select value={sequencerLength.toString()} onValueChange={(value) => setSequencerLength(parseInt(value))}>
-                      <SelectTrigger className="flex-1 h-6 text-xs bg-gray-800 border-gray-600">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[8, 16, 32, 64].map(steps => (
-                          <SelectItem key={steps} value={steps.toString()}>{steps}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
               </div>
