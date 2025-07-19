@@ -77,7 +77,7 @@ export const VolumeKnob = ({ value, onChange, size = 'md', label }: VolumeKnobPr
   const currentScale = sizeMap[size].scale;
 
   return (
-    <div className="relative flex flex-col items-center gap-2">
+    <div className="relative flex flex-col items-center">
       {label && <div className="text-xs text-gray-400">{label}</div>}
       
       <div 
