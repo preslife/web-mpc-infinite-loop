@@ -1087,6 +1087,42 @@ const DrumMachine = () => {
             </div>
             </div>
           </div>
+
+          {/* Right Drum Pads */}
+          <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
+            
+            <div className="grid grid-cols-4 gap-2 relative z-10">
+              {Array.from({length: 16}, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedPad(i)}
+                  onMouseDown={() => handlePadPress(i)}
+                  onMouseUp={() => handlePadRelease(i)}
+                  onMouseLeave={() => handlePadRelease(i)}
+                  onTouchStart={() => handlePadPress(i)}
+                  onTouchEnd={() => handlePadRelease(i)}
+                  className={`
+                    h-16 w-16 rounded-lg text-xs font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
+                    ${samples[i]?.buffer 
+                      ? getPadColor(i) + '/80 border-cyan-400/50 text-white shadow-lg shadow-cyan-500/30' 
+                      : 'bg-gray-700/40 border-purple-400/30 text-gray-300 hover:bg-gray-600/50 hover:border-purple-400/50'
+                    }
+                    ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-red-500 shadow-lg shadow-red-500/50' : ''}
+                    ${selectedPad === i ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/70 border-cyan-400' : ''}
+                  `}
+                >
+                  {samples[i]?.buffer 
+                    ? (samples[i].name.split(' ')[1] || (i + 1).toString())
+                    : isRecording && selectedPad === i 
+                      ? 'REC' 
+                      : i + 1
+                  }
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Bottom Row - Effects & MIDI */}
@@ -1507,41 +1543,6 @@ const DrumMachine = () => {
           </div>
         </div>
 
-          {/* Right Drum Pads */}
-          <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
-            
-            <div className="grid grid-cols-4 gap-2 relative z-10">
-              {Array.from({length: 16}, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedPad(i)}
-                  onMouseDown={() => handlePadPress(i)}
-                  onMouseUp={() => handlePadRelease(i)}
-                  onMouseLeave={() => handlePadRelease(i)}
-                  onTouchStart={() => handlePadPress(i)}
-                  onTouchEnd={() => handlePadRelease(i)}
-                  className={`
-                    h-16 w-16 rounded-lg text-xs font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
-                    ${samples[i]?.buffer 
-                      ? getPadColor(i) + '/80 border-cyan-400/50 text-white shadow-lg shadow-cyan-500/30' 
-                      : 'bg-gray-700/40 border-purple-400/30 text-gray-300 hover:bg-gray-600/50 hover:border-purple-400/50'
-                    }
-                    ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-red-500 shadow-lg shadow-red-500/50' : ''}
-                    ${selectedPad === i ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/70 border-cyan-400' : ''}
-                  `}
-                >
-                  {samples[i]?.buffer 
-                    ? (samples[i].name.split(' ')[1] || (i + 1).toString())
-                    : isRecording && selectedPad === i 
-                      ? 'REC' 
-                      : i + 1
-                  }
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Additional Controls */}
