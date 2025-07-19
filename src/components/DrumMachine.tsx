@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit, RefreshCw, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { WaveformEditor } from './WaveformEditor';
+import { VolumeKnob } from './VolumeKnob';
 import * as mm from '@magenta/music';
 
 interface Sample {
@@ -602,21 +603,13 @@ const DrumMachine = () => {
           {/* Left Control Panel */}
           <div className="space-y-2">
             {/* Volume & Main Controls */}
-            <div className="bg-gray-900 p-3 rounded border border-gray-700">
-              <div className="text-xs text-gray-400 mb-2">MASTER VOLUME</div>
-              <div className="relative">
-                <div className="w-16 h-16 bg-gray-700 rounded-full border-2 border-gray-600 mx-auto flex items-center justify-center cursor-pointer">
-                  <div className="text-xs text-gray-300">{masterVolume[0]}</div>
-                </div>
-                <Slider
-                  value={masterVolume}
-                  onValueChange={setMasterVolume}
-                  max={100}
-                  step={1}
-                  className="absolute inset-0 opacity-0"
-                  orientation="vertical"
-                />
-              </div>
+            <div className="bg-gray-900 p-3 rounded border border-gray-700 flex justify-center">
+              <VolumeKnob
+                value={masterVolume[0]}
+                onChange={(value) => setMasterVolume([value])}
+                size="lg"
+                label="MASTER VOLUME"
+              />
             </div>
 
             <div className="bg-gray-900 p-2 rounded border border-gray-700">
@@ -748,52 +741,21 @@ const DrumMachine = () => {
               <div className="text-xs text-gray-400 mb-4">TRACK CONTROLS</div>
               
               {/* Track Volume Controls */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-xs text-gray-400 mb-2">VOLUMES</div>
-                  <div className="space-y-2">
-                    {Array.from({length: 8}, (_, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400 w-6">{i + 1}</span>
-                        <Slider
-                          value={[trackVolumes[i]]}
-                          onValueChange={(value) => {
-                            const newVolumes = [...trackVolumes];
-                            newVolumes[i] = value[0];
-                            setTrackVolumes(newVolumes);
-                          }}
-                          max={100}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <span className="text-xs text-gray-400 w-8">{trackVolumes[i]}</span>
-                      </div>
-                    ))}
+              <div className="grid grid-cols-4 gap-2">
+                {Array.from({length: 16}, (_, i) => (
+                  <div key={i} className="flex justify-center">
+                    <VolumeKnob
+                      value={trackVolumes[i]}
+                      onChange={(value) => {
+                        const newVolumes = [...trackVolumes];
+                        newVolumes[i] = value;
+                        setTrackVolumes(newVolumes);
+                      }}
+                      size="sm"
+                      label={`T${i + 1}`}
+                    />
                   </div>
-                </div>
-                
-                <div>
-                  <div className="text-xs text-gray-400 mb-2">VOLUMES</div>
-                  <div className="space-y-2">
-                    {Array.from({length: 8}, (_, i) => (
-                      <div key={i + 8} className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400 w-6">{i + 9}</span>
-                        <Slider
-                          value={[trackVolumes[i + 8]]}
-                          onValueChange={(value) => {
-                            const newVolumes = [...trackVolumes];
-                            newVolumes[i + 8] = value[0];
-                            setTrackVolumes(newVolumes);
-                          }}
-                          max={100}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <span className="text-xs text-gray-400 w-8">{trackVolumes[i + 8]}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                ))}
               </div>
 
               {/* Mute/Solo Buttons */}
