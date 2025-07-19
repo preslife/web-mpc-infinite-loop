@@ -4,6 +4,7 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit, RefreshCw, Sparkles, X } from 'lucide-react';
+import mpcXLogo from '../assets/mpc-x-logo.png';
 import { toast } from 'sonner';
 import { WaveformEditor } from './WaveformEditor';
 import { VolumeKnob } from './VolumeKnob';
@@ -962,15 +963,12 @@ const DrumMachine = () => {
       <div className="max-w-7xl mx-auto">
         {/* Top Control Bar */}
         <div className="bg-gray-900 p-2 mb-2 rounded border border-gray-700">
-          <div className="grid grid-cols-8 gap-2">
-            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">CHANNEL</Button>
-            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">PLUG-IN</Button>
-            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">ARRANGER</Button>
-            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">MIXER</Button>
-            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">BROWSER</Button>
-            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">SAMPLING</Button>
-            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">AUTO</Button>
-            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">MACRO</Button>
+          <div className="flex items-center justify-between">
+            <img src={mpcXLogo} alt="MPC-X" className="h-8 brightness-75" />
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">SEQUENCER</Button>
+              <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">MIXER</Button>
+            </div>
           </div>
         </div>
 
