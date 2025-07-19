@@ -6,6 +6,7 @@ import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, Rota
 import { toast } from 'sonner';
 import { WaveformEditor } from './WaveformEditor';
 import * as mm from '@magenta/music';
+
 interface Sample {
   buffer: AudioBuffer | null;
   name: string;
@@ -13,16 +14,19 @@ interface Sample {
   endTime: number;
   gateMode: boolean;
 }
+
 interface PatternStep {
   active: boolean;
   velocity: number;
 }
+
 interface Pattern {
   name: string;
   steps: PatternStep[][];
   bpm: number;
   swing: number;
 }
+
 const DrumMachine = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -87,6 +91,99 @@ const DrumMachine = () => {
     };
   }, []);
 
+  // Load saved patterns from localStorage on component mount
+  useEffect(() => {
+    const storedPatterns = localStorage.getItem('savedPatterns');
+    if (storedPatterns) {
+      setSavedPatterns(JSON.parse(storedPatterns));
+    }
+  }, []);
+
+  // Save patterns to localStorage whenever savedPatterns changes
+  useEffect(() => {
+    localStorage.setItem('savedPatterns', JSON.stringify(savedPatterns));
+  }, [savedPatterns]);
+
+  // Function to generate a drum sequence using Magenta's MusicRNN
+  const generateSequence = async () => {
+    if (!rnnRef.current || !neuralEnabled) {
+      toast.error('Neural drum engine not initialized.');
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      // Create a seed sequence (first 4 steps of the current pattern)
+      const seedSequence = {
+        notes: patterns.map(pad => {
+          const activeStepIndex = pad.findIndex(step => step.active);
+          return activeStepIndex !== -1 ? { pitch: pad.indexOf(pad[activeStepIndex]) + 36, quantizedStartStep: pad.indexOf(pad[activeStepIndex]) } : null;
+        }).filter(note => note !== null).slice(0, seedLength),
+        quantizationInfo: { stepsPerQuarter: 4 },
+        totalQuantizedSteps: seedLength
+      };
+
+      // Generate continuation
+      const continuation = await rnnRef.current.continueSequence(seedSequence, sequencerLength - seedLength, temperature[0]);
+
+      // Update patterns with the generated sequence
+      const newPatterns = [...patterns];
+      continuation.notes.forEach(note => {
+        const stepIndex = note.quantizedStartStep;
+        const padIndex = note.pitch - 36; // Assuming MIDI note 36 corresponds to the first pad
+        if (stepIndex >= 0 && stepIndex < sequencerLength && padIndex >= 0 && padIndex < 16) {
+          newPatterns[padIndex] = [...newPatterns[padIndex]]; // Create a new copy of the pad's steps
+          newPatterns[padIndex][stepIndex] = { active: true, velocity: 80 };
+        }
+      });
+      setPatterns(newPatterns);
+      toast.success('Generated new sequence!');
+    } catch (error) {
+      console.error('Error generating sequence:', error);
+      toast.error('Failed to generate sequence.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const clearPattern = () => {
+    const newPatterns = patterns.map(pattern => pattern.map(step => ({ ...step, active: false })));
+    setPatterns(newPatterns);
+    toast.info('Cleared current pattern');
+  };
+
+  const randomizePattern = () => {
+    const newPatterns = patterns.map(pattern => pattern.map(() => ({
+      active: Math.random() > 0.7,
+      velocity: Math.floor(Math.random() * 127)
+    })));
+    setPatterns(newPatterns);
+    toast.info('Randomized current pattern');
+  };
+
+  const savePattern = () => {
+    const newPattern = {
+      name: currentPatternName,
+      steps: patterns,
+      bpm: bpm[0],
+      swing: swing[0]
+    };
+    setSavedPatterns([...savedPatterns, newPattern]);
+    toast.success(`Saved pattern as "${currentPatternName}"`);
+  };
+
+  const loadPattern = (pattern: Pattern) => {
+    setPatterns(pattern.steps);
+    setBpm([pattern.bpm]);
+    setSwing([pattern.swing]);
+    setCurrentPatternName(pattern.name);
+    toast.success(`Loaded pattern "${pattern.name}"`);
+  };
+
+  const deletePattern = (patternToDelete: Pattern) => {
+    setSavedPatterns(savedPatterns.filter(pattern => pattern !== patternToDelete));
+    toast.success(`Deleted pattern "${patternToDelete.name}"`);
+  };
+
   // Sequencer loop with swing
   useEffect(() => {
     if (!isPlaying) return;
@@ -115,6 +212,7 @@ const DrumMachine = () => {
     };
     scheduleNextStep();
   }, [isPlaying, bpm, patterns, samples, sequencerLength, swing, trackMutes, trackSolos]);
+
   const playPad = useCallback((padIndex: number, velocity: number = 80, gateMode: boolean = false) => {
     if (!audioContextRef.current || !samples[padIndex]?.buffer) return;
 
@@ -164,6 +262,7 @@ const DrumMachine = () => {
     }
     source.start(0, startTime, gateMode ? undefined : sliceDuration);
   }, [samples, trackVolumes, trackMutes, trackSolos, playingSources]);
+
   const startRecording = async (padIndex: number) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -202,6 +301,7 @@ const DrumMachine = () => {
       toast.error('Microphone access denied');
     }
   };
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
@@ -209,6 +309,7 @@ const DrumMachine = () => {
       setSelectedPad(null);
     }
   };
+
   const loadSample = async (file: File, padIndex: number) => {
     try {
       const arrayBuffer = await file.arrayBuffer();
@@ -229,6 +330,7 @@ const DrumMachine = () => {
       toast.error('Failed to load sample');
     }
   };
+
   const handlePadPress = (padIndex: number) => {
     if (isRecording && selectedPad === padIndex) {
       stopRecording();
@@ -258,6 +360,7 @@ const DrumMachine = () => {
       fileInputRef.current?.click();
     }
   };
+
   const handlePadRelease = (padIndex: number) => {
     if (samples[padIndex]?.gateMode) {
       const currentSource = playingSources.get(padIndex);
@@ -271,6 +374,7 @@ const DrumMachine = () => {
       }
     }
   };
+
   const handleFileLoad = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && selectedPad !== null) {
@@ -282,140 +386,7 @@ const DrumMachine = () => {
       fileInputRef.current.value = '';
     }
   };
-  const handleTrackVolumeChange = (padIndex: number, volume: number[]) => {
-    const newVolumes = [...trackVolumes];
-    newVolumes[padIndex] = volume[0];
-    setTrackVolumes(newVolumes);
-  };
-  const toggleMute = (padIndex: number) => {
-    const newMutes = [...trackMutes];
-    newMutes[padIndex] = !newMutes[padIndex];
-    setTrackMutes(newMutes);
-  };
-  const toggleSolo = (padIndex: number) => {
-    const newSolos = [...trackSolos];
-    newSolos[padIndex] = !newSolos[padIndex];
-    setTrackSolos(newSolos);
-  };
-  const clearPattern = () => {
-    setPatterns(Array(16).fill(null).map(() => Array(64).fill({
-      active: false,
-      velocity: 80
-    })));
-    toast.success('Pattern cleared');
-  };
-  const savePattern = () => {
-    const pattern: Pattern = {
-      name: currentPatternName,
-      steps: patterns,
-      bpm: bpm[0],
-      swing: swing[0]
-    };
-    setSavedPatterns(prev => [...prev, pattern]);
-    toast.success(`Pattern "${currentPatternName}" saved`);
-  };
-  const loadPattern = (pattern: Pattern) => {
-    setPatterns(pattern.steps);
-    setBpm([pattern.bpm]);
-    setSwing([pattern.swing]);
-    setCurrentPatternName(pattern.name);
-    toast.success(`Pattern "${pattern.name}" loaded`);
-  };
-  const exportPattern = () => {
-    const pattern: Pattern = {
-      name: currentPatternName,
-      steps: patterns,
-      bpm: bpm[0],
-      swing: swing[0]
-    };
-    const dataStr = JSON.stringify(pattern, null, 2);
-    const dataBlob = new Blob([dataStr], {
-      type: 'application/json'
-    });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${currentPatternName}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast.success('Pattern exported');
-  };
 
-  // Neural pattern generation
-  const generatePattern = async () => {
-    if (!rnnRef.current || !neuralEnabled) {
-      toast.error('Neural generation not available');
-      return;
-    }
-    setIsGenerating(true);
-    try {
-      // Convert our pattern format to Magenta's format
-      const seedPattern = patterns.slice(0, 9).map((track, trackIdx) => track.slice(0, seedLength).map((step, stepIdx) => step.active ? trackIdx : null).filter(note => note !== null));
-
-      // Flatten and convert to note sequence
-      const flatSeed: number[][] = Array(seedLength).fill(null).map(() => []);
-      seedPattern.forEach((track, trackIdx) => {
-        track.forEach(stepIdx => {
-          if (typeof stepIdx === 'number') {
-            flatSeed[stepIdx % seedLength].push(trackIdx);
-          }
-        });
-      });
-      const noteSequence = mm.sequences.quantizeNoteSequence({
-        ticksPerQuarter: 220,
-        totalTime: seedLength / 2,
-        timeSignatures: [{
-          time: 0,
-          numerator: 4,
-          denominator: 4
-        }],
-        tempos: [{
-          time: 0,
-          qpm: bpm[0]
-        }],
-        notes: flatSeed.flatMap((step, index) => step.map(drumIdx => ({
-          pitch: [36, 38, 42, 46, 41, 43, 45, 49, 51][drumIdx] || 36,
-          startTime: index * 0.5,
-          endTime: (index + 1) * 0.5
-        })))
-      }, 1);
-
-      // Generate continuation
-      const continuation = await rnnRef.current.continueSequence(noteSequence, sequencerLength - seedLength, temperature[0]);
-
-      // Convert back to our pattern format
-      const newPatterns = [...patterns];
-      const reverseMidiMapping = new Map([[36, 0], [38, 1], [42, 2], [46, 3], [41, 4], [43, 5], [45, 6], [49, 7], [51, 8]]);
-
-      // Clear existing generated steps
-      for (let trackIdx = 0; trackIdx < 9; trackIdx++) {
-        for (let stepIdx = seedLength; stepIdx < sequencerLength; stepIdx++) {
-          newPatterns[trackIdx][stepIdx] = {
-            active: false,
-            velocity: 80
-          };
-        }
-      }
-
-      // Apply generated notes
-      continuation.notes.forEach(note => {
-        const drumIdx = reverseMidiMapping.get(note.pitch);
-        const stepIdx = Math.floor(note.quantizedStartStep || 0) + seedLength;
-        if (drumIdx !== undefined && stepIdx < sequencerLength && stepIdx >= seedLength) {
-          newPatterns[drumIdx][stepIdx] = {
-            active: true,
-            velocity: 80
-          };
-        }
-      });
-      setPatterns(newPatterns);
-      toast.success('Neural pattern generated!');
-    } catch (error) {
-      toast.error('Generation failed: ' + (error as Error).message);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
   const toggleStep = (padIndex: number, stepIndex: number) => {
     const newPatterns = [...patterns];
     newPatterns[padIndex] = [...newPatterns[padIndex]];
@@ -425,6 +396,7 @@ const DrumMachine = () => {
     };
     setPatterns(newPatterns);
   };
+
   const handlePlayStop = () => {
     if (isPlaying) {
       setIsPlaying(false);
@@ -436,251 +408,240 @@ const DrumMachine = () => {
       setIsPlaying(true);
     }
   };
-  return <div className="min-h-screen bg-background p-4">
+
+  // Helper function for pad colors based on Maschine style
+  const getPadColor = (index: number) => {
+    const colors = [
+      'bg-yellow-600', 'bg-blue-500', 'bg-cyan-500', 'bg-pink-500',
+      'bg-purple-600', 'bg-blue-400', 'bg-green-500', 'bg-pink-400',
+      'bg-yellow-500', 'bg-orange-500', 'bg-cyan-400', 'bg-blue-600',
+      'bg-red-500', 'bg-yellow-400', 'bg-blue-300', 'bg-red-400'
+    ];
+    return colors[index] || 'bg-gray-600';
+  };
+
+  return (
+    <div className="min-h-screen bg-black p-2 font-mono">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-bold mb-2 text-slate-50 text-7xl">MPCX</h1>
-          <p className="text-muted-foreground">9X Drum Machine & Sampler</p>
-        </div>
-
-        {/* Drum Pads */}
-        <div className="glass-panel glass-glow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Volume2 className="h-5 w-5" />
-            Drum Pads
-          </h2>
-          <div className="grid grid-cols-4 gap-4">
-            {Array.from({
-            length: 16
-          }, (_, i) => <div key={i} className="relative group">
-                <button onMouseDown={() => handlePadPress(i)} onMouseUp={() => handlePadRelease(i)} onMouseLeave={() => handlePadRelease(i)} onTouchStart={() => handlePadPress(i)} onTouchEnd={() => handlePadRelease(i)} className={`
-                    h-48 w-48 rounded-lg font-bold text-lg transition-all duration-150 active:scale-95 neon-border
-                    ${samples[i]?.buffer ? 'bg-gradient-active text-primary-foreground glass-glow-strong' : 'glass-panel hover:glass-glow'}
-                    ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-destructive' : ''}
-                    ${samples[i]?.gateMode ? 'ring-2 ring-accent' : ''}
-                  `}>
-                  {samples[i]?.buffer ? samples[i].name.split(' ')[1] : isRecording && selectedPad === i ? 'REC' : i + 1}
-                </button>
-                
-                {samples[i]?.buffer && <Button onClick={() => setEditingSample(i)} variant="outline" size="sm" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Edit className="h-3 w-3" />
-                  </Button>}
-              </div>)}
+        {/* Top Control Bar */}
+        <div className="bg-gray-900 p-2 mb-2 rounded border border-gray-700">
+          <div className="grid grid-cols-8 gap-2">
+            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">CHANNEL</Button>
+            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">PLUG-IN</Button>
+            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">ARRANGER</Button>
+            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">MIXER</Button>
+            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">BROWSER</Button>
+            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">SAMPLING</Button>
+            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">AUTO</Button>
+            <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">MACRO</Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-4">
-            {recordMode ? "Record mode: Tap pads to record from microphone" : "Tap empty pads to load samples, tap filled pads to play"}
-          </p>
-          <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileLoad} className="hidden" />
         </div>
 
-        {/* Transport Controls */}
-        <div className="glass-panel glass-glow p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Button onClick={handlePlayStop} variant={isPlaying ? "destructive" : "default"} size="lg" className="h-12 w-12">
-                {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-              </Button>
-              
-              <Button onClick={() => {
-              setIsPlaying(false);
-              setCurrentStep(-1);
-              // Stop all playing sources
-              playingSources.forEach(source => {
-                try {
-                  source.stop();
-                } catch (e) {
-                  // Source might already be stopped
-                }
-              });
-              setPlayingSources(new Map());
-            }} variant="outline" size="lg" className="h-12 w-12">
-                <Square className="h-6 w-6" />
-              </Button>
-
-              <Button onClick={() => setRecordMode(!recordMode)} variant={recordMode ? "destructive" : "outline"} size="lg" className="h-12 w-12">
-                <Mic className="h-6 w-6" />
-              </Button>
-
-              {isRecording && <div className="flex items-center gap-2 text-destructive animate-pulse">
-                  <Mic className="h-5 w-5" />
-                  <span className="font-medium">REC</span>
-                </div>}
-            </div>
-
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">BPM</span>
-                <div className="w-24">
-                  <Slider value={bpm} onValueChange={setBpm} min={60} max={200} step={1} className="w-full" />
-                </div>
-                <span className="text-lg font-bold min-w-[40px] text-accent">{bpm[0]}</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Swing</span>
-                <div className="w-24">
-                  <Slider value={swing} onValueChange={setSwing} min={0} max={50} step={1} className="w-full" />
-                </div>
-                <span className="text-sm min-w-[30px] text-accent">{swing[0]}%</span>
+        {/* Main Display Area */}
+        <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-48">
+          <div className="bg-gray-800 h-full rounded border border-gray-600 p-4 flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-white mb-2">MASCHINE</h1>
+              <p className="text-gray-400 text-sm">Drums • {currentPatternName}</p>
+              <div className="mt-4 text-gray-300 text-xs">
+                BPM: {bpm[0]} • Steps: {sequencerLength} • Swing: {swing[0]}%
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Sequencer Controls */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Steps:</span>
-              {[16, 32, 64].map(steps => <Button key={steps} variant={sequencerLength === steps ? "default" : "outline"} size="sm" onClick={() => setSequencerLength(steps)}>
-                  {steps}
-                </Button>)}
-            </div>
-
-            {neuralEnabled && <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Neural:</span>
-                <div className="flex items-center gap-1">
-                  <span className="text-xs">Seed:</span>
-                  <input type="number" value={seedLength} onChange={e => setSeedLength(Math.max(1, Math.min(parseInt(e.target.value) || 4, sequencerLength - 1)))} className="bg-background/50 border border-border rounded px-2 py-1 text-sm w-12" min="1" max={sequencerLength - 1} />
+        {/* Encoder Section */}
+        <div className="bg-gray-900 p-3 mb-2 rounded border border-gray-700">
+          <div className="grid grid-cols-8 gap-4">
+            {Array.from({length: 8}, (_, i) => (
+              <div key={i} className="text-center">
+                <div className="w-12 h-12 bg-gray-700 rounded-full border-2 border-gray-600 mx-auto mb-2 flex items-center justify-center">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-xs">Temp:</span>
-                  <div className="w-16">
-                    <Slider value={temperature} onValueChange={setTemperature} min={0.5} max={2} step={0.1} className="w-full" />
-                  </div>
-                  <span className="text-xs w-8">{temperature[0]}</span>
+                <div className="text-xs text-gray-400">
+                  {['VOLUME', 'NOTE', 'FIXED VEL', 'PAD MODE', 'KEYBOARD', 'CHORDS', 'STEP', 'MACRO'][i]}
                 </div>
-                <Button onClick={generatePattern} variant="secondary" size="sm" disabled={isGenerating} className="relative">
-                  {isGenerating ? <RefreshCw className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
-                  {isGenerating ? 'Generating...' : 'Generate'}
-                </Button>
-              </div>}
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Pattern:</span>
-              <input value={currentPatternName} onChange={e => setCurrentPatternName(e.target.value)} className="bg-background/50 border border-border rounded px-2 py-1 text-sm w-24" />
-              
-              <Button onClick={savePattern} variant="outline" size="sm">
-                <Save className="h-4 w-4 mr-1" />
-                Save
-              </Button>
-              
-              <Select onValueChange={value => loadPattern(savedPatterns[parseInt(value)])}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Load..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {savedPatterns.map((pattern, index) => <SelectItem key={index} value={index.toString()}>
-                      {pattern.name}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-
-              <Button onClick={clearPattern} variant="outline" size="sm">
-                <RotateCcw className="h-4 w-4 mr-1" />
-                Clear
-              </Button>
-
-              <Button onClick={exportPattern} variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-1" />
-                Export
-              </Button>
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
-
-        {/* Neural Step Sequencer */}
-        <div className="glass-panel glass-glow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              Step Sequencer 
-              {neuralEnabled && <Sparkles className="h-5 w-5 text-accent" />}
-            </h2>
-            {neuralEnabled && <div className="text-xs text-muted-foreground">
-                Seed: {seedLength} steps | Neural generation enabled
-              </div>}
-          </div>
-          
+        {/* Main Layout Container */}
+        <div className="grid grid-cols-3 gap-4">
+          {/* Left Control Panel */}
           <div className="space-y-2">
-            {/* Step indicators with seed marker */}
-            <div className="relative mb-4">
-              <div className="flex gap-1">
-                {Array.from({
-                length: sequencerLength
-              }, (_, i) => <div key={i} className={`
-                      h-3 w-3 min-w-[0.75rem] rounded-sm transition-all duration-200
-                      ${currentStep === i ? 'bg-step-playing ring-1 ring-step-playing' : i < seedLength && neuralEnabled ? 'bg-accent' : 'bg-muted'}
-                    `} />)}
-              </div>
-              {neuralEnabled && seedLength > 0 && <div className="absolute top-0 h-3 w-1 bg-primary" style={{
-              left: `calc(${seedLength / sequencerLength * 100}% - 2px)`
-            }} />}
+            {/* Volume & Main Controls */}
+            <div className="bg-gray-900 p-3 rounded border border-gray-700">
+              <div className="text-xs text-gray-400 mb-2">VOLUME</div>
+              <div className="w-16 h-16 bg-gray-700 rounded-full border-2 border-gray-600 mx-auto"></div>
             </div>
 
-            {/* Pattern grid with track controls */}
-            <div className="space-y-1 max-h-80 overflow-y-auto">
-              {Array.from({
-              length: 16
-            }, (_, padIndex) => <div key={padIndex} className="flex items-center gap-2">
-                  {/* Pad indicator */}
-                  <div className="w-8 flex items-center justify-center">
-                    <div className={`
-                      w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold glass-panel
-                      ${samples[padIndex]?.buffer ? 'bg-gradient-active text-primary-foreground glass-glow' : 'text-muted-foreground'}
-                    `}>
-                      {padIndex + 1}
+            <div className="bg-gray-900 p-2 rounded border border-gray-700">
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">SWING</Button>
+                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">TEMPO</Button>
+                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">LOCK</Button>
+                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">GRID</Button>
+              </div>
+            </div>
+
+            {/* Pattern Controls */}
+            <div className="bg-gray-900 p-2 rounded border border-gray-700">
+              <div className="space-y-2">
+                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">PATTERN</Button>
+                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">EVENTS</Button>
+                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">VARIATION</Button>
+                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">DUPLICATE</Button>
+              </div>
+            </div>
+
+            {/* Track Controls */}
+            <div className="bg-gray-900 p-2 rounded border border-gray-700">
+              <div className="space-y-2">
+                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">SELECT</Button>
+                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">SOLO</Button>
+                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">MUTE</Button>
+              </div>
+            </div>
+
+            {/* Transport Controls */}
+            <div className="bg-gray-900 p-3 rounded border border-gray-700">
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">RESTART</Button>
+                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">ERASE</Button>
+                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">TAP</Button>
+                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">FOLLOW</Button>
+              </div>
+              
+              <div className="grid grid-cols-4 gap-1">
+                <Button 
+                  onClick={handlePlayStop}
+                  variant="outline" 
+                  size="sm" 
+                  className={`text-xs ${isPlaying ? 'bg-green-700 border-green-600' : 'bg-gray-800 border-gray-600'} text-white`}
+                >
+                  {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                </Button>
+                <Button 
+                  onClick={() => setRecordMode(!recordMode)}
+                  variant="outline" 
+                  size="sm" 
+                  className={`text-xs ${recordMode ? 'bg-red-700 border-red-600' : 'bg-gray-800 border-gray-600'} text-white`}
+                >
+                  <Mic className="h-3 w-3" />
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setIsPlaying(false);
+                    setCurrentStep(-1);
+                    // Stop all playing sources
+                    playingSources.forEach(source => source.stop());
+                    setPlayingSources(new Map());
+                  }}
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-gray-800 border-gray-600 text-white text-xs"
+                >
+                  <Square className="h-3 w-3" />
+                </Button>
+                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">SHIFT</Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Center Sequencer */}
+          <div className="bg-gray-900 p-4 rounded border border-gray-700">
+            <div className="mb-4">
+              <div className="text-xs text-gray-400 mb-2">SEQUENCER - {sequencerLength} STEPS</div>
+              <div className="flex gap-1 overflow-x-auto pb-2">
+                {Array.from({length: sequencerLength}, (_, stepIndex) => (
+                  <div key={stepIndex} className="flex-shrink-0">
+                    <div className={`w-6 h-6 rounded text-xs flex items-center justify-center mb-1 ${
+                      currentStep === stepIndex ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-400'
+                    }`}>
+                      {stepIndex + 1}
+                    </div>
+                    <div className="space-y-1">
+                      {Array.from({length: 16}, (_, padIndex) => (
+                        <button
+                          key={padIndex}
+                          onClick={() => toggleStep(padIndex, stepIndex)}
+                          className={`w-6 h-2 rounded-sm ${
+                            patterns[padIndex][stepIndex]?.active 
+                              ? 'bg-blue-500' 
+                              : 'bg-gray-600 hover:bg-gray-500'
+                          }`}
+                        />
+                      ))}
                     </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-                  {/* Mute button */}
-                  <Button size="sm" variant={trackMutes[padIndex] ? "destructive" : "outline"} onClick={() => toggleMute(padIndex)} disabled={!samples[padIndex]?.buffer} className="w-8 h-6 p-0">
-                    <VolumeX className="h-3 w-3" />
-                  </Button>
-
-                  {/* Solo button */}
-                  <Button size="sm" variant={trackSolos[padIndex] ? "default" : "outline"} onClick={() => toggleSolo(padIndex)} disabled={!samples[padIndex]?.buffer} className="w-8 h-6 p-0 text-xs">
-                    S
-                  </Button>
-
-                  {/* Volume control */}
-                  <div className="w-16 flex items-center">
-                    <Slider value={[trackVolumes[padIndex]]} onValueChange={value => handleTrackVolumeChange(padIndex, value)} min={0} max={100} step={1} className="w-full" disabled={!samples[padIndex]?.buffer} />
-                  </div>
-
-                  {/* Volume display */}
-                  <div className="w-8 text-xs text-center">
-                    {samples[padIndex]?.buffer ? trackVolumes[padIndex] : '--'}
-                  </div>
-
-                  {/* Step buttons with 3D neural effect */}
-                   <div className="flex-1 overflow-x-auto">
-                     <div className="flex gap-1 min-w-fit perspective-1000">
-                      {Array.from({
-                    length: sequencerLength
-                  }, (_, stepIndex) => <button key={stepIndex} onClick={() => toggleStep(padIndex, stepIndex)} disabled={!samples[padIndex]?.buffer} className={`
-                            h-7 w-7 min-w-[1.75rem] rounded-sm transition-all duration-200 neon-border
-                            transform-style-preserve-3d hover:scale-105
-                            ${patterns[padIndex][stepIndex]?.active ? stepIndex < seedLength && neuralEnabled ? 'bg-accent text-accent-foreground shadow-lg shadow-accent/50' : 'bg-step-active glass-glow text-primary-foreground shadow-lg' : samples[padIndex]?.buffer ? 'glass-panel hover:glass-glow bg-muted/20 border border-border/50' : 'bg-muted/30 cursor-not-allowed border border-muted/30'}
-                            ${currentStep === stepIndex ? 'ring-2 ring-step-playing glass-glow-strong animate-pulse' : ''}
-                            ${!samples[padIndex]?.buffer ? 'opacity-50' : ''}
-                            ${stepIndex < seedLength && neuralEnabled ? 'border-accent/50' : ''}
-                          `} />)}
-                    </div>
-                  </div>
-                </div>)}
+          {/* Right Drum Pads */}
+          <div className="bg-gray-900 p-3 rounded border border-gray-700">
+            <div className="grid grid-cols-4 gap-2">
+              {Array.from({length: 16}, (_, i) => (
+                <button
+                  key={i}
+                  onMouseDown={() => handlePadPress(i)}
+                  onMouseUp={() => handlePadRelease(i)}
+                  onMouseLeave={() => handlePadRelease(i)}
+                  onTouchStart={() => handlePadPress(i)}
+                  onTouchEnd={() => handlePadRelease(i)}
+                  className={`
+                    h-16 w-16 rounded text-xs font-bold transition-all duration-150 active:scale-95 border
+                    ${samples[i]?.buffer 
+                      ? getPadColor(i) + ' border-gray-600 text-white' 
+                      : 'bg-gray-700 border-gray-600 text-gray-400 hover:bg-gray-600'
+                    }
+                    ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-red-500' : ''}
+                  `}
+                >
+                  {samples[i]?.buffer 
+                    ? (samples[i].name.split(' ')[1] || (i + 1).toString())
+                    : isRecording && selectedPad === i 
+                      ? 'REC' 
+                      : i + 1
+                  }
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Waveform Editor */}
-        {editingSample !== null && samples[editingSample]?.buffer && <div className="mt-6">
-            <WaveformEditor sample={samples[editingSample]} onSampleUpdate={updatedSample => {
-          const newSamples = [...samples];
-          newSamples[editingSample] = updatedSample;
-          setSamples(newSamples);
-        }} onClose={() => setEditingSample(null)} />
-          </div>}
+        {/* Additional Controls (hidden but accessible for advanced features) */}
+        <div className="mt-4 p-2 bg-gray-900 rounded border border-gray-700">
+          <div className="flex gap-2 text-xs">
+            <Slider
+              value={bpm}
+              onValueChange={setBpm}
+              min={60}
+              max={200}
+              step={1}
+              className="w-32"
+            />
+            <span className="text-gray-400">BPM: {bpm[0]}</span>
+            
+            <Slider
+              value={swing}
+              onValueChange={setSwing}
+              min={0}
+              max={100}
+              step={1}
+              className="w-32"
+            />
+            <span className="text-gray-400">Swing: {swing[0]}%</span>
+          </div>
+        </div>
+
+
+        <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileLoad} className="hidden" />
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default DrumMachine;
