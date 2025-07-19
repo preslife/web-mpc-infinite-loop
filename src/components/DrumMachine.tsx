@@ -807,7 +807,7 @@ const DrumMachine = () => {
               <div className="text-xs text-gray-400 mb-4">TRACK CONTROLS</div>
               
               {/* Track Volume Controls */}
-              <div className="grid grid-cols-4 gap-1">
+              <div className="grid grid-cols-4 gap-x-1 gap-y-0">
                 {Array.from({length: 16}, (_, i) => (
                   <div key={i} className="flex justify-center">
                     <VolumeKnob
