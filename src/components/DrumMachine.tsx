@@ -399,16 +399,30 @@ const DrumMachine = () => {
     setPatterns(newPatterns);
   };
 
-  const handlePlayStop = () => {
-    if (isPlaying) {
-      setIsPlaying(false);
-      setCurrentStep(-1);
-    } else {
-      if (audioContextRef.current?.state === 'suspended') {
-        audioContextRef.current.resume();
-      }
-      setIsPlaying(true);
+  const handlePlay = () => {
+    if (audioContextRef.current?.state === 'suspended') {
+      audioContextRef.current.resume();
     }
+    setIsPlaying(true);
+  };
+
+  const handlePause = () => {
+    setIsPlaying(false);
+    // Keep current step position when pausing
+  };
+
+  const handleStop = () => {
+    setIsPlaying(false);
+    setCurrentStep(-1);
+    // Stop all playing sources
+    playingSources.forEach(source => {
+      try {
+        source.stop();
+      } catch (e) {
+        // Source may already be stopped
+      }
+    });
+    setPlayingSources(new Map());
   };
 
   // Helper function for pad colors based on Maschine style
@@ -701,10 +715,10 @@ const DrumMachine = () => {
               
               <div className="grid grid-cols-4 gap-1">
                 <Button 
-                  onClick={handlePlayStop}
+                  onClick={isPlaying ? handlePause : handlePlay}
                   variant="outline" 
                   size="sm" 
-                  className={`text-xs ${isPlaying ? 'bg-green-700 border-green-600' : 'bg-gray-800 border-gray-600'} text-white`}
+                  className={`text-xs ${isPlaying ? 'bg-orange-700 border-orange-600' : 'bg-green-700 border-green-600'} text-white`}
                 >
                   {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                 </Button>
@@ -717,16 +731,10 @@ const DrumMachine = () => {
                   <Mic className="h-3 w-3" />
                 </Button>
                 <Button 
-                  onClick={() => {
-                    setIsPlaying(false);
-                    setCurrentStep(-1);
-                    // Stop all playing sources
-                    playingSources.forEach(source => source.stop());
-                    setPlayingSources(new Map());
-                  }}
+                  onClick={handleStop}
                   variant="outline" 
                   size="sm" 
-                  className="bg-gray-800 border-gray-600 text-white text-xs"
+                  className="bg-red-700 border-red-600 text-white text-xs"
                 >
                   <Square className="h-3 w-3" />
                 </Button>
