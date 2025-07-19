@@ -583,7 +583,9 @@ const DrumMachine = () => {
         </div>
 
         {/* Encoder Section */}
-        <div className="bg-gray-900 p-3 mb-2 rounded border border-gray-700">
+        <div className="bg-gray-900/80 backdrop-blur-md p-3 mb-2 rounded-lg border border-pink-500/30 shadow-lg shadow-pink-500/20 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-purple-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
+          <div className="relative z-10">
           <div className="grid grid-cols-8 gap-4">
             {Array.from({length: 8}, (_, i) => (
               <div key={i} className="text-center">
@@ -596,6 +598,7 @@ const DrumMachine = () => {
               </div>
             ))}
           </div>
+          </div>
         </div>
 
         {/* Main Layout Container */}
@@ -603,47 +606,55 @@ const DrumMachine = () => {
           {/* Left Control Panel */}
           <div className="space-y-2">
             {/* Volume & Main Controls */}
-            <div className="bg-gray-900 p-3 rounded border border-gray-700 flex justify-center">
-              <VolumeKnob
-                value={masterVolume[0]}
-                onChange={(value) => setMasterVolume([value])}
-                size="lg"
-                label="MASTER VOLUME"
-              />
+            <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden flex justify-center">
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
+              <div className="relative z-10">
+                <VolumeKnob
+                  value={masterVolume[0]}
+                  onChange={(value) => setMasterVolume([value])}
+                  size="lg"
+                  label="MASTER VOLUME"
+                />
+              </div>
             </div>
 
-            <div className="bg-gray-900 p-2 rounded border border-gray-700">
-              <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  onClick={() => setSwing([swing[0] === 0 ? 50 : 0])}
-                  variant="outline" 
-                  size="sm" 
-                  className={`text-xs ${swing[0] > 0 ? 'bg-blue-600 border-blue-500' : 'bg-gray-800 border-gray-600'} text-gray-300`}
-                >
-                  SWING
-                </Button>
-                <Button 
-                  onClick={() => setBpm([bpm[0] === 120 ? 140 : 120])}
-                  variant="outline" 
-                  size="sm" 
-                  className="bg-gray-800 border-gray-600 text-gray-300 text-xs"
-                >
-                  TEMPO
-                </Button>
-                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">LOCK</Button>
-                <Button 
-                  onClick={() => setSequencerLength(sequencerLength === 16 ? 32 : 16)}
-                  variant="outline" 
-                  size="sm" 
-                  className="bg-gray-800 border-gray-600 text-gray-300 text-xs"
-                >
-                  GRID
-                </Button>
+            <div className="bg-gray-900/80 backdrop-blur-md p-2 rounded-lg border border-blue-500/30 shadow-lg shadow-blue-500/20 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-cyan-500/5 to-purple-500/10 rounded-lg pointer-events-none"></div>
+              <div className="relative z-10">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    onClick={() => setSwing([swing[0] === 0 ? 50 : 0])}
+                    variant="outline" 
+                    size="sm" 
+                    className={`text-xs ${swing[0] > 0 ? 'bg-blue-600 border-blue-500' : 'bg-gray-800 border-gray-600'} text-gray-300`}
+                  >
+                    SWING
+                  </Button>
+                  <Button 
+                    onClick={() => setBpm([bpm[0] === 120 ? 140 : 120])}
+                    variant="outline" 
+                    size="sm" 
+                    className="bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                  >
+                    TEMPO
+                  </Button>
+                  <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">LOCK</Button>
+                  <Button 
+                    onClick={() => setSequencerLength(sequencerLength === 16 ? 32 : 16)}
+                    variant="outline" 
+                    size="sm" 
+                    className="bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                  >
+                    GRID
+                  </Button>
+                </div>
               </div>
             </div>
 
             {/* Pattern Controls */}
-            <div className="bg-gray-900 p-2 rounded border border-gray-700">
+            <div className="bg-gray-900/80 backdrop-blur-md p-2 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
+              <div className="relative z-10">
               <div className="space-y-2">
                 <Button 
                   onClick={savePattern}
@@ -671,10 +682,13 @@ const DrumMachine = () => {
                   CLEAR
                 </Button>
               </div>
+              </div>
             </div>
 
             {/* Track Controls */}
-            <div className="bg-gray-900 p-2 rounded border border-gray-700">
+            <div className="bg-gray-900/80 backdrop-blur-md p-2 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
+              <div className="relative z-10">
               <div className="space-y-2">
                 <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">SELECT</Button>
                 <Button 
@@ -694,10 +708,13 @@ const DrumMachine = () => {
                   UNMUTE
                 </Button>
               </div>
+              </div>
             </div>
 
             {/* Transport Controls */}
-            <div className="bg-gray-900 p-3 rounded border border-gray-700">
+            <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-orange-500/30 shadow-lg shadow-orange-500/20 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-red-500/5 to-pink-500/10 rounded-lg pointer-events-none"></div>
+              <div className="relative z-10">
               <div className="grid grid-cols-2 gap-2 mb-2">
                 <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">RESTART</Button>
                 <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">ERASE</Button>
@@ -732,11 +749,14 @@ const DrumMachine = () => {
                 </Button>
                 <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">SHIFT</Button>
               </div>
+              </div>
             </div>
           </div>
 
           {/* Center Track Controls */}
-          <div className="bg-gray-900 p-4 rounded border border-gray-700">
+          <div className="bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-purple-500/10 rounded-lg pointer-events-none"></div>
+            <div className="relative z-10">
             <div className="space-y-3">
               <div className="text-xs text-gray-400 mb-4">TRACK CONTROLS</div>
               
@@ -798,12 +818,13 @@ const DrumMachine = () => {
                 ))}
               </div>
             </div>
+            </div>
           </div>
 
           {/* Right Drum Pads */}
-          <div className="bg-gray-900 p-3 rounded border border-gray-700 relative overflow-hidden">
-            {/* Neon glow effect for pads */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-blue-500/5 to-cyan-500/5 rounded pointer-events-none"></div>
+          <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
             
             <div className="grid grid-cols-4 gap-2 relative z-10">
               {Array.from({length: 16}, (_, i) => (
@@ -816,13 +837,13 @@ const DrumMachine = () => {
                   onTouchStart={() => handlePadPress(i)}
                   onTouchEnd={() => handlePadRelease(i)}
                   className={`
-                    h-16 w-16 rounded text-xs font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm
+                    h-16 w-16 rounded-lg text-xs font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
                     ${samples[i]?.buffer 
-                      ? getPadColor(i) + ' border-gray-600 text-white shadow-lg' 
-                      : 'bg-gray-700/70 border-gray-600 text-gray-400 hover:bg-gray-600/70'
+                      ? getPadColor(i) + '/80 border-cyan-400/50 text-white shadow-lg shadow-cyan-500/30' 
+                      : 'bg-gray-700/40 border-purple-400/30 text-gray-300 hover:bg-gray-600/50 hover:border-purple-400/50'
                     }
-                    ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-red-500' : ''}
-                    ${selectedPad === i ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/50' : ''}
+                    ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-red-500 shadow-lg shadow-red-500/50' : ''}
+                    ${selectedPad === i ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/70 border-cyan-400' : ''}
                   `}
                 >
                   {samples[i]?.buffer 
