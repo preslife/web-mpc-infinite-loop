@@ -1934,31 +1934,55 @@ const DrumMachine = () => {
             
             <div className="grid grid-cols-4 gap-2 relative z-10">
               {Array.from({length: 16}, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedPad(i)}
-                  onMouseDown={() => handlePadPress(i)}
-                  onMouseUp={() => handlePadRelease(i)}
-                  onMouseLeave={() => handlePadRelease(i)}
-                  onTouchStart={() => handlePadPress(i)}
-                  onTouchEnd={() => handlePadRelease(i)}
-                  className={`
-                    h-16 w-16 rounded-lg text-xs font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
-                    ${samples[i]?.buffer 
-                      ? getPadColor(i) + '/80 border-cyan-400/50 text-white shadow-lg shadow-cyan-500/30' 
-                      : 'bg-gray-700/40 border-purple-400/30 text-gray-300 hover:bg-gray-600/50 hover:border-purple-400/50'
-                    }
-                    ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-red-500 shadow-lg shadow-red-500/50' : ''}
-                    ${selectedPad === i ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/70 border-cyan-400' : ''}
-                  `}
-                >
-                  {samples[i]?.buffer 
-                    ? (samples[i].name.split(' ')[1] || (i + 1).toString())
-                    : isRecording && selectedPad === i 
-                      ? 'REC' 
-                      : i + 1
-                  }
-                </button>
+                <ContextMenu key={i}>
+                  <ContextMenuTrigger asChild>
+                    <button
+                      onClick={() => setSelectedPad(i)}
+                      onMouseDown={() => handlePadPress(i)}
+                      onMouseUp={() => handlePadRelease(i)}
+                      onMouseLeave={() => handlePadRelease(i)}
+                      onTouchStart={() => handlePadPress(i)}
+                      onTouchEnd={() => handlePadRelease(i)}
+                      className={`
+                        h-16 w-16 rounded-lg text-xs font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
+                        ${samples[i]?.buffer 
+                          ? getPadColor(i) + '/80 border-cyan-400/50 text-white shadow-lg shadow-cyan-500/30' 
+                          : 'bg-gray-700/40 border-purple-400/30 text-gray-300 hover:bg-gray-600/50 hover:border-purple-400/50'
+                        }
+                        ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-red-500 shadow-lg shadow-red-500/50' : ''}
+                        ${selectedPad === i ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/70 border-cyan-400' : ''}
+                      `}
+                    >
+                      {samples[i]?.buffer 
+                        ? (samples[i].name.split(' ')[1] || (i + 1).toString())
+                        : isRecording && selectedPad === i 
+                          ? 'REC' 
+                          : i + 1
+                      }
+                    </button>
+                  </ContextMenuTrigger>
+                  {samples[i]?.buffer && (
+                    <ContextMenuContent>
+                      <ContextMenuItem onClick={() => {
+                        setSelectedPad(i);
+                        fileInputRef.current?.click();
+                      }}>
+                        Replace Sample
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => {
+                        const newSamples = [...samples];
+                        newSamples[i] = null;
+                        setSamples(newSamples);
+                        toast.success(`Cleared sample from pad ${i + 1}`);
+                      }}>
+                        Clear Sample
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => setSelectedPad(i)}>
+                        Edit Sample
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  )}
+                </ContextMenu>
               ))}
             </div>
           </div>
