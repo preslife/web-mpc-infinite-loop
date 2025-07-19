@@ -314,34 +314,43 @@ const DrumMachine = () => {
                 ))}
               </div>
 
-              {/* Pattern grid */}
+              {/* Pattern grid - Show all 16 pad tracks */}
               <div className="space-y-1 max-h-64 overflow-y-auto">
-                {samples.map((sample, padIndex) => {
-                  if (!sample.buffer) return null;
-                  return (
-                    <div key={padIndex} className="flex items-center gap-2">
-                      <div className="w-12 text-xs font-medium text-primary">
-                        {sample.name.split(' ')[1]}
-                      </div>
-                      <div className="grid grid-cols-16 gap-1 flex-1">
-                        {Array.from({ length: 16 }, (_, stepIndex) => (
-                          <button
-                            key={stepIndex}
-                            onClick={() => toggleStep(padIndex, stepIndex)}
-                            className={`
-                              h-6 w-full rounded-sm transition-all duration-150
-                              ${patterns[padIndex][stepIndex]?.active 
-                                ? 'bg-step-active shadow-sm' 
-                                : 'bg-muted hover:bg-secondary'
-                              }
-                              ${currentStep === stepIndex ? 'ring-1 ring-step-playing' : ''}
-                            `}
-                          />
-                        ))}
+                {Array.from({ length: 16 }, (_, padIndex) => (
+                  <div key={padIndex} className="flex items-center gap-2">
+                    <div className="w-12 text-xs font-medium flex items-center justify-center">
+                      <div className={`
+                        w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold
+                        ${samples[padIndex]?.buffer 
+                          ? 'bg-gradient-active text-primary-foreground' 
+                          : 'bg-muted text-muted-foreground'
+                        }
+                      `}>
+                        {samples[padIndex]?.buffer ? (padIndex + 1) : (padIndex + 1)}
                       </div>
                     </div>
-                  );
-                })}
+                    <div className="grid grid-cols-16 gap-1 flex-1">
+                      {Array.from({ length: 16 }, (_, stepIndex) => (
+                        <button
+                          key={stepIndex}
+                          onClick={() => toggleStep(padIndex, stepIndex)}
+                          disabled={!samples[padIndex]?.buffer}
+                          className={`
+                            h-6 w-full rounded-sm transition-all duration-150
+                            ${patterns[padIndex][stepIndex]?.active 
+                              ? 'bg-step-active shadow-sm' 
+                              : samples[padIndex]?.buffer 
+                                ? 'bg-muted hover:bg-secondary' 
+                                : 'bg-muted/50 cursor-not-allowed'
+                            }
+                            ${currentStep === stepIndex ? 'ring-1 ring-step-playing' : ''}
+                            ${!samples[padIndex]?.buffer ? 'opacity-50' : ''}
+                          `}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
