@@ -610,15 +610,18 @@ const DrumMachine = () => {
     };
   }, [isPlaying, bpm, patterns, samples, sequencerLength, swing, trackMutes, trackSolos]);
 
-  const playPad = useCallback((padIndex: number, velocity: number = 80, gateMode: boolean = false) => {
+  const playPad = useCallback((padIndex: number, velocity: number = 80) => {
     if (!audioContextRef.current || !samples[padIndex]?.buffer) return;
 
     // Check mute/solo state
     const shouldPlay = !trackMutes[padIndex] && (trackSolos.every(s => !s) || trackSolos[padIndex]);
     if (!shouldPlay) return;
 
+    // Use the sample's gate mode setting
+    const sampleGateMode = samples[padIndex]?.gateMode ?? true;
+    
     // Stop any currently playing source for this pad if in gate mode
-    if (gateMode) {
+    if (sampleGateMode) {
       const currentSource = playingSources.get(padIndex);
       if (currentSource) {
         currentSource.stop();
@@ -647,7 +650,7 @@ const DrumMachine = () => {
     gainNode.connect(audioContextRef.current.destination);
 
     // Track the source if in gate mode
-    if (gateMode) {
+    if (sampleGateMode) {
       setPlayingSources(prev => new Map(prev).set(padIndex, source));
       source.onended = () => {
         setPlayingSources(prev => {
@@ -657,7 +660,7 @@ const DrumMachine = () => {
         });
       };
     }
-    source.start(0, startTime, gateMode ? undefined : sliceDuration);
+    source.start(0, startTime, sampleGateMode ? undefined : sliceDuration);
   }, [samples, trackVolumes, trackMutes, trackSolos, playingSources, initializeTrackEffects, connectEffectsChain]);
 
   const startRecording = async (padIndex: number) => {
@@ -759,7 +762,7 @@ const DrumMachine = () => {
       }
       
       // Always play the pad when pressed
-      playPad(padIndex, trackVolumes[padIndex], samples[padIndex].gateMode);
+      playPad(padIndex, trackVolumes[padIndex]);
     } else {
       // Open file picker for empty pads
       setSelectedPad(padIndex);
@@ -955,7 +958,13 @@ const DrumMachine = () => {
               SEQUENCER
             </Button>
             <Button 
-              onClick={() => setDisplayMode('editor')}
+              onClick={() => {
+                setDisplayMode('editor');
+                // If a track is selected, automatically set it for editing
+                if (selectedTrack !== null) {
+                  setEditingSample(selectedTrack);
+                }
+              }}
               variant={displayMode === 'editor' ? 'default' : 'outline'}
               size="sm" 
               className={`text-xs transition-all duration-300 ${
