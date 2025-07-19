@@ -142,19 +142,19 @@ const DrumMachine = () => {
           const inputs = Array.from(access.inputs.values());
           setMidiDevices(inputs);
           
-          // Set up MIDI event listeners
-          inputs.forEach(input => {
-            input.onmidimessage = handleMIDIMessage;
-          });
-          
-          // Listen for device connection/disconnection
-          access.onstatechange = () => {
-            const newInputs = Array.from(access.inputs.values());
-            setMidiDevices(newInputs);
-            newInputs.forEach(input => {
-              input.onmidimessage = handleMIDIMessage;
-            });
-          };
+           // Set up MIDI event listeners
+           inputs.forEach(input => {
+             input.onmidimessage = handleMIDIMessage;
+           });
+           
+           // Listen for device connection/disconnection
+           access.onstatechange = () => {
+             const newInputs = Array.from(access.inputs.values());
+             setMidiDevices(newInputs);
+             newInputs.forEach(input => {
+               input.onmidimessage = handleMIDIMessage;
+             });
+           };
           
           toast.success(`MIDI enabled - ${inputs.length} device(s) connected`);
         } else {
@@ -174,6 +174,7 @@ const DrumMachine = () => {
       }
     };
   }, []);
+
 
   // Load saved patterns from localStorage on component mount
   useEffect(() => {
@@ -633,11 +634,13 @@ const DrumMachine = () => {
   // MIDI message handler
   const handleMIDIMessage = useCallback((message: MIDIMessageEvent) => {
     const [status, note, velocity] = message.data;
+    console.log('MIDI Message received:', { status, note, velocity, midiLearning });
     
     // Note On (144) or Note Off (128)
     if (status === 144 || status === 128) {
       // Check if we're in MIDI learning mode
       if (midiLearning !== null && status === 144 && velocity > 0) {
+        console.log('MIDI Learning mode active, mapping note', note, 'to pad', midiLearning);
         const newMapping = { ...midiMapping };
         newMapping[note] = midiLearning;
         setMidiMapping(newMapping);
@@ -651,6 +654,7 @@ const DrumMachine = () => {
       
       if (padIndex !== undefined && padIndex >= 0 && padIndex < 16) {
         if (status === 144 && velocity > 0) {
+          console.log('Triggering pad', padIndex, 'from MIDI note', note);
           // Note On - trigger pad
           setSelectedPad(padIndex);
           playPad(padIndex, velocity);
@@ -658,9 +662,21 @@ const DrumMachine = () => {
           // Visual feedback
           setTimeout(() => setSelectedPad(null), 100);
         }
+      } else {
+        console.log('No mapping found for MIDI note', note);
       }
     }
   }, [midiMapping, midiLearning, playPad]);
+
+  // Update MIDI event listeners when handleMIDIMessage changes
+  useEffect(() => {
+    if (midiDevices.length > 0) {
+      console.log('Updating MIDI event listeners for learning state:', midiLearning);
+      midiDevices.forEach(input => {
+        input.onmidimessage = handleMIDIMessage;
+      });
+    }
+  }, [handleMIDIMessage, midiDevices, midiLearning]);
 
   const handlePlay = () => {
     if (audioContextRef.current?.state === 'suspended') {
