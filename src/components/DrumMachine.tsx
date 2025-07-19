@@ -838,12 +838,16 @@ const DrumMachine = () => {
           // Visual feedback
           setSelectedPad(padIndex);
           setTimeout(() => setSelectedPad(null), 100);
+        } else if (status === 128 || (status === 144 && velocity === 0)) {
+          console.log('Releasing pad', padIndex, 'from MIDI note', note);
+          // Note Off - handle gate mode release
+          handlePadRelease(padIndex);
         }
       } else {
         console.log('No mapping found for MIDI note', note);
       }
     }
-  }, [midiMapping, midiLearning, handlePadPress]);
+  }, [midiMapping, midiLearning, handlePadPress, handlePadRelease]);
 
   // Update MIDI event listeners when handleMIDIMessage changes
   useEffect(() => {
