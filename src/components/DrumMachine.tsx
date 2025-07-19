@@ -373,8 +373,22 @@ const DrumMachine = () => {
             </div>
           </div>
 
-          {/* Pattern Controls */}
+          {/* Sequencer Controls */}
           <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Steps:</span>
+              {[16, 32, 64].map((steps) => (
+                <Button
+                  key={steps}
+                  variant={sequencerLength === steps ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSequencerLength(steps)}
+                >
+                  {steps}
+                </Button>
+              ))}
+            </div>
+
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Pattern:</span>
               <input 
@@ -382,9 +396,7 @@ const DrumMachine = () => {
                 onChange={(e) => setCurrentPatternName(e.target.value)}
                 className="bg-background/50 border border-border rounded px-2 py-1 text-sm w-24"
               />
-            </div>
-
-            <div className="flex items-center gap-2">
+              
               <Button onClick={savePattern} variant="outline" size="sm">
                 <Save className="h-4 w-4 mr-1" />
                 Save
@@ -422,13 +434,13 @@ const DrumMachine = () => {
             <Volume2 className="h-5 w-5" />
             Drum Pads
           </h2>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-8 gap-2">
             {Array.from({ length: 16 }, (_, i) => (
               <button
                 key={i}
                 onClick={() => handlePadPress(i)}
                 className={`
-                  aspect-square rounded-lg font-bold text-sm transition-all duration-150 active:scale-95 neon-border
+                  h-12 w-12 rounded-lg font-bold text-xs transition-all duration-150 active:scale-95 neon-border
                   ${samples[i]?.buffer 
                     ? 'bg-gradient-active text-primary-foreground glass-glow-strong' 
                     : 'glass-panel hover:glass-glow'
@@ -455,23 +467,11 @@ const DrumMachine = () => {
           />
         </div>
 
-        {/* Step Sequencer with Volume Controls */}
+
+        {/* Step Sequencer */}
         <div className="glass-panel glass-glow p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Step Sequencer</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Steps:</span>
-              {[16, 32, 64].map((steps) => (
-                <Button
-                  key={steps}
-                  variant={sequencerLength === steps ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSequencerLength(steps)}
-                >
-                  {steps}
-                </Button>
-              ))}
-            </div>
           </div>
           
           <div className="space-y-2">
