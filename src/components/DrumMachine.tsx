@@ -69,6 +69,11 @@ const DrumMachine = () => {
   const recordingChunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // MIDI support state
+  const [midiAccess, setMidiAccess] = useState<MIDIAccess | null>(null);
+  const [midiDevices, setMidiDevices] = useState<MIDIInput[]>([]);
+  const [midiEnabled, setMidiEnabled] = useState(false);
+
   // Initialize Web Audio API and Neural Network
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -87,6 +92,45 @@ const DrumMachine = () => {
       }
     };
     initializeRNN();
+
+    // Initialize MIDI
+    const initializeMIDI = async () => {
+      try {
+        if (navigator.requestMIDIAccess) {
+          const access = await navigator.requestMIDIAccess();
+          setMidiAccess(access);
+          setMidiEnabled(true);
+          
+          // Get all MIDI input devices
+          const inputs = Array.from(access.inputs.values());
+          setMidiDevices(inputs);
+          
+          // Set up MIDI event listeners
+          inputs.forEach(input => {
+            input.onmidimessage = handleMIDIMessage;
+          });
+          
+          // Listen for device connection/disconnection
+          access.onstatechange = () => {
+            const newInputs = Array.from(access.inputs.values());
+            setMidiDevices(newInputs);
+            newInputs.forEach(input => {
+              input.onmidimessage = handleMIDIMessage;
+            });
+          };
+          
+          toast.success(`MIDI enabled - ${inputs.length} device(s) connected`);
+        } else {
+          console.warn('Web MIDI API not supported');
+          toast.info('MIDI not supported in this browser');
+        }
+      } catch (error) {
+        console.warn('MIDI initialization failed:', error);
+        toast.info('MIDI access denied or unavailable');
+      }
+    };
+    
+    initializeMIDI();
     return () => {
       if (audioContextRef.current) {
         audioContextRef.current.close();
@@ -399,6 +443,28 @@ const DrumMachine = () => {
     };
     setPatterns(newPatterns);
   };
+
+  // MIDI message handler
+  const handleMIDIMessage = useCallback((message: MIDIMessageEvent) => {
+    const [status, note, velocity] = message.data;
+    
+    // Note On (144) or Note Off (128)
+    if (status === 144 || status === 128) {
+      // Map MIDI notes 36-51 to drum pads 0-15 (standard GM drum mapping)
+      const padIndex = note - 36;
+      
+      if (padIndex >= 0 && padIndex < 16) {
+        if (status === 144 && velocity > 0) {
+          // Note On - trigger pad
+          handlePadPress(padIndex);
+          playPad(padIndex, velocity);
+          
+          // Visual feedback
+          setTimeout(() => handlePadRelease(padIndex), 100);
+        }
+      }
+    }
+  }, [playPad]);
 
   const handlePlay = () => {
     if (audioContextRef.current?.state === 'suspended') {
@@ -954,8 +1020,33 @@ const DrumMachine = () => {
           </div>
         </div>
 
-
         <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileLoad} className="hidden" />
+
+        {/* MIDI Status Panel */}
+        <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded pointer-events-none"></div>
+          
+          <div className="relative z-10">
+            <div className="text-xs text-gray-400 mb-2">MIDI STATUS</div>
+            <div className="space-y-2">
+              <div className={`px-2 py-1 rounded text-xs ${midiEnabled ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'}`}>
+                {midiEnabled ? `✓ ${midiDevices.length} device(s)` : '✗ Not available'}
+              </div>
+              {midiDevices.length > 0 && (
+                <div className="max-h-20 overflow-y-auto">
+                  {midiDevices.map((device, index) => (
+                    <div key={index} className="text-xs text-gray-500 truncate">
+                      {device.name || `Device ${index + 1}`}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="text-xs text-gray-500">
+                Notes 36-51 → Pads 1-16
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
