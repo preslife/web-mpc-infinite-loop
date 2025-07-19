@@ -818,7 +818,6 @@ const DrumMachine = () => {
                         setTrackVolumes(newVolumes);
                       }}
                       size="sm"
-                      label={`T${i + 1}`}
                     />
                   </div>
                 ))}
