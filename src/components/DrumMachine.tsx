@@ -51,6 +51,8 @@ const DrumMachine = () => {
   const [trackMutes, setTrackMutes] = useState<boolean[]>(Array(16).fill(false));
   const [trackSolos, setTrackSolos] = useState<boolean[]>(Array(16).fill(false));
   const [selectedPad, setSelectedPad] = useState<number | null>(null);
+  const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
+  const [lastTrackClickTime, setLastTrackClickTime] = useState<{ [key: number]: number }>({});
   const [recordMode, setRecordMode] = useState(false);
   const [swing, setSwing] = useState([0]);
   const [savedPatterns, setSavedPatterns] = useState<Pattern[]>([]);
@@ -350,7 +352,8 @@ const DrumMachine = () => {
     if (patternTarget === 'all') {
       return getLoadedSamplesCount() > 0;
     } else {
-      return selectedPad !== null && samples[selectedPad]?.buffer;
+      const targetTrack = selectedTrack !== null ? selectedTrack : selectedPad;
+      return targetTrack !== null && samples[targetTrack]?.buffer;
     }
   };
 
@@ -360,9 +363,10 @@ const DrumMachine = () => {
       const count = getLoadedSamplesCount();
       return count > 0 ? `${count} loaded tracks` : 'No tracks loaded';
     } else {
-      if (selectedPad === null) return 'No pad selected';
-      if (!samples[selectedPad]?.buffer) return 'Selected pad has no sample';
-      return `pad ${selectedPad + 1}`;
+      const targetTrack = selectedTrack !== null ? selectedTrack : selectedPad;
+      if (targetTrack === null) return 'No track selected';
+      if (!samples[targetTrack]?.buffer) return 'Selected track has no sample';
+      return `track ${targetTrack + 1}`;
     }
   };
 
@@ -382,15 +386,16 @@ const DrumMachine = () => {
       }
     } else {
       // Selected track mode
-      if (selectedPad === null) {
-        toast.error('Select a pad first to generate patterns.');
+      const targetTrack = selectedTrack !== null ? selectedTrack : selectedPad;
+      if (targetTrack === null) {
+        toast.error('Select a track first to generate patterns.');
         return;
       }
-      if (!samples[selectedPad]?.buffer) {
-        toast.error('Selected pad has no sample loaded.');
+      if (!samples[targetTrack]?.buffer) {
+        toast.error('Selected track has no sample loaded.');
         return;
       }
-      targetTracks = [selectedPad];
+      targetTracks = [targetTrack];
     }
 
     setIsGenerating(true);
@@ -427,7 +432,7 @@ const DrumMachine = () => {
       
       const targetDescription = patternTarget === 'all' 
         ? `${targetTracks.length} loaded tracks` 
-        : `pad ${selectedPad! + 1}`;
+        : `track ${(selectedTrack !== null ? selectedTrack : selectedPad)! + 1}`;
       toast.success(`Generated patterns for ${targetDescription}!`);
     } catch (error) {
       console.error('Error generating sequence:', error);
@@ -454,15 +459,16 @@ const DrumMachine = () => {
       }
     } else {
       // Selected track mode
-      if (selectedPad === null) {
-        toast.error('Select a pad first to randomize patterns.');
+      const targetTrack = selectedTrack !== null ? selectedTrack : selectedPad;
+      if (targetTrack === null) {
+        toast.error('Select a track first to randomize patterns.');
         return;
       }
-      if (!samples[selectedPad]?.buffer) {
-        toast.error('Selected pad has no sample loaded.');
+      if (!samples[targetTrack]?.buffer) {
+        toast.error('Selected track has no sample loaded.');
         return;
       }
-      targetTracks = [selectedPad];
+      targetTracks = [targetTrack];
     }
 
     const newPatterns = patterns.map((pattern, trackIndex) => {
@@ -829,6 +835,29 @@ const DrumMachine = () => {
     setPlayingSources(new Map());
   };
 
+  const handleTrackLabelClick = (trackIndex: number) => {
+    const currentTime = Date.now();
+    const lastClickTime = lastTrackClickTime[trackIndex] || 0;
+    const isDoubleClick = currentTime - lastClickTime < 300;
+
+    if (isDoubleClick) {
+      // Double click - unselect track
+      setSelectedTrack(null);
+      setPatternTarget('all');
+      toast.info('Switched to pattern mode (all tracks)');
+    } else {
+      // Single click - select track
+      setSelectedTrack(trackIndex);
+      setPatternTarget('selected');
+      toast.info(`Selected track ${trackIndex + 1}`);
+    }
+
+    setLastTrackClickTime({
+      ...lastTrackClickTime,
+      [trackIndex]: currentTime
+    });
+  };
+
   // Helper function for pad colors based on Maschine style
   const getPadColor = (index: number) => {
     const colors = [
@@ -933,10 +962,18 @@ const DrumMachine = () => {
                   <div className="space-y-1">
                     {Array.from({length: 16}, (_, padIndex) => (
                       <div key={padIndex} className="flex items-center gap-1 overflow-x-auto">
-                        {/* Track label on the left */}
-                        <div className="w-14 flex-shrink-0 text-xs text-gray-400 truncate">
+                        {/* Track label on the left - clickable */}
+                        <button
+                          onClick={() => handleTrackLabelClick(padIndex)}
+                          className={`w-14 flex-shrink-0 text-xs truncate transition-all duration-200 rounded px-1 py-0.5 ${
+                            selectedTrack === padIndex 
+                              ? 'bg-cyan-600/30 border border-cyan-400/50 text-cyan-300 shadow-md shadow-cyan-500/30' 
+                              : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-300'
+                          }`}
+                          title={`${selectedTrack === padIndex ? 'Double-click to unselect' : 'Click to select'} track ${padIndex + 1}`}
+                        >
                           {samples[padIndex]?.name || `T${padIndex + 1}`}
-                        </div>
+                        </button>
                         
                         {/* Mute/Solo buttons */}
                         <div className="flex gap-1 flex-shrink-0">
@@ -1116,23 +1153,12 @@ const DrumMachine = () => {
                 </div>
               </div>
 
-              {/* Pattern Target Selection */}
+              {/* Track Selection Status */}
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-400">Target:</span>
-                <Select value={patternTarget} onValueChange={(value: 'all' | 'selected') => setPatternTarget(value)}>
-                  <SelectTrigger className="h-8 w-32 text-xs bg-gray-800/50 border-gray-600">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Tracks</SelectItem>
-                    <SelectItem value="selected">Selected Track</SelectItem>
-                  </SelectContent>
-                </Select>
-                {patternTarget === 'selected' && (
-                  <span className="text-xs text-cyan-400">
-                    {selectedPad !== null ? `Pad ${selectedPad + 1}` : 'No pad selected'}
-                  </span>
-                )}
+                <span className="text-sm text-gray-400">Mode:</span>
+                <span className="text-xs text-cyan-400">
+                  {selectedTrack !== null ? `Track ${selectedTrack + 1} Selected` : 'All Tracks'}
+                </span>
               </div>
 
               {/* Status Display */}
@@ -1199,32 +1225,19 @@ const DrumMachine = () => {
             <div className="bg-gray-900/80 backdrop-blur-md p-2 rounded-lg border border-blue-500/30 shadow-lg shadow-blue-500/20 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-cyan-500/5 to-purple-500/10 rounded-lg pointer-events-none"></div>
               <div className="relative z-10">
-                <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    onClick={() => setSwing([swing[0] === 0 ? 50 : 0])}
-                    variant="outline" 
-                    size="sm" 
-                    className={`text-xs ${swing[0] > 0 ? 'bg-blue-600 border-blue-500' : 'bg-gray-800 border-gray-600'} text-gray-300`}
-                  >
-                    SWING
-                  </Button>
-                  <Button 
-                    onClick={() => setBpm([bpm[0] === 120 ? 140 : 120])}
-                    variant="outline" 
-                    size="sm" 
-                    className="bg-gray-800 border-gray-600 text-gray-300 text-xs"
-                  >
-                    TEMPO
-                  </Button>
-                  <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs">LOCK</Button>
-                  <Button 
-                    onClick={() => setSequencerLength(sequencerLength === 16 ? 32 : 16)}
-                    variant="outline" 
-                    size="sm" 
-                    className="bg-gray-800 border-gray-600 text-gray-300 text-xs"
-                  >
-                    GRID
-                  </Button>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400 w-12">Swing</span>
+                    <Slider
+                      value={swing}
+                      onValueChange={setSwing}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-gray-300 w-8">{swing[0]}%</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1242,7 +1255,7 @@ const DrumMachine = () => {
                 >
                   SAVE
                 </Button>
-                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">EVENTS</Button>
+                
                 <Button 
                   onClick={randomizePattern}
                   disabled={!canPerformPatternOperations()}
@@ -1274,7 +1287,9 @@ const DrumMachine = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
               <div className="relative z-10">
               <div className="space-y-2">
-                <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">SELECT</Button>
+                <div className="text-center text-xs text-gray-400 mb-2">
+                  {selectedTrack !== null ? `Track ${selectedTrack + 1} Selected` : 'No Track Selected'}
+                </div>
                 <Button 
                   onClick={() => setTrackSolos(trackSolos.map(() => false))}
                   variant="outline" 
