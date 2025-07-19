@@ -6,7 +6,6 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit, RefreshCw, Sparkles, X, Music } from 'lucide-react';
 import { toast } from 'sonner';
 import { WaveformEditor } from './WaveformEditor';
-import { MixerPanel } from './MixerPanel';
 import { PatternManager } from './PatternManager';
 import { AudioExporter } from './AudioExporter';
 import { SongMode } from './SongMode';
@@ -85,7 +84,7 @@ const DrumMachine = () => {
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
   const [pendingSample, setPendingSample] = useState<{ sample: Sample; padIndex: number } | null>(null);
   const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
-  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'mixer' | 'patterns' | 'export' | 'song'>('sequencer');
+  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'patterns' | 'export' | 'song'>('sequencer');
   const [masterVolume, setMasterVolume] = useState(0.8);
 
   // Song mode state
@@ -1150,14 +1149,6 @@ const DrumMachine = () => {
               >
                 SEQUENCER
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-gray-800 border-gray-600 text-gray-300 text-xs neon-border"
-                onClick={() => setDisplayMode('mixer')}
-              >
-                MIXER
-              </Button>
             </div>
           </div>
         </div>
@@ -1181,18 +1172,6 @@ const DrumMachine = () => {
               }`}
             >
               SEQUENCER
-            </Button>
-            <Button 
-              onClick={() => setDisplayMode('mixer')}
-              variant={displayMode === 'mixer' ? 'default' : 'outline'}
-              size="sm" 
-              className={`text-xs transition-all duration-300 ${
-                displayMode === 'mixer' 
-                  ? 'bg-green-500/20 border-green-400 text-green-300 shadow-lg shadow-green-500/25' 
-                  : 'bg-gray-800 border-gray-600 text-gray-300'
-              }`}
-            >
-              MIXER
             </Button>
             <Button 
               onClick={() => {
@@ -1335,6 +1314,19 @@ const DrumMachine = () => {
                           </ContextMenuContent>
                         </ContextMenu>
                         
+                        {/* Volume knob */}
+                        <div className="flex-shrink-0 w-8">
+                          <VolumeKnob
+                            value={trackVolumes[padIndex]}
+                            onChange={(value) => {
+                              const newVolumes = [...trackVolumes];
+                              newVolumes[padIndex] = value;
+                              setTrackVolumes(newVolumes);
+                            }}
+                            size="sm"
+                          />
+                        </div>
+                        
                         {/* Mute/Solo buttons */}
                         <div className="flex gap-1 flex-shrink-0">
                           <button
@@ -1392,32 +1384,6 @@ const DrumMachine = () => {
                     ))}
                   </div>
                 </div>
-              </div>
-            ) : displayMode === 'mixer' ? (
-              <div className="h-full overflow-auto">
-                <MixerPanel
-                  samples={samples}
-                  volumes={trackVolumes.map(v => v / 100)}
-                  masterVolume={masterVolume}
-                  muteStates={trackMutes}
-                  soloStates={trackSolos}
-                  onVolumeChange={(index, volume) => {
-                    const newVolumes = [...trackVolumes];
-                    newVolumes[index] = volume * 100;
-                    setTrackVolumes(newVolumes);
-                  }}
-                  onMasterVolumeChange={setMasterVolume}
-                  onMuteChange={(index, mute) => {
-                    const newMutes = [...trackMutes];
-                    newMutes[index] = mute;
-                    setTrackMutes(newMutes);
-                  }}
-                  onSoloChange={(index, solo) => {
-                    const newSolos = [...trackSolos];
-                    newSolos[index] = solo;
-                    setTrackSolos(newSolos);
-                  }}
-                />
               </div>
             ) : displayMode === 'patterns' ? (
               <div className="h-full overflow-auto">
