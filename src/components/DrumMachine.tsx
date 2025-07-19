@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, Square, Mic, Volume2 } from 'lucide-react';
+import { Play, Pause, Square, Mic, Volume2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Sample {
@@ -25,9 +25,11 @@ const DrumMachine = () => {
     Array(16).fill(null).map(() => Array(16).fill({ active: false, velocity: 80 }))
   );
   const [selectedPad, setSelectedPad] = useState<number | null>(null);
+  const [recordMode, setRecordMode] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingChunksRef = useRef<Blob[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize Web Audio API
   useEffect(() => {
@@ -119,15 +121,51 @@ const DrumMachine = () => {
     }
   };
 
+  const loadSample = async (file: File, padIndex: number) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      if (audioContextRef.current) {
+        const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
+        const newSamples = [...samples];
+        newSamples[padIndex] = { buffer: audioBuffer, name: file.name.replace(/\.[^/.]+$/, "") };
+        setSamples(newSamples);
+        toast.success(`Sample "${file.name}" loaded!`);
+      }
+    } catch (error) {
+      toast.error('Failed to load sample');
+    }
+  };
+
   const handlePadPress = (padIndex: number) => {
     if (isRecording && selectedPad === padIndex) {
       stopRecording();
-    } else if (isRecording) {
+      return;
+    } 
+    
+    if (isRecording) {
       return; // Don't allow other interactions while recording
+    }
+
+    if (recordMode) {
+      startRecording(padIndex);
     } else if (samples[padIndex]?.buffer) {
       playPad(padIndex);
     } else {
-      startRecording(padIndex);
+      // Open file picker for empty pads
+      setSelectedPad(padIndex);
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleFileLoad = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && selectedPad !== null) {
+      loadSample(file, selectedPad);
+      setSelectedPad(null);
+    }
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -184,6 +222,15 @@ const DrumMachine = () => {
                 <Square className="h-6 w-6" />
               </Button>
 
+              <Button 
+                onClick={() => setRecordMode(!recordMode)}
+                variant={recordMode ? "destructive" : "outline"}
+                size="lg"
+                className="h-12 w-12"
+              >
+                <Mic className="h-6 w-6" />
+              </Button>
+
               {isRecording && (
                 <div className="flex items-center gap-2 text-destructive animate-pulse">
                   <Mic className="h-5 w-5" />
@@ -236,8 +283,18 @@ const DrumMachine = () => {
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              Tap empty pads to record samples, tap filled pads to play
+              {recordMode 
+                ? "Record mode: Tap pads to record from microphone" 
+                : "Tap empty pads to load samples, tap filled pads to play"
+              }
             </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/*"
+              onChange={handleFileLoad}
+              className="hidden"
+            />
           </div>
 
           {/* Step Sequencer */}
