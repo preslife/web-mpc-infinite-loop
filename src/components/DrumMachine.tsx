@@ -32,6 +32,7 @@ const DrumMachine = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isPatternRecording, setIsPatternRecording] = useState(false);
   const [currentStep, setCurrentStep] = useState(-1);
   const [bpm, setBpm] = useState([120]);
   const [sequencerLength, setSequencerLength] = useState(16);
@@ -80,6 +81,7 @@ const DrumMachine = () => {
   const [midiLearning, setMidiLearning] = useState<number | null>(null);
   const [showMidiPanel, setShowMidiPanel] = useState(false);
   const [patternTarget, setPatternTarget] = useState<'all' | 'selected'>('all');
+  const sequencerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Audio effects state
   const [trackEffects, setTrackEffects] = useState<Array<{
@@ -506,16 +508,25 @@ const DrumMachine = () => {
     toast.success(`Deleted pattern "${patternToDelete.name}"`);
   };
 
-  // Sequencer loop with swing
+  // Sequencer loop with swing - with proper cleanup
   useEffect(() => {
+    // Clear any existing timeout
+    if (sequencerTimeoutRef.current) {
+      clearTimeout(sequencerTimeoutRef.current);
+      sequencerTimeoutRef.current = null;
+    }
+
     if (!isPlaying) return;
+
     const baseStepTime = 60 / bpm[0] / 4 * 1000; // 16th notes
     let stepCounter = 0;
+    
     const scheduleNextStep = () => {
       const swingAmount = swing[0] / 100;
       const isOffBeat = stepCounter % 2 === 1;
       const swingDelay = isOffBeat ? baseStepTime * swingAmount * 0.1 : 0;
-      setTimeout(() => {
+      
+      sequencerTimeoutRef.current = setTimeout(() => {
         setCurrentStep(prev => {
           const nextStep = (prev + 1) % sequencerLength;
 
@@ -526,13 +537,23 @@ const DrumMachine = () => {
               playPad(padIndex, pattern[nextStep].velocity);
             }
           });
+          
           stepCounter++;
           if (isPlaying) scheduleNextStep();
           return nextStep;
         });
       }, baseStepTime + swingDelay);
     };
+    
     scheduleNextStep();
+
+    // Cleanup function
+    return () => {
+      if (sequencerTimeoutRef.current) {
+        clearTimeout(sequencerTimeoutRef.current);
+        sequencerTimeoutRef.current = null;
+      }
+    };
   }, [isPlaying, bpm, patterns, samples, sequencerLength, swing, trackMutes, trackSolos]);
 
   const playPad = useCallback((padIndex: number, velocity: number = 80, gateMode: boolean = false) => {
@@ -654,18 +675,25 @@ const DrumMachine = () => {
   };
 
   const handlePadPress = (padIndex: number) => {
+    // Handle audio recording mode (for sample recording)
     if (isRecording && selectedPad === padIndex) {
       stopRecording();
       return;
     }
     if (isRecording) {
-      return; // Don't allow other interactions while recording
+      return; // Don't allow other interactions while recording audio
     }
+    
+    // Start audio recording if in record mode
     if (recordMode) {
       startRecording(padIndex);
-    } else if (samples[padIndex]?.buffer) {
-      // If sequencer is playing, record to sequencer
-      if (isPlaying && currentStep >= 0) {
+      return;
+    }
+    
+    // If pad has a sample, play it and potentially record to pattern
+    if (samples[padIndex]?.buffer) {
+      // Real-time pattern recording: if sequencer is playing and pattern recording is on
+      if (isPlaying && isPatternRecording && currentStep >= 0) {
         const newPatterns = [...patterns];
         newPatterns[padIndex] = [...newPatterns[padIndex]];
         newPatterns[padIndex][currentStep] = {
@@ -673,8 +701,10 @@ const DrumMachine = () => {
           velocity: trackVolumes[padIndex]
         };
         setPatterns(newPatterns);
-        toast.success(`Recorded to step ${currentStep + 1}`);
+        toast.success(`Recorded pad ${padIndex + 1} to step ${currentStep + 1}`);
       }
+      
+      // Always play the pad when pressed
       playPad(padIndex, trackVolumes[padIndex], samples[padIndex].gateMode);
     } else {
       // Open file picker for empty pads
@@ -781,6 +811,13 @@ const DrumMachine = () => {
   const handleStop = () => {
     setIsPlaying(false);
     setCurrentStep(-1);
+    
+    // Clear sequencer timeout
+    if (sequencerTimeoutRef.current) {
+      clearTimeout(sequencerTimeoutRef.current);
+      sequencerTimeoutRef.current = null;
+    }
+    
     // Stop all playing sources
     playingSources.forEach(source => {
       try {
@@ -1001,32 +1038,38 @@ const DrumMachine = () => {
           <div className="relative z-10">
             <div className="flex items-center justify-center gap-6">
               {/* Transport Buttons */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
+                {/* Play/Pause Button */}
                 <Button 
                   onClick={isPlaying ? handlePause : handlePlay}
                   variant="outline" 
                   size="lg" 
-                  className={`h-12 w-12 rounded-full ${isPlaying ? 'bg-orange-600/20 border-orange-500/50 text-orange-300' : 'bg-green-600/20 border-green-500/50 text-green-300'} hover:scale-110 transition-all duration-200 shadow-lg`}
+                  className={`h-14 w-14 rounded-full ${isPlaying ? 'bg-orange-600/20 border-orange-500/50 text-orange-300' : 'bg-green-600/20 border-green-500/50 text-green-300'} hover:scale-110 transition-all duration-200 shadow-lg`}
+                  title={isPlaying ? 'Pause sequencer' : 'Start sequencer'}
                 >
-                  {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                  {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
                 </Button>
                 
+                {/* Stop Button */}
                 <Button 
                   onClick={handleStop}
                   variant="outline" 
                   size="lg" 
-                  className="h-12 w-12 rounded-full bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30 hover:scale-110 transition-all duration-200 shadow-lg"
+                  className="h-14 w-14 rounded-full bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30 hover:scale-110 transition-all duration-200 shadow-lg"
+                  title="Stop sequencer and reset to beginning"
                 >
-                  <Square className="h-6 w-6" />
+                  <Square className="h-7 w-7" />
                 </Button>
                 
+                {/* Pattern Record Button */}
                 <Button 
-                  onClick={() => setRecordMode(!recordMode)}
+                  onClick={() => setIsPatternRecording(!isPatternRecording)}
                   variant="outline" 
                   size="lg" 
-                  className={`h-12 w-12 rounded-full ${recordMode ? 'bg-red-600/30 border-red-500 text-red-200 animate-pulse shadow-lg shadow-red-500/30' : 'bg-gray-600/20 border-gray-500/50 text-gray-300'} hover:scale-110 transition-all duration-200 shadow-lg`}
+                  className={`h-14 w-14 rounded-full ${isPatternRecording ? 'bg-red-600/30 border-red-500 text-red-200 animate-pulse shadow-lg shadow-red-500/30' : 'bg-gray-600/20 border-gray-500/50 text-gray-300'} hover:scale-110 transition-all duration-200 shadow-lg`}
+                  title={isPatternRecording ? 'Stop pattern recording' : 'Start pattern recording (press pads while sequencer plays to record)'}
                 >
-                  <Mic className="h-6 w-6" />
+                  <Mic className="h-7 w-7" />
                 </Button>
               </div>
 
@@ -1052,10 +1095,12 @@ const DrumMachine = () => {
               {/* Status Display */}
               <div className="text-center">
                 <div className="text-lg font-bold text-white mb-1">
-                  {isPlaying ? 'PLAYING' : recordMode ? 'RECORDING' : 'STOPPED'}
+                  {isPlaying ? 'PLAYING' : 'STOPPED'}
+                  {isPatternRecording && <span className="text-red-300 ml-2 animate-pulse">● REC</span>}
                 </div>
                 <div className="text-sm text-gray-400">
                   {bpm[0]} BPM • {sequencerLength} Steps
+                  {isPatternRecording && <div className="text-xs text-red-400 mt-1">Press pads to record</div>}
                 </div>
               </div>
 
@@ -1211,22 +1256,24 @@ const DrumMachine = () => {
             <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-orange-500/30 shadow-lg shadow-orange-500/20 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-red-500/5 to-pink-500/10 rounded-lg pointer-events-none"></div>
               <div className="relative z-10">
-                <div className="text-xs text-gray-400 mb-2">CONTROLS</div>
+                <div className="text-xs text-gray-400 mb-2">AUDIO RECORDING</div>
                 <div className="space-y-2">
                   <Button 
                     onClick={() => setRecordMode(!recordMode)}
                     variant="outline" 
                     size="sm" 
                     className={`w-full text-xs ${recordMode ? 'bg-red-700 border-red-600 text-white' : 'bg-gray-800 border-gray-600 text-gray-300'}`}
+                    title="Record audio samples from microphone"
                   >
                     <Mic className="h-3 w-3 mr-2" />
-                    {recordMode ? 'RECORDING' : 'RECORD'}
+                    {recordMode ? 'RECORDING AUDIO' : 'RECORD AUDIO'}
                   </Button>
                   <Button 
                     onClick={clearPattern} 
                     variant="outline" 
                     size="sm" 
                     className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                    title="Clear all patterns"
                   >
                     <RotateCcw className="h-3 w-3 mr-2" />
                     CLEAR
