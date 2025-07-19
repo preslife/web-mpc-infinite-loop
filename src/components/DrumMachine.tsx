@@ -906,22 +906,74 @@ const DrumMachine = () => {
           </div>
         </div>
 
-        {/* Encoder Section */}
-        <div className="bg-gray-900/80 backdrop-blur-md p-3 mb-2 rounded-lg border border-pink-500/30 shadow-lg shadow-pink-500/20 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-purple-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
+        {/* Transport Controls */}
+        <div className="bg-gray-900/80 backdrop-blur-md p-4 mb-2 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
           <div className="relative z-10">
-          <div className="grid grid-cols-8 gap-4">
-            {Array.from({length: 8}, (_, i) => (
-              <div key={i} className="text-center">
-                <div className="w-12 h-12 bg-gray-700 rounded-full border-2 border-gray-600 mx-auto mb-2 flex items-center justify-center">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+            <div className="flex items-center justify-center gap-6">
+              {/* Transport Buttons */}
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={isPlaying ? handlePause : handlePlay}
+                  variant="outline" 
+                  size="lg" 
+                  className={`h-12 w-12 rounded-full ${isPlaying ? 'bg-orange-600/20 border-orange-500/50 text-orange-300' : 'bg-green-600/20 border-green-500/50 text-green-300'} hover:scale-110 transition-all duration-200 shadow-lg`}
+                >
+                  {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                </Button>
+                
+                <Button 
+                  onClick={handleStop}
+                  variant="outline" 
+                  size="lg" 
+                  className="h-12 w-12 rounded-full bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30 hover:scale-110 transition-all duration-200 shadow-lg"
+                >
+                  <Square className="h-6 w-6" />
+                </Button>
+                
+                <Button 
+                  onClick={() => setRecordMode(!recordMode)}
+                  variant="outline" 
+                  size="lg" 
+                  className={`h-12 w-12 rounded-full ${recordMode ? 'bg-red-600/30 border-red-500 text-red-200 animate-pulse shadow-lg shadow-red-500/30' : 'bg-gray-600/20 border-gray-500/50 text-gray-300'} hover:scale-110 transition-all duration-200 shadow-lg`}
+                >
+                  <Mic className="h-6 w-6" />
+                </Button>
+              </div>
+
+              {/* Status Display */}
+              <div className="text-center">
+                <div className="text-lg font-bold text-white mb-1">
+                  {isPlaying ? 'PLAYING' : recordMode ? 'RECORDING' : 'STOPPED'}
                 </div>
-                <div className="text-xs text-gray-400">
-                  {['VOLUME', 'NOTE', 'FIXED VEL', 'PAD MODE', 'KEYBOARD', 'CHORDS', 'STEP', 'MACRO'][i]}
+                <div className="text-sm text-gray-400">
+                  {bpm[0]} BPM • {sequencerLength} Steps
                 </div>
               </div>
-            ))}
-          </div>
+
+              {/* Quick Actions */}
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={clearPattern} 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-yellow-600/20 border-yellow-500/50 text-yellow-300 hover:bg-yellow-600/30 transition-all duration-200"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Clear
+                </Button>
+                
+                <Button 
+                  onClick={randomizePattern} 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-purple-600/20 border-purple-500/50 text-purple-300 hover:bg-purple-600/30 transition-all duration-200"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Random
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1486,51 +1538,15 @@ const DrumMachine = () => {
 
         </div>
 
-        {/* Transport & Global Controls */}
-        <div className="mt-4 p-4 bg-gray-900/80 backdrop-blur-md rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
+        {/* Additional Controls */}
+        <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded pointer-events-none"></div>
           
           <div className="relative z-10">
-            <div className="grid grid-cols-4 gap-6">
-              {/* Transport Controls */}
-              <div>
-                <div className="text-sm text-gray-300 mb-3 font-medium">TRANSPORT</div>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button 
-                      onClick={isPlaying ? handlePause : handlePlay}
-                      variant="outline" 
-                      size="sm" 
-                      className={`h-10 text-sm font-medium ${isPlaying ? 'bg-orange-600/20 border-orange-500/50 text-orange-300' : 'bg-green-600/20 border-green-500/50 text-green-300'} hover:scale-105 transition-all duration-200`}
-                    >
-                      {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    </Button>
-                    <Button 
-                      onClick={handleStop}
-                      variant="outline" 
-                      size="sm" 
-                      className="h-10 bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30 hover:scale-105 transition-all duration-200"
-                    >
-                      <Square className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      onClick={() => setRecordMode(!recordMode)}
-                      variant="outline" 
-                      size="sm" 
-                      className={`h-10 ${recordMode ? 'bg-red-600/30 border-red-500 text-red-200 animate-pulse' : 'bg-gray-600/20 border-gray-500/50 text-gray-300'} hover:scale-105 transition-all duration-200`}
-                    >
-                      <Mic className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="text-xs text-gray-400 text-center">
-                    {isPlaying ? 'Playing' : recordMode ? 'Recording' : 'Stopped'}
-                  </div>
-                </div>
-              </div>
-
+            <div className="grid grid-cols-3 gap-6">
               {/* Global Controls */}
               <div>
-                <div className="text-sm text-gray-300 mb-3 font-medium">GLOBAL</div>
+                <div className="text-xs text-gray-400 mb-2">GLOBAL</div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400 w-12">BPM</span>
@@ -1542,7 +1558,7 @@ const DrumMachine = () => {
                       step={1}
                       className="flex-1"
                     />
-                    <span className="text-xs text-gray-300 w-8 font-medium">{bpm[0]}</span>
+                    <span className="text-xs text-gray-400 w-8">{bpm[0]}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400 w-12">Swing</span>
@@ -1554,7 +1570,7 @@ const DrumMachine = () => {
                       step={1}
                       className="flex-1"
                     />
-                    <span className="text-xs text-gray-300 w-8 font-medium">{swing[0]}%</span>
+                    <span className="text-xs text-gray-400 w-8">{swing[0]}%</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400 w-12">Steps</span>
@@ -1574,7 +1590,7 @@ const DrumMachine = () => {
 
               {/* Neural Controls */}
               <div>
-                <div className="text-sm text-gray-300 mb-3 font-medium">AI ENGINE</div>
+                <div className="text-xs text-gray-400 mb-2">NEURAL ENGINE</div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400 w-12">Temp</span>
@@ -1586,14 +1602,14 @@ const DrumMachine = () => {
                       step={0.1}
                       className="flex-1"
                     />
-                    <span className="text-xs text-gray-300 w-8 font-medium">{temperature[0].toFixed(1)}</span>
+                    <span className="text-xs text-gray-400 w-8">{temperature[0].toFixed(1)}</span>
                   </div>
                   <Button 
                     onClick={generateSequence} 
                     disabled={!neuralEnabled || isGenerating}
                     variant="outline" 
                     size="sm" 
-                    className="w-full h-6 text-xs bg-purple-600/20 border-purple-500/50 text-purple-300 hover:bg-purple-600/30 disabled:opacity-50"
+                    className="w-full h-6 text-xs bg-gray-800 border-gray-600 disabled:opacity-50"
                   >
                     {isGenerating ? <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}
                     {isGenerating ? 'Generating...' : 'Generate'}
@@ -1603,17 +1619,17 @@ const DrumMachine = () => {
 
               {/* Pattern Management */}
               <div>
-                <div className="text-sm text-gray-300 mb-3 font-medium">PATTERNS</div>
+                <div className="text-xs text-gray-400 mb-2">PATTERNS</div>
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-1">
-                    <Button onClick={savePattern} variant="outline" size="sm" className="h-6 text-xs bg-blue-600/20 border-blue-500/50 text-blue-300 hover:bg-blue-600/30">
+                    <Button onClick={savePattern} variant="outline" size="sm" className="h-6 text-xs bg-gray-800 border-gray-600">
                       <Save className="h-3 w-3" />
                     </Button>
-                    <Button onClick={clearPattern} variant="outline" size="sm" className="h-6 text-xs bg-gray-600/20 border-gray-500/50 text-gray-300 hover:bg-gray-600/30">
+                    <Button onClick={clearPattern} variant="outline" size="sm" className="h-6 text-xs bg-gray-800 border-gray-600">
                       <RotateCcw className="h-3 w-3" />
                     </Button>
                   </div>
-                  <Button onClick={randomizePattern} variant="outline" size="sm" className="w-full h-6 text-xs bg-yellow-600/20 border-yellow-500/50 text-yellow-300 hover:bg-yellow-600/30">
+                  <Button onClick={randomizePattern} variant="outline" size="sm" className="w-full h-6 text-xs bg-gray-800 border-gray-600">
                     Randomize
                   </Button>
                 </div>
