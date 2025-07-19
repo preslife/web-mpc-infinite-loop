@@ -482,32 +482,32 @@ const DrumMachine = () => {
                   <p className="text-gray-300 text-sm">{currentPatternName}</p>
                 </div>
                 
-                <div className="h-full">
-                  <div className="grid grid-cols-16 gap-1 overflow-x-auto">
-                    {/* Step numbers row */}
-                    <div className="col-span-16 grid grid-cols-16 gap-1 mb-2">
-                      {Array.from({length: sequencerLength}, (_, stepIndex) => (
-                        <div key={stepIndex} className={`
-                          h-6 rounded text-xs flex items-center justify-center transition-all duration-300
-                          ${currentStep === stepIndex 
-                            ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/50 scale-110' 
-                            : 'bg-gray-700/50 text-gray-400 backdrop-blur-sm'
-                          }
-                        `}>
-                          {stepIndex + 1}
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Track rows */}
+                <div className="h-full overflow-auto">
+                  {/* Step numbers row */}
+                  <div className="flex gap-1 mb-2 overflow-x-auto">
+                    {Array.from({length: sequencerLength}, (_, stepIndex) => (
+                      <div key={stepIndex} className={`
+                        w-8 h-6 rounded text-xs flex items-center justify-center flex-shrink-0 transition-all duration-300
+                        ${currentStep === stepIndex 
+                          ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/50 scale-110' 
+                          : 'bg-gray-700/50 text-gray-400 backdrop-blur-sm'
+                        }
+                      `}>
+                        {stepIndex + 1}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Track rows */}
+                  <div className="space-y-1">
                     {Array.from({length: 16}, (_, padIndex) => (
-                      <div key={padIndex} className="col-span-16 grid grid-cols-16 gap-1 mb-1">
+                      <div key={padIndex} className="flex gap-1 overflow-x-auto">
                         {Array.from({length: sequencerLength}, (_, stepIndex) => (
                           <button
                             key={stepIndex}
                             onClick={() => toggleStep(padIndex, stepIndex)}
                             className={`
-                              h-6 rounded transition-all duration-200
+                              w-8 h-6 rounded flex-shrink-0 transition-all duration-200
                               ${patterns[padIndex][stepIndex]?.active 
                                 ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-md shadow-cyan-500/50' 
                                 : 'bg-gray-600/50 hover:bg-gray-500/70 backdrop-blur-sm'
@@ -518,6 +518,17 @@ const DrumMachine = () => {
                         ))}
                       </div>
                     ))}
+                  </div>
+                  
+                  {/* Track labels */}
+                  <div className="mt-2 text-xs text-gray-400">
+                    <div className="grid grid-cols-4 gap-1">
+                      {Array.from({length: 16}, (_, i) => (
+                        <div key={i} className="text-center truncate">
+                          T{i + 1}: {samples[i]?.buffer ? samples[i].name.substring(0, 6) : 'Empty'}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
