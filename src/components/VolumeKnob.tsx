@@ -126,12 +126,6 @@ export const VolumeKnob = ({ value, onChange, size = 'md', label }: VolumeKnobPr
           }}
         >
           {displayValue}
-          <div 
-            className="absolute inset-0 flex items-center justify-center text-black opacity-10 z-0"
-            style={{ fontFamily: '"Alarm Clock", "Orbitron", monospace' }}
-          >
-            88
-          </div>
         </div>
       </div>
     </div>

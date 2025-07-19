@@ -522,6 +522,40 @@ const DrumMachine = () => {
                           {samples[padIndex]?.name || `T${padIndex + 1}`}
                         </div>
                         
+                        {/* Mute/Solo buttons */}
+                        <div className="flex gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => {
+                              const newMutes = [...trackMutes];
+                              newMutes[padIndex] = !newMutes[padIndex];
+                              setTrackMutes(newMutes);
+                            }}
+                            className={`w-6 h-6 rounded text-xs font-bold transition-all duration-200 ${
+                              trackMutes[padIndex] 
+                                ? 'bg-red-600 border border-red-500 text-white shadow-md shadow-red-500/50' 
+                                : 'bg-gray-700/50 border border-gray-600 text-gray-400 hover:bg-gray-600/70'
+                            }`}
+                            title={`Mute track ${padIndex + 1}`}
+                          >
+                            M
+                          </button>
+                          <button
+                            onClick={() => {
+                              const newSolos = [...trackSolos];
+                              newSolos[padIndex] = !newSolos[padIndex];
+                              setTrackSolos(newSolos);
+                            }}
+                            className={`w-6 h-6 rounded text-xs font-bold transition-all duration-200 ${
+                              trackSolos[padIndex] 
+                                ? 'bg-yellow-600 border border-yellow-500 text-white shadow-md shadow-yellow-500/50' 
+                                : 'bg-gray-700/50 border border-gray-600 text-gray-400 hover:bg-gray-600/70'
+                            }`}
+                            title={`Solo track ${padIndex + 1}`}
+                          >
+                            S
+                          </button>
+                        </div>
+                        
                         {/* Step buttons */}
                         {Array.from({length: sequencerLength}, (_, stepIndex) => (
                           <button
@@ -778,45 +812,6 @@ const DrumMachine = () => {
                 ))}
               </div>
 
-              {/* Mute/Solo Buttons */}
-              <div className="grid grid-cols-16 gap-1 mt-4">
-                {Array.from({length: 16}, (_, i) => (
-                  <div key={i} className="flex flex-col gap-1">
-                    <Button
-                      onClick={() => {
-                        const newMutes = [...trackMutes];
-                        newMutes[i] = !newMutes[i];
-                        setTrackMutes(newMutes);
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className={`h-6 w-6 p-0 text-xs ${
-                        trackMutes[i] 
-                          ? 'bg-red-600 border-red-500 text-white' 
-                          : 'bg-gray-800 border-gray-600 text-gray-400'
-                      }`}
-                    >
-                      M
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        const newSolos = [...trackSolos];
-                        newSolos[i] = !newSolos[i];
-                        setTrackSolos(newSolos);
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className={`h-6 w-6 p-0 text-xs ${
-                        trackSolos[i] 
-                          ? 'bg-yellow-600 border-yellow-500 text-white' 
-                          : 'bg-gray-800 border-gray-600 text-gray-400'
-                      }`}
-                    >
-                      S
-                    </Button>
-                  </div>
-                ))}
-              </div>
             </div>
             </div>
           </div>
