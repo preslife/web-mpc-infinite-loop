@@ -1403,6 +1403,18 @@ const DrumMachine = () => {
           </div>
         </div>
 
+        {/* Waveform Visualizer Panel */}
+        <div className="bg-gray-900/60 backdrop-blur-md p-2 mb-2 rounded-lg border border-cyan-500/20 shadow-lg shadow-cyan-500/10 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 rounded-lg pointer-events-none"></div>
+          <div className="relative z-10 flex items-center justify-center gap-2">
+            <span className="text-xs text-cyan-400 font-medium">WAVEFORM</span>
+            <WaveformVisualizer 
+              isPlaying={isPlaying} 
+              className="flex-1 max-w-md" 
+            />
+          </div>
+        </div>
+
         {/* Transport Controls */}
         <div className="bg-gray-900/80 backdrop-blur-md p-4 mb-2 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
