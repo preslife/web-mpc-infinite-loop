@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit, RefreshCw, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { WaveformEditor } from './WaveformEditor';
@@ -490,6 +491,53 @@ const DrumMachine = () => {
     toast.info(`Randomized patterns for ${targetDescription}!`);
   };
 
+  const fillPattern = (trackIndex: number, fillType: string) => {
+    if (!samples[trackIndex]?.buffer) {
+      toast.error(`Track ${trackIndex + 1} has no sample loaded.`);
+      return;
+    }
+
+    const newPatterns = [...patterns];
+    const pattern = [...newPatterns[trackIndex]];
+    
+    // Clear the pattern first
+    pattern.forEach((step, index) => {
+      pattern[index] = { ...step, active: false };
+    });
+
+    // Fill based on type
+    switch (fillType) {
+      case '4x4':
+        // Every 4 steps (quarters)
+        for (let i = 0; i < sequencerLength; i += 4) {
+          pattern[i] = { active: true, velocity: 80 };
+        }
+        break;
+      case '2x2':
+        // Every 2 steps (eighths)
+        for (let i = 0; i < sequencerLength; i += 2) {
+          pattern[i] = { active: true, velocity: 80 };
+        }
+        break;
+      case '1x1':
+        // Every step (sixteenths)
+        for (let i = 0; i < sequencerLength; i++) {
+          pattern[i] = { active: true, velocity: 80 };
+        }
+        break;
+      case '8x8':
+        // Every 8 steps (half notes)
+        for (let i = 0; i < sequencerLength; i += 8) {
+          pattern[i] = { active: true, velocity: 80 };
+        }
+        break;
+    }
+
+    newPatterns[trackIndex] = pattern;
+    setPatterns(newPatterns);
+    toast.success(`Filled track ${trackIndex + 1} with ${fillType} pattern`);
+  };
+
   const savePattern = () => {
     const newPattern = {
       name: currentPatternName,
@@ -962,18 +1010,48 @@ const DrumMachine = () => {
                   <div className="space-y-1">
                     {Array.from({length: 16}, (_, padIndex) => (
                       <div key={padIndex} className="flex items-center gap-1 overflow-x-auto">
-                        {/* Track label on the left - clickable */}
-                        <button
-                          onClick={() => handleTrackLabelClick(padIndex)}
-                          className={`w-14 flex-shrink-0 text-xs truncate transition-all duration-200 rounded px-1 py-0.5 ${
-                            selectedTrack === padIndex 
-                              ? 'bg-cyan-600/30 border border-cyan-400/50 text-cyan-300 shadow-md shadow-cyan-500/30' 
-                              : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-300'
-                          }`}
-                          title={`${selectedTrack === padIndex ? 'Double-click to unselect' : 'Click to select'} track ${padIndex + 1}`}
-                        >
-                          {samples[padIndex]?.name || `T${padIndex + 1}`}
-                        </button>
+                        {/* Track label on the left - clickable with context menu */}
+                        <ContextMenu>
+                          <ContextMenuTrigger asChild>
+                            <button
+                              onClick={() => handleTrackLabelClick(padIndex)}
+                              className={`w-14 flex-shrink-0 text-xs truncate transition-all duration-200 rounded px-1 py-0.5 ${
+                                selectedTrack === padIndex 
+                                  ? 'bg-cyan-600/30 border border-cyan-400/50 text-cyan-300 shadow-md shadow-cyan-500/30' 
+                                  : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-300'
+                              }`}
+                              title={`${selectedTrack === padIndex ? 'Double-click to unselect' : 'Click to select'} track ${padIndex + 1}. Right-click for fill options.`}
+                            >
+                              {samples[padIndex]?.name || `T${padIndex + 1}`}
+                            </button>
+                          </ContextMenuTrigger>
+                          <ContextMenuContent className="bg-gray-900 border-gray-700">
+                            <ContextMenuItem 
+                              onClick={() => fillPattern(padIndex, '8x8')}
+                              className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700"
+                            >
+                              Fill 8x8 (Half Notes)
+                            </ContextMenuItem>
+                            <ContextMenuItem 
+                              onClick={() => fillPattern(padIndex, '4x4')}
+                              className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700"
+                            >
+                              Fill 4x4 (Quarter Notes)
+                            </ContextMenuItem>
+                            <ContextMenuItem 
+                              onClick={() => fillPattern(padIndex, '2x2')}
+                              className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700"
+                            >
+                              Fill 2x2 (Eighth Notes)
+                            </ContextMenuItem>
+                            <ContextMenuItem 
+                              onClick={() => fillPattern(padIndex, '1x1')}
+                              className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700"
+                            >
+                              Fill 1x1 (Sixteenth Notes)
+                            </ContextMenuItem>
+                          </ContextMenuContent>
+                        </ContextMenu>
                         
                         {/* Mute/Solo buttons */}
                         <div className="flex gap-1 flex-shrink-0">
