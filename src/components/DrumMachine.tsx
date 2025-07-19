@@ -79,6 +79,7 @@ const DrumMachine = () => {
   });
   const [midiLearning, setMidiLearning] = useState<number | null>(null);
   const [showMidiPanel, setShowMidiPanel] = useState(false);
+  const [patternTarget, setPatternTarget] = useState<'all' | 'selected'>('all');
 
   // Audio effects state
   const [trackEffects, setTrackEffects] = useState<Array<{
@@ -342,26 +343,61 @@ const DrumMachine = () => {
   // Helper function to count loaded samples
   const getLoadedSamplesCount = () => samples.filter(sample => sample?.buffer).length;
 
+  // Helper function to check if pattern operations are possible
+  const canPerformPatternOperations = () => {
+    if (patternTarget === 'all') {
+      return getLoadedSamplesCount() > 0;
+    } else {
+      return selectedPad !== null && samples[selectedPad]?.buffer;
+    }
+  };
+
+  // Helper function to get operation description
+  const getOperationDescription = () => {
+    if (patternTarget === 'all') {
+      const count = getLoadedSamplesCount();
+      return count > 0 ? `${count} loaded tracks` : 'No tracks loaded';
+    } else {
+      if (selectedPad === null) return 'No pad selected';
+      if (!samples[selectedPad]?.buffer) return 'Selected pad has no sample';
+      return `pad ${selectedPad + 1}`;
+    }
+  };
+
   const generateSequence = async () => {
     if (!rnnRef.current || !neuralEnabled) {
       toast.error('Neural drum engine not initialized.');
       return;
     }
 
-    // Check if there are any tracks with samples loaded
-    const tracksWithSamples = samples.filter(sample => sample?.buffer).length;
-    if (tracksWithSamples === 0) {
-      toast.error('Load samples first to generate patterns.');
-      return;
+    // Check target tracks based on mode
+    let targetTracks: number[] = [];
+    if (patternTarget === 'all') {
+      targetTracks = samples.map((sample, index) => sample?.buffer ? index : -1).filter(i => i !== -1);
+      if (targetTracks.length === 0) {
+        toast.error('Load samples first to generate patterns.');
+        return;
+      }
+    } else {
+      // Selected track mode
+      if (selectedPad === null) {
+        toast.error('Select a pad first to generate patterns.');
+        return;
+      }
+      if (!samples[selectedPad]?.buffer) {
+        toast.error('Selected pad has no sample loaded.');
+        return;
+      }
+      targetTracks = [selectedPad];
     }
 
     setIsGenerating(true);
     try {
-      // Create a seed sequence (first 4 steps of the current pattern) - only for tracks with samples
+      // Create a seed sequence - only for target tracks
       const seedSequence = {
         notes: patterns.map((pad, index) => {
-          // Only include tracks that have samples loaded
-          if (!samples[index]?.buffer) return null;
+          // Only include target tracks
+          if (!targetTracks.includes(index)) return null;
           
           const activeStepIndex = pad.findIndex(step => step.active);
           return activeStepIndex !== -1 ? { pitch: index + 36, quantizedStartStep: activeStepIndex } : null;
@@ -373,20 +409,24 @@ const DrumMachine = () => {
       // Generate continuation
       const continuation = await rnnRef.current.continueSequence(seedSequence, sequencerLength - seedLength, temperature[0]);
 
-      // Update patterns with the generated sequence - only for tracks with samples
+      // Update patterns with the generated sequence - only for target tracks
       const newPatterns = [...patterns];
       continuation.notes.forEach(note => {
         const stepIndex = note.quantizedStartStep;
-        const padIndex = note.pitch - 36; // Assuming MIDI note 36 corresponds to the first pad
+        const padIndex = note.pitch - 36;
         
-        // Only apply to tracks that have samples loaded
-        if (stepIndex >= 0 && stepIndex < sequencerLength && padIndex >= 0 && padIndex < 16 && samples[padIndex]?.buffer) {
-          newPatterns[padIndex] = [...newPatterns[padIndex]]; // Create a new copy of the pad's steps
+        // Only apply to target tracks
+        if (stepIndex >= 0 && stepIndex < sequencerLength && targetTracks.includes(padIndex)) {
+          newPatterns[padIndex] = [...newPatterns[padIndex]];
           newPatterns[padIndex][stepIndex] = { active: true, velocity: 80 };
         }
       });
       setPatterns(newPatterns);
-      toast.success(`Generated patterns for ${tracksWithSamples} loaded tracks!`);
+      
+      const targetDescription = patternTarget === 'all' 
+        ? `${targetTracks.length} loaded tracks` 
+        : `pad ${selectedPad! + 1}`;
+      toast.success(`Generated patterns for ${targetDescription}!`);
     } catch (error) {
       console.error('Error generating sequence:', error);
       toast.error('Failed to generate sequence.');
@@ -402,17 +442,31 @@ const DrumMachine = () => {
   };
 
   const randomizePattern = () => {
-    // Check if there are any tracks with samples loaded
-    const tracksWithSamples = samples.filter(sample => sample?.buffer).length;
-    if (tracksWithSamples === 0) {
-      toast.error('Load samples first to randomize patterns.');
-      return;
+    // Check target tracks based on mode
+    let targetTracks: number[] = [];
+    if (patternTarget === 'all') {
+      targetTracks = samples.map((sample, index) => sample?.buffer ? index : -1).filter(i => i !== -1);
+      if (targetTracks.length === 0) {
+        toast.error('Load samples first to randomize patterns.');
+        return;
+      }
+    } else {
+      // Selected track mode
+      if (selectedPad === null) {
+        toast.error('Select a pad first to randomize patterns.');
+        return;
+      }
+      if (!samples[selectedPad]?.buffer) {
+        toast.error('Selected pad has no sample loaded.');
+        return;
+      }
+      targetTracks = [selectedPad];
     }
 
     const newPatterns = patterns.map((pattern, trackIndex) => {
-      // Only randomize tracks that have samples loaded
-      if (!samples[trackIndex]?.buffer) {
-        return pattern; // Keep existing pattern for tracks without samples
+      // Only randomize target tracks
+      if (!targetTracks.includes(trackIndex)) {
+        return pattern; // Keep existing pattern for non-target tracks
       }
       
       return pattern.map(() => ({
@@ -422,7 +476,10 @@ const DrumMachine = () => {
     });
     
     setPatterns(newPatterns);
-    toast.info(`Randomized patterns for ${tracksWithSamples} loaded tracks!`);
+    const targetDescription = patternTarget === 'all' 
+      ? `${targetTracks.length} loaded tracks` 
+      : `pad ${selectedPad! + 1}`;
+    toast.info(`Randomized patterns for ${targetDescription}!`);
   };
 
   const savePattern = () => {
@@ -810,9 +867,9 @@ const DrumMachine = () => {
                   {/* Neural Generate Button */}
                   <Button
                     onClick={generateSequence}
-                    disabled={!neuralEnabled || isGenerating || getLoadedSamplesCount() === 0}
+                    disabled={!neuralEnabled || isGenerating || !canPerformPatternOperations()}
                     className="h-8 px-3 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
-                    title={getLoadedSamplesCount() === 0 ? 'Load samples first' : neuralEnabled ? `Generate AI patterns for ${getLoadedSamplesCount()} loaded tracks` : 'Neural engine not available'}
+                    title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : neuralEnabled ? `Generate AI patterns for ${getOperationDescription()}` : 'Neural engine not available'}
                   >
                     {isGenerating ? <RefreshCw className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
                     {isGenerating ? 'Generating...' : 'Generate'}
@@ -973,6 +1030,25 @@ const DrumMachine = () => {
                 </Button>
               </div>
 
+              {/* Pattern Target Selection */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-400">Target:</span>
+                <Select value={patternTarget} onValueChange={(value: 'all' | 'selected') => setPatternTarget(value)}>
+                  <SelectTrigger className="h-8 w-32 text-xs bg-gray-800/50 border-gray-600">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Tracks</SelectItem>
+                    <SelectItem value="selected">Selected Track</SelectItem>
+                  </SelectContent>
+                </Select>
+                {patternTarget === 'selected' && (
+                  <span className="text-xs text-cyan-400">
+                    {selectedPad !== null ? `Pad ${selectedPad + 1}` : 'No pad selected'}
+                  </span>
+                )}
+              </div>
+
               {/* Status Display */}
               <div className="text-center">
                 <div className="text-lg font-bold text-white mb-1">
@@ -997,15 +1073,15 @@ const DrumMachine = () => {
                 
                 <Button 
                   onClick={randomizePattern} 
-                  disabled={getLoadedSamplesCount() === 0}
+                  disabled={!canPerformPatternOperations()}
                   variant="outline" 
                   size="sm" 
                   className={`transition-all duration-200 ${
-                    getLoadedSamplesCount() === 0 
+                    !canPerformPatternOperations()
                       ? 'bg-gray-600/10 border-gray-500/30 text-gray-500 cursor-not-allowed' 
                       : 'bg-purple-600/20 border-purple-500/50 text-purple-300 hover:bg-purple-600/30'
                   }`}
-                  title={getLoadedSamplesCount() === 0 ? 'Load samples first' : `Randomize patterns for ${getLoadedSamplesCount()} loaded tracks`}
+                  title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : `Randomize patterns for ${getOperationDescription()}`}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Random
@@ -1081,15 +1157,15 @@ const DrumMachine = () => {
                 <Button variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">EVENTS</Button>
                 <Button 
                   onClick={randomizePattern}
-                  disabled={getLoadedSamplesCount() === 0}
+                  disabled={!canPerformPatternOperations()}
                   variant="outline" 
                   size="sm" 
                   className={`w-full text-xs ${
-                    getLoadedSamplesCount() === 0 
+                    !canPerformPatternOperations()
                       ? 'bg-gray-700/50 border-gray-600/50 text-gray-500 cursor-not-allowed' 
                       : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
                   }`}
-                  title={getLoadedSamplesCount() === 0 ? 'Load samples first' : `Randomize patterns for ${getLoadedSamplesCount()} loaded tracks`}
+                  title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : `Randomize patterns for ${getOperationDescription()}`}
                 >
                   RANDOM
                 </Button>
@@ -1650,11 +1726,11 @@ const DrumMachine = () => {
                   </div>
                   <Button 
                     onClick={generateSequence} 
-                    disabled={!neuralEnabled || isGenerating || getLoadedSamplesCount() === 0}
+                    disabled={!neuralEnabled || isGenerating || !canPerformPatternOperations()}
                     variant="outline" 
                     size="sm" 
                     className="w-full h-6 text-xs bg-gray-800 border-gray-600 disabled:opacity-50"
-                    title={getLoadedSamplesCount() === 0 ? 'Load samples first' : neuralEnabled ? `Generate AI patterns for ${getLoadedSamplesCount()} loaded tracks` : 'Neural engine not available'}
+                    title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : neuralEnabled ? `Generate AI patterns for ${getOperationDescription()}` : 'Neural engine not available'}
                   >
                     {isGenerating ? <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}
                     {isGenerating ? 'Generating...' : 'Generate'}
@@ -1676,15 +1752,15 @@ const DrumMachine = () => {
                   </div>
                   <Button 
                     onClick={randomizePattern} 
-                    disabled={getLoadedSamplesCount() === 0}
+                    disabled={!canPerformPatternOperations()}
                     variant="outline" 
                     size="sm" 
                     className={`w-full h-6 text-xs ${
-                      getLoadedSamplesCount() === 0 
+                      !canPerformPatternOperations()
                         ? 'bg-gray-700/50 border-gray-600/50 text-gray-500 cursor-not-allowed' 
                         : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
                     }`}
-                    title={getLoadedSamplesCount() === 0 ? 'Load samples first' : `Randomize patterns for ${getLoadedSamplesCount()} loaded tracks`}
+                    title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : `Randomize patterns for ${getOperationDescription()}`}
                   >
                     Randomize
                   </Button>
