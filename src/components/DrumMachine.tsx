@@ -2,12 +2,16 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download } from 'lucide-react';
+import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit } from 'lucide-react';
 import { toast } from 'sonner';
+import { WaveformEditor } from './WaveformEditor';
 
 interface Sample {
   buffer: AudioBuffer | null;
   name: string;
+  startTime: number;
+  endTime: number;
+  gateMode: boolean;
 }
 
 interface PatternStep {
@@ -29,7 +33,7 @@ const DrumMachine = () => {
   const [currentStep, setCurrentStep] = useState(-1);
   const [bpm, setBpm] = useState([120]);
   const [sequencerLength, setSequencerLength] = useState(16);
-  const [samples, setSamples] = useState<Sample[]>(Array(16).fill({ buffer: null, name: '' }));
+  const [samples, setSamples] = useState<Sample[]>(Array(16).fill({ buffer: null, name: '', startTime: 0, endTime: 1, gateMode: false }));
   const [patterns, setPatterns] = useState<PatternStep[][]>(
     Array(16).fill(null).map(() => Array(64).fill({ active: false, velocity: 80 }))
   );
@@ -41,6 +45,8 @@ const DrumMachine = () => {
   const [swing, setSwing] = useState([0]);
   const [savedPatterns, setSavedPatterns] = useState<Pattern[]>([]);
   const [currentPatternName, setCurrentPatternName] = useState('Pattern 1');
+  const [editingSample, setEditingSample] = useState<number | null>(null);
+  const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingChunksRef = useRef<Blob[]>([]);
@@ -94,7 +100,7 @@ const DrumMachine = () => {
     scheduleNextStep();
   }, [isPlaying, bpm, patterns, samples, sequencerLength, swing, trackMutes, trackSolos]);
 
-  const playPad = useCallback((padIndex: number, velocity: number = 80) => {
+  const playPad = useCallback((padIndex: number, velocity: number = 80, gateMode: boolean = false) => {
     if (!audioContextRef.current || !samples[padIndex]?.buffer) return;
     
     // Check mute/solo state
@@ -103,10 +109,31 @@ const DrumMachine = () => {
     
     if (!shouldPlay) return;
 
+    // Stop any currently playing source for this pad if in gate mode
+    if (gateMode) {
+      const currentSource = playingSources.get(padIndex);
+      if (currentSource) {
+        currentSource.stop();
+        setPlayingSources(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(padIndex);
+          return newMap;
+        });
+      }
+    }
+
     const source = audioContextRef.current.createBufferSource();
     const gainNode = audioContextRef.current.createGain();
     
     source.buffer = samples[padIndex].buffer;
+    
+    // Calculate sample slice timing
+    const sample = samples[padIndex];
+    const duration = sample.buffer!.duration;
+    const startTime = sample.startTime * duration;
+    const endTime = sample.endTime * duration;
+    const sliceDuration = endTime - startTime;
+    
     // Combine pattern velocity with track volume
     const finalVolume = (velocity / 127) * (trackVolumes[padIndex] / 100);
     gainNode.gain.value = finalVolume;
@@ -114,8 +141,21 @@ const DrumMachine = () => {
     source.connect(gainNode);
     gainNode.connect(audioContextRef.current.destination);
     
-    source.start();
-  }, [samples, trackVolumes, trackMutes, trackSolos]);
+    // Track the source if in gate mode
+    if (gateMode) {
+      setPlayingSources(prev => new Map(prev).set(padIndex, source));
+      
+      source.onended = () => {
+        setPlayingSources(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(padIndex);
+          return newMap;
+        });
+      };
+    }
+    
+    source.start(0, startTime, gateMode ? undefined : sliceDuration);
+  }, [samples, trackVolumes, trackMutes, trackSolos, playingSources]);
 
   const startRecording = async (padIndex: number) => {
     try {
@@ -134,7 +174,13 @@ const DrumMachine = () => {
         if (audioContextRef.current) {
           const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
           const newSamples = [...samples];
-          newSamples[padIndex] = { buffer: audioBuffer, name: `Sample ${padIndex + 1}` };
+          newSamples[padIndex] = { 
+            buffer: audioBuffer, 
+            name: `Sample ${padIndex + 1}`,
+            startTime: 0,
+            endTime: 1,
+            gateMode: false
+          };
           setSamples(newSamples);
           toast.success('Sample recorded!');
         }
@@ -165,7 +211,13 @@ const DrumMachine = () => {
       if (audioContextRef.current) {
         const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
         const newSamples = [...samples];
-        newSamples[padIndex] = { buffer: audioBuffer, name: file.name.replace(/\.[^/.]+$/, "") };
+        newSamples[padIndex] = { 
+          buffer: audioBuffer, 
+          name: file.name.replace(/\.[^/.]+$/, ""),
+          startTime: 0,
+          endTime: 1,
+          gateMode: false
+        };
         setSamples(newSamples);
         toast.success(`Sample "${file.name}" loaded!`);
       }
@@ -187,11 +239,25 @@ const DrumMachine = () => {
     if (recordMode) {
       startRecording(padIndex);
     } else if (samples[padIndex]?.buffer) {
-      playPad(padIndex, trackVolumes[padIndex]);
+      playPad(padIndex, trackVolumes[padIndex], samples[padIndex].gateMode);
     } else {
       // Open file picker for empty pads
       setSelectedPad(padIndex);
       fileInputRef.current?.click();
+    }
+  };
+
+  const handlePadRelease = (padIndex: number) => {
+    if (samples[padIndex]?.gateMode) {
+      const currentSource = playingSources.get(padIndex);
+      if (currentSource) {
+        currentSource.stop();
+        setPlayingSources(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(padIndex);
+          return newMap;
+        });
+      }
     }
   };
 
@@ -309,20 +375,37 @@ const DrumMachine = () => {
           </h2>
           <div className="grid grid-cols-4 gap-4">
             {Array.from({ length: 16 }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => handlePadPress(i)}
-                className={`
-                  h-48 w-48 rounded-lg font-bold text-lg transition-all duration-150 active:scale-95 neon-border
-                  ${samples[i]?.buffer 
-                    ? 'bg-gradient-active text-primary-foreground glass-glow-strong' 
-                    : 'glass-panel hover:glass-glow'
-                  }
-                  ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-destructive' : ''}
-                `}
-              >
-                {samples[i]?.buffer ? samples[i].name.split(' ')[1] : isRecording && selectedPad === i ? 'REC' : i + 1}
-              </button>
+              <div key={i} className="relative group">
+                <button
+                  onMouseDown={() => handlePadPress(i)}
+                  onMouseUp={() => handlePadRelease(i)}
+                  onMouseLeave={() => handlePadRelease(i)}
+                  onTouchStart={() => handlePadPress(i)}
+                  onTouchEnd={() => handlePadRelease(i)}
+                  className={`
+                    h-48 w-48 rounded-lg font-bold text-lg transition-all duration-150 active:scale-95 neon-border
+                    ${samples[i]?.buffer 
+                      ? 'bg-gradient-active text-primary-foreground glass-glow-strong' 
+                      : 'glass-panel hover:glass-glow'
+                    }
+                    ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-destructive' : ''}
+                    ${samples[i]?.gateMode ? 'ring-2 ring-accent' : ''}
+                  `}
+                >
+                  {samples[i]?.buffer ? samples[i].name.split(' ')[1] : isRecording && selectedPad === i ? 'REC' : i + 1}
+                </button>
+                
+                {samples[i]?.buffer && (
+                  <Button
+                    onClick={() => setEditingSample(i)}
+                    variant="outline"
+                    size="sm"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-4">
@@ -581,6 +664,21 @@ const DrumMachine = () => {
             </div>
           </div>
         </div>
+
+        {/* Waveform Editor */}
+        {editingSample !== null && samples[editingSample]?.buffer && (
+          <div className="mt-6">
+            <WaveformEditor
+              sample={samples[editingSample]}
+              onSampleUpdate={(updatedSample) => {
+                const newSamples = [...samples];
+                newSamples[editingSample] = updatedSample;
+                setSamples(newSamples);
+              }}
+              onClose={() => setEditingSample(null)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
