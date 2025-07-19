@@ -492,9 +492,21 @@ const DrumMachine = () => {
           <div className="bg-black/30 backdrop-blur-sm h-full rounded border border-gray-600/50 p-4 relative z-10 shadow-inner">
             {displayMode === 'sequencer' ? (
               <div className="h-full">
-                <div className="text-center mb-4">
-                  <h2 className="text-xl font-bold text-cyan-300 mb-2 text-shadow-glow">SEQUENCER</h2>
-                  <p className="text-gray-300 text-sm">{currentPatternName}</p>
+                <div className="flex justify-between items-center mb-4">
+                  <div className="text-center flex-1">
+                    <h2 className="text-xl font-bold text-cyan-300 mb-2 text-shadow-glow">SEQUENCER</h2>
+                    <p className="text-gray-300 text-sm">{currentPatternName}</p>
+                  </div>
+                  
+                  {/* Neural Generate Button */}
+                  <Button
+                    onClick={generateSequence}
+                    disabled={!neuralEnabled || isGenerating}
+                    className="h-8 px-3 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
+                  >
+                    {isGenerating ? <RefreshCw className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                    {isGenerating ? 'Generating...' : 'Generate'}
+                  </Button>
                 </div>
                 
                 <div className="h-full overflow-auto">
@@ -903,18 +915,10 @@ const DrumMachine = () => {
                 </div>
               </div>
 
-              {/* Neural Generation */}
+              {/* Neural Controls */}
               <div>
                 <div className="text-xs text-gray-400 mb-2">NEURAL ENGINE</div>
                 <div className="space-y-2">
-                  <Button
-                    onClick={generateSequence}
-                    disabled={!neuralEnabled || isGenerating}
-                    className="w-full h-6 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
-                  >
-                    {isGenerating ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                    {isGenerating ? 'Generating...' : 'Generate'}
-                  </Button>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400 w-12">Temp</span>
                     <Slider

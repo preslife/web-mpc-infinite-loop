@@ -72,13 +72,12 @@ export const VolumeKnob = ({ value, onChange, size = 'md', label }: VolumeKnobPr
       {label && <div className="text-xs text-gray-400">{label}</div>}
       
       <div className={`relative ${sizeClasses[size].container}`}>
-        {/* Glow effect */}
+        {/* Progress ring */}
         <div 
           className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${sizeClasses[size].glow} rounded-full z-0`}
           style={{
             background: `radial-gradient(circle at 50% 50%, #333333 40%, transparent 41%), conic-gradient(from 0deg, transparent 0%, transparent ${(value / 100) * 100}%, #00ddff ${(value / 100) * 100}%, #00ddff ${(value / 100) * 100 + 1}%, transparent ${(value / 100) * 100 + 2}%, transparent 100%)`,
-            boxShadow: isDragging ? '0 0 20px #00ddff, inset 0 0 20px #00ddff' : '0 0 10px #00ddff40',
-            border: '5px solid #00bcd410'
+            border: '2px solid #00bcd420'
           }}
         />
         
@@ -88,9 +87,7 @@ export const VolumeKnob = ({ value, onChange, size = 'md', label }: VolumeKnobPr
           className={`relative ${sizeClasses[size].knob} rounded-full cursor-pointer select-none`}
           style={{
             background: 'linear-gradient(145deg, #525252 0%, #373737 100%)',
-            boxShadow: isDragging 
-              ? '0 0 20px #00ddff, 0 20px 35px #111111, inset 0 5px 6px #979797, inset 0 -5px 6px #242424'
-              : '0 -20px 20px #757575, 0 20px 35px #111111, inset 0 5px 6px #979797, inset 0 -5px 6px #242424'
+            boxShadow: '0 -20px 20px #757575, 0 20px 35px #111111, inset 0 5px 6px #979797, inset 0 -5px 6px #242424'
           }}
           onMouseDown={handleMouseDown}
         >
@@ -99,9 +96,7 @@ export const VolumeKnob = ({ value, onChange, size = 'md', label }: VolumeKnobPr
             className="absolute top-3 left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full transition-all duration-200"
             style={{
               background: `radial-gradient(circle at 50% 45%, ${isDragging ? '#c7e6ff' : '#39c1ff'} 4px, transparent 5px), radial-gradient(circle at 50% 50%, #404040 4px, transparent 6px), radial-gradient(circle at 50% 40%, #1118 4px, transparent 5px), linear-gradient(0deg, #373737, #2e2e2e)`,
-              boxShadow: isDragging 
-                ? '0 0 10px #00ddff, 0 0 30px #00ddff, inset 0 0 10px #00ddff, 0 -1px 1px #111, 0 3px 3px #404040'
-                : '0 -1px 1px #111, 0 1px 1px #555',
+              boxShadow: '0 -1px 1px #111, 0 1px 1px #555',
               border: `2px solid ${isDragging ? '#00ddff' : '#2e2e2e'}`,
               transform: `translateX(-50%) rotate(${rotation}deg)`
             }}
@@ -115,13 +110,9 @@ export const VolumeKnob = ({ value, onChange, size = 'md', label }: VolumeKnobPr
             background: '#282828',
             color: isDragging ? '#c7eaff' : '#39c1ff',
             fontFamily: '"Alarm Clock", "Orbitron", monospace',
-            boxShadow: isDragging 
-              ? '0 0 10px #000 inset, 0 0 100px -40px #335564 inset, 0 0 30px #8edbff'
-              : '0 0 10px #000 inset, 0 0 100px -80px #39c1ff inset',
+            boxShadow: '0 0 10px #000 inset, 0 0 100px -80px #39c1ff inset',
             border: '2px solid #0001',
-            textShadow: isDragging 
-              ? '0 0 2px #2196f3, 0 0 2px #2196f3, 0 0 2px #23759b, 0 0 20px #144054, 0 0 25px #39c1ff'
-              : '0 0 3px #000, 0 0 2px #000, 0 0 3px #39c1ff',
+            textShadow: '0 0 3px #000, 0 0 2px #000, 0 0 3px #39c1ff',
             filter: 'drop-shadow(-1px -2px 1px #111) drop-shadow(0px 1px 1px #404040)'
           }}
         >
