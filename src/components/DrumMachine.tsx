@@ -830,18 +830,23 @@ const DrumMachine = () => {
       if (padIndex !== undefined && padIndex >= 0 && padIndex < 16) {
         if (status === 144 && velocity > 0) {
           console.log('Triggering pad', padIndex, 'from MIDI note', note);
-          // Note On - trigger pad using handlePadPress to include pattern recording logic
-          setSelectedPad(padIndex);
-          handlePadPress(padIndex);
+          // Note On - use same logic as pad press but trigger playPad directly
+          playPad(padIndex, velocity);
+          
+          // Add to pattern if recording
+          if (isPatternRecording && isPlaying) {
+            toggleStep(padIndex, currentStep);
+          }
           
           // Visual feedback
+          setSelectedPad(padIndex);
           setTimeout(() => setSelectedPad(null), 100);
         }
       } else {
         console.log('No mapping found for MIDI note', note);
       }
     }
-  }, [midiMapping, midiLearning, playPad]);
+  }, [midiMapping, midiLearning, playPad, isPatternRecording, isPlaying, currentStep, toggleStep]);
 
   // Update MIDI event listeners when handleMIDIMessage changes
   useEffect(() => {

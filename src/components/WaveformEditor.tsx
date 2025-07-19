@@ -31,11 +31,15 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose }: WaveformEdit
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
+      // Stop any playing audio before cleanup
+      if (currentSource) {
+        currentSource.stop();
+      }
       if (audioContextRef.current) {
         audioContextRef.current.close();
       }
     };
-  }, []);
+  }, [currentSource]);
 
   // Generate waveform data
   useEffect(() => {
@@ -136,8 +140,13 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose }: WaveformEdit
   const playPreview = () => {
     if (!audioContextRef.current || !sample.buffer) return;
 
-    if (isPlaying && currentSource) {
+    // Stop any currently playing source first (always stop for previews)
+    if (currentSource) {
       currentSource.stop();
+      setCurrentSource(null);
+    }
+
+    if (isPlaying) {
       setIsPlaying(false);
       return;
     }
