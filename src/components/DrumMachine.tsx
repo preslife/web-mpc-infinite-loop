@@ -34,7 +34,7 @@ const DrumMachine = () => {
   const [currentStep, setCurrentStep] = useState(-1);
   const [bpm, setBpm] = useState([120]);
   const [sequencerLength, setSequencerLength] = useState(16);
-  const [samples, setSamples] = useState<Sample[]>(Array(16).fill({ buffer: null, name: '', startTime: 0, endTime: 1, gateMode: false }));
+  const [samples, setSamples] = useState<Sample[]>(Array(16).fill({ buffer: null, name: '', startTime: 0, endTime: 1, gateMode: true }));
   const [patterns, setPatterns] = useState<PatternStep[][]>(
     Array(16).fill(null).map(() => Array(64).fill({ active: false, velocity: 80 }))
   );
@@ -204,7 +204,7 @@ const DrumMachine = () => {
             name: `Sample ${padIndex + 1}`,
             startTime: 0,
             endTime: 1,
-            gateMode: false
+            gateMode: true
           };
           setSamples(newSamples);
           toast.success('Sample recorded!');
@@ -241,7 +241,7 @@ const DrumMachine = () => {
           name: file.name.replace(/\.[^/.]+$/, ""),
           startTime: 0,
           endTime: 1,
-          gateMode: false
+          gateMode: true
         };
         setSamples(newSamples);
         toast.success(`Sample "${file.name}" loaded!`);
@@ -264,6 +264,15 @@ const DrumMachine = () => {
     if (recordMode) {
       startRecording(padIndex);
     } else if (samples[padIndex]?.buffer) {
+      // If sequencer is playing, record to sequencer
+      if (isPlaying && currentStep >= 0) {
+        const newPatterns = [...patterns];
+        newPatterns[padIndex] = [...newPatterns[padIndex]];
+        newPatterns[padIndex][currentStep] = { active: true, velocity: trackVolumes[padIndex] };
+        setPatterns(newPatterns);
+        toast.success(`Recorded to step ${currentStep + 1}`);
+      }
+      
       playPad(padIndex, trackVolumes[padIndex], samples[padIndex].gateMode);
     } else {
       // Open file picker for empty pads
@@ -543,6 +552,15 @@ const DrumMachine = () => {
                 onClick={() => {
                   setIsPlaying(false);
                   setCurrentStep(-1);
+                  // Stop all playing sources
+                  playingSources.forEach(source => {
+                    try {
+                      source.stop();
+                    } catch (e) {
+                      // Source might already be stopped
+                    }
+                  });
+                  setPlayingSources(new Map());
                 }}
                 variant="outline"
                 size="lg"
