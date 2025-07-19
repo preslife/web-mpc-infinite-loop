@@ -1508,14 +1508,6 @@ const DrumMachine = () => {
                 </div>
               </div>
 
-              {/* Waveform Visualizer */}
-              <div className="text-center">
-                <div className="text-xs text-gray-400 mb-2">WAVEFORM</div>
-                <WaveformVisualizer 
-                  isPlaying={isPlaying} 
-                  className="mx-auto" 
-                />
-              </div>
 
               {/* Quick Actions */}
               <div className="flex items-center gap-3">
