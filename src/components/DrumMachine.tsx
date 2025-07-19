@@ -1187,12 +1187,24 @@ const DrumMachine = () => {
                   samples={samples}
                   volumes={trackVolumes.map(v => v / 100)}
                   masterVolume={masterVolume}
+                  muteStates={trackMutes}
+                  soloStates={trackSolos}
                   onVolumeChange={(index, volume) => {
                     const newVolumes = [...trackVolumes];
                     newVolumes[index] = volume * 100;
                     setTrackVolumes(newVolumes);
                   }}
                   onMasterVolumeChange={setMasterVolume}
+                  onMuteChange={(index, mute) => {
+                    const newMutes = [...trackMutes];
+                    newMutes[index] = mute;
+                    setTrackMutes(newMutes);
+                  }}
+                  onSoloChange={(index, solo) => {
+                    const newSolos = [...trackSolos];
+                    newSolos[index] = solo;
+                    setTrackSolos(newSolos);
+                  }}
                 />
               </div>
             ) : (

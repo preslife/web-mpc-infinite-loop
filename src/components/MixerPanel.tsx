@@ -170,32 +170,26 @@ interface MixerPanelProps {
   samples: Array<{ name: string }>;
   volumes: number[];
   masterVolume: number;
+  muteStates: boolean[];
+  soloStates: boolean[];
   onVolumeChange: (index: number, volume: number) => void;
   onMasterVolumeChange: (volume: number) => void;
+  onMuteChange: (index: number, mute: boolean) => void;
+  onSoloChange: (index: number, solo: boolean) => void;
 }
 
 export const MixerPanel = ({ 
   samples, 
   volumes, 
   masterVolume,
+  muteStates,
+  soloStates,
   onVolumeChange, 
-  onMasterVolumeChange 
+  onMasterVolumeChange,
+  onMuteChange,
+  onSoloChange
 }: MixerPanelProps) => {
-  const [muteStates, setMuteStates] = useState<boolean[]>(Array(16).fill(false));
-  const [soloStates, setSoloStates] = useState<boolean[]>(Array(16).fill(false));
   const [masterMute, setMasterMute] = useState(false);
-
-  const handleMuteChange = (index: number, mute: boolean) => {
-    const newMuteStates = [...muteStates];
-    newMuteStates[index] = mute;
-    setMuteStates(newMuteStates);
-  };
-
-  const handleSoloChange = (index: number, solo: boolean) => {
-    const newSoloStates = [...soloStates];
-    newSoloStates[index] = solo;
-    setSoloStates(newSoloStates);
-  };
 
   return (
     <div className="mixer-panel">
@@ -498,8 +492,8 @@ export const MixerPanel = ({
             mute={muteStates[index]}
             solo={soloStates[index]}
             onValueChange={(value) => onVolumeChange(index, value)}
-            onMuteChange={(mute) => handleMuteChange(index, mute)}
-            onSoloChange={(solo) => handleSoloChange(index, solo)}
+            onMuteChange={(mute) => onMuteChange(index, mute)}
+            onSoloChange={(solo) => onSoloChange(index, solo)}
           />
         ))}
         
