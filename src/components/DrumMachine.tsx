@@ -301,6 +301,45 @@ const DrumMachine = () => {
           <p className="text-muted-foreground">Professional Drum Machine & Sampler</p>
         </div>
 
+        {/* Drum Pads */}
+        <div className="glass-panel glass-glow p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Volume2 className="h-5 w-5" />
+            Drum Pads
+          </h2>
+          <div className="grid grid-cols-4 gap-4">
+            {Array.from({ length: 16 }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => handlePadPress(i)}
+                className={`
+                  h-48 w-48 rounded-lg font-bold text-lg transition-all duration-150 active:scale-95 neon-border
+                  ${samples[i]?.buffer 
+                    ? 'bg-gradient-active text-primary-foreground glass-glow-strong' 
+                    : 'glass-panel hover:glass-glow'
+                  }
+                  ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-destructive' : ''}
+                `}
+              >
+                {samples[i]?.buffer ? samples[i].name.split(' ')[1] : isRecording && selectedPad === i ? 'REC' : i + 1}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-4">
+            {recordMode 
+              ? "Record mode: Tap pads to record from microphone" 
+              : "Tap empty pads to load samples, tap filled pads to play"
+            }
+          </p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            onChange={handleFileLoad}
+            className="hidden"
+          />
+        </div>
+
         {/* Transport Controls */}
         <div className="glass-panel glass-glow p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -426,45 +465,6 @@ const DrumMachine = () => {
               </Button>
             </div>
           </div>
-        </div>
-
-        {/* Drum Pads */}
-        <div className="glass-panel glass-glow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Volume2 className="h-5 w-5" />
-            Drum Pads
-          </h2>
-          <div className="grid grid-cols-8 gap-2">
-            {Array.from({ length: 16 }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => handlePadPress(i)}
-                className={`
-                  h-12 w-12 rounded-lg font-bold text-xs transition-all duration-150 active:scale-95 neon-border
-                  ${samples[i]?.buffer 
-                    ? 'bg-gradient-active text-primary-foreground glass-glow-strong' 
-                    : 'glass-panel hover:glass-glow'
-                  }
-                  ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-destructive' : ''}
-                `}
-              >
-                {samples[i]?.buffer ? samples[i].name.split(' ')[1] : isRecording && selectedPad === i ? 'REC' : i + 1}
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground mt-4">
-            {recordMode 
-              ? "Record mode: Tap pads to record from microphone" 
-              : "Tap empty pads to load samples, tap filled pads to play"
-            }
-          </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="audio/*"
-            onChange={handleFileLoad}
-            className="hidden"
-          />
         </div>
 
 
