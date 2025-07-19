@@ -765,8 +765,12 @@ const DrumMachine = () => {
           return newMap;
         });
       };
+      // For gate mode, play the slice duration (respects start/end points)
+      source.start(0, startTime, sliceDuration);
+    } else {
+      // For non-gate mode, play the slice duration normally
+      source.start(0, startTime, sliceDuration);
     }
-    source.start(0, startTime, sampleGateMode ? undefined : sliceDuration);
   }, [samples, trackVolumes, trackMutes, trackSolos, playingSources, initializeTrackEffects, connectEffectsChain]);
 
   const startRecording = async (padIndex: number) => {
@@ -1509,8 +1513,9 @@ const DrumMachine = () => {
                 />
               </div>
             ) : (
-              <div className="h-full">
+              <div className="h-full overflow-auto">
                 {pendingSample ? (
+                  <div className="h-full overflow-auto p-2">
                     <WaveformEditor
                       sample={pendingSample.sample}
                       onSampleUpdate={updateSample}
@@ -1519,6 +1524,7 @@ const DrumMachine = () => {
                       onClose={cancelPendingSample}
                       audioContext={audioContextRef.current}
                     />
+                  </div>
                 ) : (
                   <>
                     <div className="text-center mb-2">
@@ -1531,17 +1537,19 @@ const DrumMachine = () => {
                     </div>
                     
                     {selectedPad !== null && samples[selectedPad]?.buffer ? (
-                      <WaveformEditor
-                        sample={samples[selectedPad]}
-                        onSampleUpdate={(updatedSample) => {
-                          const newSamples = [...samples];
-                          newSamples[selectedPad] = updatedSample;
-                          setSamples(newSamples);
-                          toast.success('Sample settings saved!');
-                        }}
-                        onClose={() => setSelectedPad(null)}
-                        audioContext={audioContextRef.current}
-                      />
+                      <div className="h-full overflow-auto p-2">
+                        <WaveformEditor
+                          sample={samples[selectedPad]}
+                          onSampleUpdate={(updatedSample) => {
+                            const newSamples = [...samples];
+                            newSamples[selectedPad] = updatedSample;
+                            setSamples(newSamples);
+                            toast.success('Sample settings saved!');
+                          }}
+                          onClose={() => setSelectedPad(null)}
+                          audioContext={audioContextRef.current}
+                        />
+                      </div>
                     ) : (
                       <div className="flex items-center justify-center h-48">
                         <div className="text-center text-gray-400">
