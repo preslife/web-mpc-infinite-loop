@@ -773,9 +773,9 @@ const DrumMachine = () => {
       if (padIndex !== undefined && padIndex >= 0 && padIndex < 16) {
         if (status === 144 && velocity > 0) {
           console.log('Triggering pad', padIndex, 'from MIDI note', note);
-          // Note On - trigger pad
+          // Note On - trigger pad using handlePadPress to include pattern recording logic
           setSelectedPad(padIndex);
-          playPad(padIndex, velocity);
+          handlePadPress(padIndex);
           
           // Visual feedback
           setTimeout(() => setSelectedPad(null), 100);
