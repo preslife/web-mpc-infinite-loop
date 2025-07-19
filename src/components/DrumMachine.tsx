@@ -481,8 +481,8 @@ const DrumMachine = () => {
                   <p className="text-gray-300 text-sm">{currentPatternName}</p>
                 </div>
                 
-                <div className="overflow-auto h-64">
-                  <div className="flex gap-1 pb-2 justify-center">
+                <div className="h-full overflow-auto">
+                  <div className="flex gap-1 pb-2">
                     {Array.from({length: sequencerLength}, (_, stepIndex) => (
                       <div key={stepIndex} className="flex-shrink-0">
                         <div className={`w-8 h-8 rounded text-xs flex items-center justify-center mb-2 transition-all duration-300 ${
@@ -502,9 +502,19 @@ const DrumMachine = () => {
                                   ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-md shadow-cyan-500/50' 
                                   : 'bg-gray-600/50 hover:bg-gray-500/70 backdrop-blur-sm'
                               }`}
+                              title={`Track ${padIndex + 1}, Step ${stepIndex + 1}`}
                             />
                           ))}
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Track labels on the side */}
+                  <div className="mt-4 grid grid-cols-8 gap-1 text-xs text-gray-400">
+                    {Array.from({length: 16}, (_, i) => (
+                      <div key={i} className="text-center">
+                        {samples[i]?.buffer ? samples[i].name.substring(0, 3) : `${i + 1}`}
                       </div>
                     ))}
                   </div>
