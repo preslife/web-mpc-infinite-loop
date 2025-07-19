@@ -1253,7 +1253,7 @@ const DrumMachine = () => {
                 
                 <div className="h-full overflow-auto">
                   {/* Step numbers row */}
-                  <div className="flex gap-1 mb-2 pl-16 overflow-x-auto">
+                  <div className="flex gap-1 mb-2 ml-[84px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 6 (volume) + 12 (mute/solo) + 4 (gaps) = 84px */}
                     {Array.from({length: sequencerLength}, (_, stepIndex) => (
                       <div key={stepIndex} className={`
                         w-8 h-6 rounded text-xs flex items-center justify-center flex-shrink-0 transition-all duration-300
@@ -1313,9 +1313,51 @@ const DrumMachine = () => {
                             </ContextMenuItem>
                           </ContextMenuContent>
                         </ContextMenu>
+                        {/* Track label on the left - clickable with context menu */}
+                        <ContextMenu>
+                          <ContextMenuTrigger asChild>
+                            <button
+                              onClick={() => handleTrackLabelClick(padIndex)}
+                              className={`w-14 flex-shrink-0 text-xs truncate transition-all duration-200 rounded px-1 py-0.5 ${
+                                selectedTrack === padIndex 
+                                  ? 'bg-cyan-600/30 border border-cyan-400/50 text-cyan-300 shadow-md shadow-cyan-500/30' 
+                                  : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-300'
+                              }`}
+                              title={`${selectedTrack === padIndex ? 'Double-click to unselect' : 'Click to select'} track ${padIndex + 1}. Right-click for fill options.`}
+                            >
+                              {samples[padIndex]?.name || `T${padIndex + 1}`}
+                            </button>
+                          </ContextMenuTrigger>
+                          <ContextMenuContent className="bg-gray-900 border-gray-700">
+                            <ContextMenuItem 
+                              onClick={() => fillPattern(padIndex, '8x8')}
+                              className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700"
+                            >
+                              Fill 8x8 (Half Notes)
+                            </ContextMenuItem>
+                            <ContextMenuItem 
+                              onClick={() => fillPattern(padIndex, '4x4')}
+                              className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700"
+                            >
+                              Fill 4x4 (Quarter Notes)
+                            </ContextMenuItem>
+                            <ContextMenuItem 
+                              onClick={() => fillPattern(padIndex, '2x2')}
+                              className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700"
+                            >
+                              Fill 2x2 (Eighth Notes)
+                            </ContextMenuItem>
+                            <ContextMenuItem 
+                              onClick={() => fillPattern(padIndex, '1x1')}
+                              className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700"
+                            >
+                              Fill 1x1 (Sixteenth Notes)
+                            </ContextMenuItem>
+                          </ContextMenuContent>
+                        </ContextMenu>
                         
                         {/* Volume knob */}
-                        <div className="flex-shrink-0 w-8">
+                        <div className="flex-shrink-0 w-6">
                           <VolumeKnob
                             value={trackVolumes[padIndex]}
                             onChange={(value) => {
