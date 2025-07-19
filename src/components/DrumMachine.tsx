@@ -1462,6 +1462,7 @@ const DrumMachine = () => {
                       onConfirm={confirmPendingSample}
                       showConfirm={true}
                       onClose={cancelPendingSample}
+                      audioContext={audioContextRef.current}
                     />
                 ) : (
                   <>
@@ -1484,6 +1485,7 @@ const DrumMachine = () => {
                           toast.success('Sample settings saved!');
                         }}
                         onClose={() => setSelectedPad(null)}
+                        audioContext={audioContextRef.current}
                       />
                     ) : (
                       <div className="flex items-center justify-center h-48">

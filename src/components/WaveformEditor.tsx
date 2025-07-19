@@ -21,30 +21,19 @@ interface WaveformEditorProps {
   onClose: () => void;
   onConfirm?: () => void;
   showConfirm?: boolean;
+  audioContext?: AudioContext | null;
 }
 
-export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, showConfirm }: WaveformEditorProps) => {
+export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, showConfirm, audioContext }: WaveformEditorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSource, setCurrentSource] = useState<AudioBufferSourceNode | null>(null);
   const [waveformData, setWaveformData] = useState<Float32Array | null>(null);
   const [pitch, setPitch] = useState(1.0);
   const [isNormalizing, setIsNormalizing] = useState(false);
 
-  // Initialize audio context
-  useEffect(() => {
-    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    return () => {
-      // Stop any playing audio before cleanup
-      if (currentSource) {
-        currentSource.stop();
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-    };
-  }, [currentSource]);
+  // Use the provided audio context from parent component
+  const getAudioContext = () => audioContext || null;
 
   // Generate waveform data
   useEffect(() => {
@@ -143,26 +132,27 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
   };
 
   const playPreview = async () => {
+    const ctx = getAudioContext();
     console.log('playPreview called', { 
-      audioContext: !!audioContextRef.current, 
+      audioContext: !!ctx, 
       buffer: !!sample.buffer,
-      audioContextState: audioContextRef.current?.state 
+      audioContextState: ctx?.state 
     });
     
-    if (!audioContextRef.current || !sample.buffer) {
+    if (!ctx || !sample.buffer) {
       console.log('Missing audio context or buffer:', { 
-        audioContext: !!audioContextRef.current, 
+        audioContext: !!ctx, 
         buffer: !!sample.buffer 
       });
       return;
     }
 
     // Resume audio context if suspended (required by browsers)
-    if (audioContextRef.current.state === 'suspended') {
+    if (ctx.state === 'suspended') {
       try {
         console.log('Resuming audio context...');
-        await audioContextRef.current.resume();
-        console.log('Audio context resumed, state:', audioContextRef.current.state);
+        await ctx.resume();
+        console.log('Audio context resumed, state:', ctx.state);
       } catch (error) {
         console.error('Failed to resume audio context:', error);
         return;
@@ -184,7 +174,7 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
 
     try {
       console.log('Creating audio source...');
-      const source = audioContextRef.current.createBufferSource();
+      const source = ctx.createBufferSource();
       source.buffer = sample.buffer;
 
       // Apply pitch adjustment
@@ -193,7 +183,7 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
       console.log('Applied pitch rate:', pitchRate);
 
       // Create gain node for volume control
-      const gainNode = audioContextRef.current.createGain();
+      const gainNode = ctx.createGain();
       gainNode.gain.value = sample.volume;
       console.log('Applied volume:', sample.volume);
 
@@ -213,7 +203,7 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
 
       // Connect: source -> gain -> destination
       source.connect(gainNode);
-      gainNode.connect(audioContextRef.current.destination);
+      gainNode.connect(ctx.destination);
 
       source.onended = () => {
         console.log('Audio playback ended');
