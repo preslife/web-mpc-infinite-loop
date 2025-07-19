@@ -2,112 +2,114 @@
 @tailwind components;
 @tailwind utilities;
 
-/* MPC-inspired drum machine design system. All colors MUST be HSL. */
-
 @layer base {
   :root {
-    /* Dark MPC-style background */
-    --background: 220 25% 8%;
-    --foreground: 210 40% 95%;
+    /* Base Colors */
+    --background: 220 13% 9%;
+    --foreground: 220 10% 97%;
+    --card: 220 13% 11%;
+    --card-foreground: 220 10% 97%;
+    --popover: 220 13% 11%;
+    --popover-foreground: 220 10% 97%;
+    --primary: 263 85% 65%;
+    --primary-foreground: 220 10% 5%;
+    --secondary: 220 13% 15%;
+    --secondary-foreground: 220 10% 97%;
+    --muted: 220 13% 15%;
+    --muted-foreground: 220 10% 60%;
+    --accent: 322 84% 68%;
+    --accent-foreground: 220 10% 5%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 220 10% 97%;
+    --border: 220 13% 20%;
+    --input: 220 13% 15%;
+    --ring: 263 85% 65%;
+    --radius: 0.75rem;
 
-    /* Interface panels */
-    --card: 220 20% 12%;
-    --card-foreground: 210 40% 95%;
+    /* Glass Effect Variables */
+    --glass-hue1: 263;
+    --glass-hue2: 322;
+    --glass-border: 1px;
+    --glass-radius: 16px;
+    --glass-blur: 12px;
 
-    --popover: 220 25% 8%;
-    --popover-foreground: 210 40% 95%;
+    /* Drum machine specific colors with glass effect */
+    --pad-active: var(--glass-hue1) 85% 65%;
+    --pad-inactive: 220 13% 15%;
+    --step-active: var(--glass-hue1) 85% 65%;
+    --step-playing: var(--glass-hue2) 84% 68%;
+    --led-green: 120 84% 65%;
+    --led-red: 0 84% 65%;
+    --led-orange: 35 84% 65%;
 
-    /* Neon accent colors for pads and highlights */
-    --primary: 165 100% 45%;
-    --primary-foreground: 220 25% 8%;
+    /* Glass gradients and effects */
+    --gradient-glass: linear-gradient(135deg, 
+      hsla(var(--glass-hue1), 85%, 65%, 0.1) 0%,
+      hsla(var(--glass-hue2), 84%, 68%, 0.05) 50%,
+      hsla(var(--glass-hue1), 85%, 65%, 0.1) 100%);
+    
+    --gradient-glass-border: linear-gradient(135deg,
+      hsla(var(--glass-hue1), 85%, 65%, 0.3) 0%,
+      hsla(var(--glass-hue2), 84%, 68%, 0.2) 50%,
+      hsla(var(--glass-hue1), 85%, 65%, 0.3) 100%);
 
-    /* Secondary controls */
-    --secondary: 220 15% 18%;
-    --secondary-foreground: 210 40% 95%;
+    --gradient-pad: var(--gradient-glass);
+    --gradient-panel: var(--gradient-glass);
+    --gradient-active: linear-gradient(135deg, 
+      hsl(var(--glass-hue1), 85%, 65%) 0%,
+      hsl(var(--glass-hue2), 84%, 68%) 100%);
 
-    /* Muted elements */
-    --muted: 220 15% 15%;
-    --muted-foreground: 210 20% 70%;
+    /* Glass shadows and glows */
+    --shadow-glass: 0 8px 32px hsla(var(--glass-hue1), 85%, 65%, 0.1);
+    --shadow-glass-inset: inset 0 1px 1px hsla(0, 0%, 100%, 0.1);
+    --shadow-glow: 0 0 20px hsla(var(--glass-hue1), 85%, 65%, 0.3);
+    --shadow-glow-strong: 0 0 40px hsla(var(--glass-hue1), 85%, 65%, 0.5);
+    
+    --shadow-pad: var(--shadow-glass), var(--shadow-glass-inset);
+    --shadow-panel: var(--shadow-glass), var(--shadow-glass-inset);
 
-    /* Accent highlights */
-    --accent: 50 100% 55%;
-    --accent-foreground: 220 25% 8%;
+    /* Animation easing */
+    --ease-glass: cubic-bezier(0.5, 1, 0.89, 1);
 
-    /* Destructive/record */
-    --destructive: 0 85% 60%;
-    --destructive-foreground: 210 40% 98%;
-
-    /* Borders and inputs */
-    --border: 220 15% 25%;
-    --input: 220 15% 20%;
-    --ring: 165 100% 45%;
-
-    /* Drum machine specific colors */
-    --pad-active: 165 100% 45%;
-    --pad-inactive: 220 15% 20%;
-    --step-active: 50 100% 55%;
-    --step-playing: 165 100% 45%;
-    --led-green: 120 100% 50%;
-    --led-red: 0 100% 50%;
-    --led-orange: 30 100% 50%;
-
-    /* Gradients for depth */
-    --gradient-pad: linear-gradient(135deg, hsl(var(--pad-inactive)), hsl(220 15% 25%));
-    --gradient-panel: linear-gradient(180deg, hsl(var(--card)), hsl(220 20% 10%));
-    --gradient-active: linear-gradient(135deg, hsl(var(--primary)), hsl(165 100% 35%));
-
-    /* Shadows for depth */
-    --shadow-pad: 0 4px 12px hsl(220 25% 5% / 0.5);
-    --shadow-panel: 0 8px 24px hsl(220 25% 5% / 0.6);
-    --shadow-glow: 0 0 20px hsl(var(--primary) / 0.4);
-
-    --radius: 0.5rem;
-
+    /* Sidebar colors */
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 220 13% 5%;
+    --foreground: 220 10% 97%;
+    --card: 220 13% 7%;
+    --card-foreground: 220 10% 97%;
+    --popover: 220 13% 7%;
+    --popover-foreground: 220 10% 97%;
+    --primary: 263 85% 70%;
+    --primary-foreground: 220 10% 5%;
+    --secondary: 220 13% 10%;
+    --secondary-foreground: 220 10% 97%;
+    --muted: 220 13% 10%;
+    --muted-foreground: 220 10% 50%;
+    --accent: 322 84% 72%;
+    --accent-foreground: 220 10% 5%;
+    --border: 220 13% 15%;
+    --input: 220 13% 10%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    /* Enhanced glass effects for dark mode */
+    --gradient-glass: linear-gradient(135deg, 
+      hsla(var(--glass-hue1), 85%, 70%, 0.15) 0%,
+      hsla(var(--glass-hue2), 84%, 72%, 0.08) 50%,
+      hsla(var(--glass-hue1), 85%, 70%, 0.15) 100%);
+    
+    --shadow-glow: 0 0 25px hsla(var(--glass-hue1), 85%, 70%, 0.4);
+    --shadow-glow-strong: 0 0 50px hsla(var(--glass-hue1), 85%, 70%, 0.6);
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Sidebar colors for dark mode */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -123,8 +125,75 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+    background: radial-gradient(ellipse at bottom, 
+      hsla(var(--glass-hue1), 85%, 15%, 0.3) 0%, 
+      hsla(var(--background)) 40%);
+    min-height: 100vh;
+  }
+
+  /* Glass morphism base classes */
+  .glass-panel {
+    background: var(--gradient-glass);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: var(--glass-border) solid transparent;
+    background-clip: padding-box;
+    border-radius: var(--glass-radius);
+    position: relative;
+  }
+
+  .glass-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: var(--glass-border);
+    background: var(--gradient-glass-border);
+    border-radius: inherit;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+  }
+
+  .glass-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .glass-glow-strong {
+    box-shadow: var(--shadow-glow-strong);
+  }
+
+  /* Neon border animations */
+  .neon-border {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .neon-border::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(45deg, 
+      transparent 0%, 
+      hsla(var(--glass-hue1), 85%, 65%, 0.8) 20%, 
+      hsla(var(--glass-hue2), 84%, 68%, 0.8) 40%,
+      transparent 60%,
+      hsla(var(--glass-hue1), 85%, 65%, 0.8) 80%,
+      transparent 100%);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    opacity: 0;
+    transition: opacity 0.3s var(--ease-glass);
+  }
+
+  .neon-border:hover::after {
+    opacity: 1;
   }
 }

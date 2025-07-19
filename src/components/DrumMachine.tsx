@@ -211,7 +211,7 @@ const DrumMachine = () => {
         </div>
 
         {/* Transport Controls */}
-        <div className="bg-gradient-panel rounded-lg p-6 mb-6 shadow-panel">
+        <div className="glass-panel glass-glow p-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button 
@@ -267,7 +267,7 @@ const DrumMachine = () => {
         </div>
 
         {/* Drum Pads */}
-        <div className="bg-gradient-panel rounded-lg p-6 mb-6 shadow-panel">
+        <div className="glass-panel glass-glow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Volume2 className="h-5 w-5" />
             Drum Pads
@@ -278,13 +278,12 @@ const DrumMachine = () => {
                 key={i}
                 onClick={() => handlePadPress(i)}
                 className={`
-                  aspect-square rounded-lg font-bold text-sm transition-all duration-150 active:scale-95
+                  aspect-square rounded-lg font-bold text-sm transition-all duration-150 active:scale-95 neon-border
                   ${samples[i]?.buffer 
-                    ? 'bg-gradient-active text-primary-foreground shadow-glow' 
-                    : 'bg-gradient-pad text-foreground hover:bg-secondary'
+                    ? 'bg-gradient-active text-primary-foreground glass-glow-strong' 
+                    : 'glass-panel hover:glass-glow'
                   }
                   ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-destructive' : ''}
-                  shadow-pad hover:shadow-glow
                 `}
               >
                 {samples[i]?.buffer ? samples[i].name.split(' ')[1] : isRecording && selectedPad === i ? 'REC' : i + 1}
@@ -307,7 +306,7 @@ const DrumMachine = () => {
         </div>
 
         {/* Step Sequencer with Volume Controls */}
-        <div className="bg-gradient-panel rounded-lg p-6 shadow-panel">
+        <div className="glass-panel glass-glow p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Step Sequencer</h2>
             <div className="flex items-center gap-2">
@@ -348,17 +347,17 @@ const DrumMachine = () => {
               {Array.from({ length: 16 }, (_, padIndex) => (
                 <div key={padIndex} className="flex items-center gap-2">
                   {/* Pad indicator */}
-                  <div className="w-8 flex items-center justify-center">
-                    <div className={`
-                      w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold
-                      ${samples[padIndex]?.buffer 
-                        ? 'bg-gradient-active text-primary-foreground' 
-                        : 'bg-muted text-muted-foreground'
-                      }
-                    `}>
-                      {padIndex + 1}
+                    <div className="w-8 flex items-center justify-center">
+                      <div className={`
+                        w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold glass-panel
+                        ${samples[padIndex]?.buffer 
+                          ? 'bg-gradient-active text-primary-foreground glass-glow' 
+                          : 'text-muted-foreground'
+                        }
+                      `}>
+                        {padIndex + 1}
+                      </div>
                     </div>
-                  </div>
 
                   {/* Volume control */}
                   <div className="w-16 flex items-center">
@@ -391,14 +390,14 @@ const DrumMachine = () => {
                           onClick={() => toggleStep(padIndex, stepIndex)}
                           disabled={!samples[padIndex]?.buffer}
                           className={`
-                            h-6 w-6 min-w-[1.5rem] rounded-sm transition-all duration-150
+                            h-6 w-6 min-w-[1.5rem] rounded-sm transition-all duration-150 neon-border
                             ${patterns[padIndex][stepIndex]?.active 
-                              ? 'bg-step-active shadow-sm' 
+                              ? 'bg-step-active glass-glow text-primary-foreground' 
                               : samples[padIndex]?.buffer 
-                                ? 'bg-muted hover:bg-secondary' 
+                                ? 'glass-panel hover:glass-glow' 
                                 : 'bg-muted/50 cursor-not-allowed'
                             }
-                            ${currentStep === stepIndex ? 'ring-1 ring-step-playing' : ''}
+                            ${currentStep === stepIndex ? 'ring-2 ring-step-playing glass-glow-strong' : ''}
                             ${!samples[padIndex]?.buffer ? 'opacity-50' : ''}
                           `}
                         />
