@@ -10,6 +10,9 @@ interface Sample {
   startTime: number;
   endTime: number;
   gateMode: boolean;
+  pitch: number; // -12 to +12 semitones
+  reverse: boolean;
+  volume: number; // 0 to 1
 }
 
 interface WaveformEditorProps {
@@ -237,7 +240,7 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="text-sm font-medium mb-1 block">Start Position</label>
             <Slider
@@ -266,6 +269,49 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
             <span className="text-xs text-muted-foreground">
               {(sample.endTime * (sample.buffer?.duration || 0)).toFixed(2)}s
             </span>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-1 block">Volume</label>
+            <Slider
+              value={[sample.volume * 100]}
+              onValueChange={([value]) => onSampleUpdate({ ...sample, volume: value / 100 })}
+              min={0}
+              max={100}
+              step={1}
+              className="w-full"
+            />
+            <span className="text-xs text-muted-foreground">
+              {Math.round(sample.volume * 100)}%
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium mb-1 block">Pitch (semitones)</label>
+            <Slider
+              value={[sample.pitch]}
+              onValueChange={([value]) => onSampleUpdate({ ...sample, pitch: value })}
+              min={-12}
+              max={12}
+              step={1}
+              className="w-full"
+            />
+            <span className="text-xs text-muted-foreground">
+              {sample.pitch > 0 ? '+' : ''}{sample.pitch} semitones
+            </span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={() => onSampleUpdate({ ...sample, reverse: !sample.reverse })} 
+              variant={sample.reverse ? "default" : "outline"} 
+              size="sm"
+              className="w-full"
+            >
+              Reverse {sample.reverse ? 'ON' : 'OFF'}
+            </Button>
           </div>
         </div>
 

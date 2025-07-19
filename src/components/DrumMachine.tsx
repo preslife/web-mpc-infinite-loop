@@ -9,6 +9,7 @@ import { WaveformEditor } from './WaveformEditor';
 import { MixerPanel } from './MixerPanel';
 import { PatternManager } from './PatternManager';
 import { AudioExporter } from './AudioExporter';
+import { SongMode } from './SongMode';
 import { VisualFeedback, WaveformVisualizer } from './VisualFeedback';
 import { VolumeKnob } from './VolumeKnob';
 import { useNavigate } from 'react-router-dom';
@@ -20,11 +21,14 @@ interface Sample {
   startTime: number;
   endTime: number;
   gateMode: boolean;
+  pitch: number; // -12 to +12 semitones
+  reverse: boolean;
+  volume: number; // 0 to 1
 }
 
 interface PatternStep {
   active: boolean;
-  velocity: number;
+  velocity: number; // 0 to 127 (MIDI standard)
 }
 
 interface Pattern {
@@ -32,6 +36,13 @@ interface Pattern {
   steps: PatternStep[][];
   bpm: number;
   swing: number;
+  length: number; // pattern length in steps
+}
+
+interface Song {
+  name: string;
+  patterns: string[]; // array of pattern names
+  currentPatternIndex: number;
 }
 
 const DrumMachine = () => {
@@ -48,7 +59,10 @@ const DrumMachine = () => {
     name: '',
     startTime: 0,
     endTime: 1,
-    gateMode: true
+    gateMode: true,
+    pitch: 0,
+    reverse: false,
+    volume: 0.8
   }));
   const [patterns, setPatterns] = useState<PatternStep[][]>(Array(16).fill(null).map(() => Array(64).fill({
     active: false,
@@ -68,8 +82,22 @@ const DrumMachine = () => {
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
   const [pendingSample, setPendingSample] = useState<{ sample: Sample; padIndex: number } | null>(null);
   const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
-  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'mixer' | 'patterns' | 'export'>('sequencer');
+  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'mixer' | 'patterns' | 'export' | 'song'>('sequencer');
   const [masterVolume, setMasterVolume] = useState(0.8);
+
+  // Song mode state
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
+  const [isPatternChaining, setIsPatternChaining] = useState(false);
+
+  // Quantization settings
+  const [quantizeEnabled, setQuantizeEnabled] = useState(false);
+  const [quantizeStrength, setQuantizeStrength] = useState(100); // 0-100%
+  const [quantizeGrid, setQuantizeGrid] = useState<'1/16' | '1/8' | '1/4' | '1/2'>('1/16');
+
+  // Velocity-sensitive pads
+  const [velocitySensitive, setVelocitySensitive] = useState(true);
+  const [padVelocities, setPadVelocities] = useState<number[]>(Array(16).fill(100)); // Current velocity for each pad
 
   // Neural generation state
   const [seedLength, setSeedLength] = useState(4);
@@ -250,7 +278,10 @@ const DrumMachine = () => {
         name: name,
         startTime: 0,
         endTime: 1,
-        gateMode: true
+        gateMode: true,
+        pitch: 0,
+        reverse: false,
+        volume: 0.8
       };
       setSamples(newSamples);
     } catch (error) {
@@ -612,7 +643,8 @@ const DrumMachine = () => {
       name: currentPatternName,
       steps: patterns,
       bpm: bpm[0],
-      swing: swing[0]
+      swing: swing[0],
+      length: sequencerLength
     };
     setSavedPatterns([...savedPatterns, newPattern]);
     toast.success(`Saved pattern as "${currentPatternName}"`);
@@ -757,7 +789,10 @@ const DrumMachine = () => {
             name: `Sample ${padIndex + 1}`,
             startTime: 0,
             endTime: 1,
-            gateMode: true
+            gateMode: true,
+            pitch: 0,
+            reverse: false,
+            volume: 0.8
           };
           setSamples(newSamples);
           toast.success('Sample recorded!');
@@ -791,7 +826,10 @@ const DrumMachine = () => {
           name: file.name.replace(/\.[^/.]+$/, ""),
           startTime: 0,
           endTime: 1,
-          gateMode: true
+          gateMode: true,
+          pitch: 0,
+          reverse: false,
+          volume: 0.8
         };
         
         // Set pending sample for editor confirmation
@@ -1139,6 +1177,18 @@ const DrumMachine = () => {
             >
               EXPORT
             </Button>
+            <Button 
+              onClick={() => setDisplayMode('song')}
+              variant={displayMode === 'song' ? 'default' : 'outline'}
+              size="sm" 
+              className={`text-xs transition-all duration-300 ${
+                displayMode === 'song' 
+                  ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300 shadow-lg shadow-yellow-500/25' 
+                  : 'bg-gray-800 border-gray-600 text-gray-300'
+              }`}
+            >
+              SONG
+            </Button>
           </div>
 
           {/* Display Content */}
@@ -1331,6 +1381,7 @@ const DrumMachine = () => {
                       steps: patterns,
                       bpm: bpm[0],
                       swing: swing[0],
+                      length: sequencerLength,
                       genre,
                       author: 'User',
                       createdAt: new Date().toISOString().split('T')[0],
@@ -1339,6 +1390,52 @@ const DrumMachine = () => {
                     setSavedPatterns([...savedPatterns, newPattern]);
                     setCurrentPatternName(name);
                     toast.success(`Saved pattern "${name}"`);
+                  }}
+                />
+              </div>
+            ) : displayMode === 'song' ? (
+              <div className="h-full">
+                <SongMode
+                  patterns={savedPatterns}
+                  songs={songs}
+                  currentSong={currentSong}
+                  isPlaying={isPlaying}
+                  isPatternChaining={isPatternChaining}
+                  onCreateSong={(song) => setSongs([...songs, song])}
+                  onDeleteSong={(songIndex) => {
+                    const newSongs = songs.filter((_, index) => index !== songIndex);
+                    setSongs(newSongs);
+                    if (currentSong === songs[songIndex]) {
+                      setCurrentSong(null);
+                    }
+                  }}
+                  onSelectSong={(song) => setCurrentSong(song)}
+                  onPlaySong={() => {
+                    if (currentSong && currentSong.patterns.length > 0) {
+                      setIsPatternChaining(true);
+                      handlePlay();
+                    }
+                  }}
+                  onStopSong={() => {
+                    setIsPatternChaining(false);
+                    handleStop();
+                  }}
+                  onAddPatternToSong={(songIndex, patternName) => {
+                    const newSongs = [...songs];
+                    newSongs[songIndex].patterns.push(patternName);
+                    setSongs(newSongs);
+                  }}
+                  onRemovePatternFromSong={(songIndex, patternIndex) => {
+                    const newSongs = [...songs];
+                    newSongs[songIndex].patterns.splice(patternIndex, 1);
+                    setSongs(newSongs);
+                  }}
+                  onMovePattern={(songIndex, fromIndex, toIndex) => {
+                    if (toIndex < 0 || toIndex >= songs[songIndex].patterns.length) return;
+                    const newSongs = [...songs];
+                    const [movedPattern] = newSongs[songIndex].patterns.splice(fromIndex, 1);
+                    newSongs[songIndex].patterns.splice(toIndex, 0, movedPattern);
+                    setSongs(newSongs);
                   }}
                 />
               </div>
@@ -1586,7 +1683,55 @@ const DrumMachine = () => {
                     />
                     <span className="text-xs text-gray-300 w-8">{swing[0]}%</span>
                   </div>
+              </div>
+            </div>
+
+            {/* Quantization Settings */}
+            <div className="bg-gray-900/80 backdrop-blur-md p-2 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-red-500/10 rounded-lg pointer-events-none"></div>
+              <div className="relative z-10">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-yellow-400 font-medium">QUANTIZE</span>
+                    <input
+                      type="checkbox"
+                      checked={quantizeEnabled}
+                      onChange={(e) => setQuantizeEnabled(e.target.checked)}
+                      className="w-3 h-3"
+                    />
+                  </div>
+                  {quantizeEnabled && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400 w-12">Grid</span>
+                        <Select value={quantizeGrid} onValueChange={(value: '1/16' | '1/8' | '1/4' | '1/2') => setQuantizeGrid(value)}>
+                          <SelectTrigger className="h-6 text-xs bg-gray-800 border-gray-600">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1/16">1/16</SelectItem>
+                            <SelectItem value="1/8">1/8</SelectItem>
+                            <SelectItem value="1/4">1/4</SelectItem>
+                            <SelectItem value="1/2">1/2</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400 w-12">Strength</span>
+                        <Slider
+                          value={[quantizeStrength]}
+                          onValueChange={([value]) => setQuantizeStrength(value)}
+                          min={0}
+                          max={100}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <span className="text-xs text-gray-300 w-8">{quantizeStrength}%</span>
+                      </div>
+                    </>
+                  )}
                 </div>
+              </div>
               </div>
             </div>
 
