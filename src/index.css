@@ -309,8 +309,9 @@
 
 .volume-knob-number {
   position: absolute;
-  bottom: calc(50% - 6em);
-  left: calc(50% - 1em);
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) rotate(-90deg);
   width: 1.75em;
   height: 1.75em;
   background: #282828;
