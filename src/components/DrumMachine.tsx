@@ -3,11 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit, RefreshCw, Sparkles, X } from 'lucide-react';
+import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit, RefreshCw, Sparkles, X, Music } from 'lucide-react';
 import { toast } from 'sonner';
 import { WaveformEditor } from './WaveformEditor';
 import { MixerPanel } from './MixerPanel';
+import { PatternManager } from './PatternManager';
 import { VolumeKnob } from './VolumeKnob';
+import { useNavigate } from 'react-router-dom';
 import * as mm from '@magenta/music';
 
 interface Sample {
@@ -31,6 +33,7 @@ interface Pattern {
 }
 
 const DrumMachine = () => {
+  const navigate = useNavigate();
   const audioContextRef = useRef<AudioContext | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -63,7 +66,7 @@ const DrumMachine = () => {
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
   const [pendingSample, setPendingSample] = useState<{ sample: Sample; padIndex: number } | null>(null);
   const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
-  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'mixer'>('sequencer');
+  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'mixer' | 'patterns'>('sequencer');
   const [masterVolume, setMasterVolume] = useState(0.8);
 
   // Neural generation state
@@ -192,6 +195,67 @@ const DrumMachine = () => {
       setSavedPatterns(JSON.parse(storedPatterns));
     }
   }, []);
+
+  // Check for kit/sample selections from library
+  useEffect(() => {
+    const selectedKit = localStorage.getItem('selectedKit');
+    const selectedSamples = localStorage.getItem('selectedSamples');
+    
+    if (selectedKit) {
+      const kit = JSON.parse(selectedKit);
+      loadKitSamples(kit);
+      localStorage.removeItem('selectedKit');
+    }
+    
+    if (selectedSamples) {
+      const sampleData = JSON.parse(selectedSamples);
+      Object.entries(sampleData).forEach(([padIndex, sample]: [string, any]) => {
+        loadSampleFromUrl(sample.url, sample.name, parseInt(padIndex));
+      });
+      localStorage.removeItem('selectedSamples');
+    }
+  }, []);
+
+  // Load samples from a drum kit
+  const loadKitSamples = async (kit: any) => {
+    try {
+      const newSamples = [...samples];
+      
+      for (let i = 0; i < Math.min(kit.samples.length, 16); i++) {
+        const sample = kit.samples[i];
+        await loadSampleFromUrl(sample.url, sample.name, i);
+      }
+      
+      toast.success(`Loaded ${kit.name} drum kit!`);
+    } catch (error) {
+      console.error('Error loading kit:', error);
+      toast.error('Failed to load some samples from kit');
+    }
+  };
+
+  // Load a single sample from URL
+  const loadSampleFromUrl = async (url: string, name: string, padIndex: number) => {
+    try {
+      if (!audioContextRef.current) return;
+      
+      const response = await fetch(url);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
+      
+      const newSamples = [...samples];
+      newSamples[padIndex] = {
+        buffer: audioBuffer,
+        name: name,
+        startTime: 0,
+        endTime: 1,
+        gateMode: true
+      };
+      setSamples(newSamples);
+    } catch (error) {
+      console.warn(`Failed to load sample ${name}:`, error);
+      // Don't show error toast for individual samples as some URLs might be placeholder
+    }
+  };
 
   // Create reverb impulse response
   const createReverbImpulse = useCallback((roomSize: number, decay: number) => {
@@ -966,6 +1030,15 @@ const DrumMachine = () => {
           <div className="flex items-center justify-between">
             <div className="text-white font-bold text-lg tracking-wider">X BEAT STUDIO</div>
             <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-gray-800 border-gray-600 text-gray-300 text-xs hover:bg-purple-800/20 hover:border-purple-400"
+                onClick={() => navigate('/library')}
+              >
+                <Music className="w-3 h-3 mr-1" />
+                LIBRARY
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
