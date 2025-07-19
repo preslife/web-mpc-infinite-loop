@@ -1681,8 +1681,8 @@ const DrumMachine = () => {
           </div>
         </div>
 
-        {/* Main Layout Container */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Main Layout Container - Maschine style with left controls, center sequencer, right pads */}
+        <div className="grid grid-cols-[300px_1fr_400px] gap-4 h-[600px]">
           {/* Left Control Panel */}
           <div className="space-y-2">
             {/* Volume & Main Controls */}
@@ -1865,12 +1865,279 @@ const DrumMachine = () => {
             </div>
           </div>
 
+          {/* Center Sequencer */}
+          <div className="bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-purple-500/10 rounded-lg pointer-events-none"></div>
+            <div className="relative z-10 h-full overflow-hidden">
+              {/* Display Content */}
+              <div className="bg-black/30 backdrop-blur-sm h-full rounded border border-gray-600/50 p-3 relative z-10 shadow-inner">
+                {displayMode === 'sequencer' ? (
+                  <div className="h-full">
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="text-center flex-1">
+                        <h2 className="text-lg font-bold text-cyan-300 mb-1 text-shadow-glow">SEQUENCER</h2>
+                        <p className="text-gray-300 text-xs">{currentPatternName}</p>
+                      </div>
+                      
+                      {/* Neural Generate Button */}
+                      <Button
+                        onClick={generateSequence}
+                        disabled={!neuralEnabled || isGenerating || !canPerformPatternOperations()}
+                        className="h-6 px-2 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
+                        title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : neuralEnabled ? `Generate AI patterns for ${getOperationDescription()}` : 'Neural engine not available'}
+                      >
+                        {isGenerating ? <RefreshCw className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                        {isGenerating ? 'Generating...' : 'Generate'}
+                      </Button>
+                    </div>
+                    
+                    <div className="h-full overflow-auto">
+                      {/* Step numbers row */}
+                      <div className="flex gap-1 mb-1 ml-[120px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 8 (volume) + 12 (mute/solo) + 6 (gaps) = 120px */}
+                        {Array.from({length: sequencerLength}, (_, stepIndex) => (
+                          <div key={stepIndex} className={`
+                            w-6 h-4 rounded text-xs flex items-center justify-center flex-shrink-0 transition-all duration-300
+                            ${currentStep === stepIndex 
+                              ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/50 scale-110' 
+                              : 'bg-gray-700/50 text-gray-400 backdrop-blur-sm'
+                            }
+                          `}>
+                            {stepIndex + 1}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Track rows with labels */}
+                      <div className="space-y-1">
+                        {Array.from({length: 16}, (_, padIndex) => (
+                          <div key={padIndex} className="flex items-center gap-1 overflow-x-auto">
+                            {/* Track label on the left - clickable with context menu */}
+                            <ContextMenu>
+                              <ContextMenuTrigger asChild>
+                                <button
+                                  onClick={() => handleTrackLabelClick(padIndex)}
+                                  className={`w-14 flex-shrink-0 text-xs truncate transition-all duration-200 rounded px-1 py-0.5 ${
+                                    selectedTrack === padIndex 
+                                      ? 'bg-cyan-600/30 border border-cyan-400/50 text-cyan-300 shadow-md shadow-cyan-500/30' 
+                                      : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-300'
+                                  }`}
+                                  title={`${selectedTrack === padIndex ? 'Double-click to unselect' : 'Click to select'} track ${padIndex + 1}. Right-click for fill options.`}
+                                >
+                                  {samples[padIndex]?.name || `T${padIndex + 1}`}
+                                </button>
+                              </ContextMenuTrigger>
+                              <ContextMenuContent className="bg-gray-900 border-gray-700">
+                                <ContextMenuItem 
+                                  onClick={() => fillPattern(padIndex, '8x8')}
+                                  className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700"
+                                >
+                                  Fill 8x8 (Half Notes)
+                                </ContextMenuItem>
+                                <ContextMenuItem 
+                                  onClick={() => fillPattern(padIndex, '4x4')}
+                                  className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700"
+                                >
+                                  Fill 4x4 (Quarter Notes)
+                                </ContextMenuItem>
+                                <ContextMenuItem 
+                                  onClick={() => fillPattern(padIndex, '2x2')}
+                                  className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700"
+                                >
+                                  Fill 2x2 (Eighth Notes)
+                                </ContextMenuItem>
+                                <ContextMenuItem 
+                                  onClick={() => fillPattern(padIndex, '1x1')}
+                                  className="text-gray-300 hover:bg-gray-700 focus:bg-gray-700"
+                                >
+                                  Fill 1x1 (Sixteenth Notes)
+                                </ContextMenuItem>
+                              </ContextMenuContent>
+                            </ContextMenu>
+                            
+                            {/* Volume knob */}
+                            <div className="flex-shrink-0 w-8">
+                              <VolumeKnob
+                                value={trackVolumes[padIndex]}
+                                onChange={(value) => {
+                                  const newVolumes = [...trackVolumes];
+                                  newVolumes[padIndex] = value;
+                                  setTrackVolumes(newVolumes);
+                                }}
+                                size="sm"
+                              />
+                            </div>
+                            
+                            {/* Mute/Solo buttons */}
+                            <div className="flex gap-1 flex-shrink-0">
+                              <button
+                                onClick={() => {
+                                  const newMutes = [...trackMutes];
+                                  newMutes[padIndex] = !newMutes[padIndex];
+                                  setTrackMutes(newMutes);
+                                }}
+                                className={`w-6 h-6 rounded text-xs font-bold transition-all duration-200 ${
+                                  trackMutes[padIndex] 
+                                    ? 'bg-red-600 border border-red-500 text-white shadow-md shadow-red-500/50' 
+                                    : 'bg-gray-700/50 border border-gray-600 text-gray-400 hover:bg-gray-600/70'
+                                }`}
+                                title={`Mute track ${padIndex + 1}`}
+                              >
+                                M
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const newSolos = [...trackSolos];
+                                  newSolos[padIndex] = !newSolos[padIndex];
+                                  setTrackSolos(newSolos);
+                                }}
+                                className={`w-6 h-6 rounded text-xs font-bold transition-all duration-200 ${
+                                  trackSolos[padIndex] 
+                                    ? 'bg-yellow-600 border border-yellow-500 text-white shadow-md shadow-yellow-500/50' 
+                                    : 'bg-gray-700/50 border border-gray-600 text-gray-400 hover:bg-gray-600/70'
+                                }`}
+                                title={`Solo track ${padIndex + 1}`}
+                              >
+                                S
+                              </button>
+                            </div>
+                            
+                            {/* Step buttons */}
+                            {Array.from({length: sequencerLength}, (_, stepIndex) => (
+                              <button
+                                key={stepIndex}
+                                onClick={() => toggleStep(padIndex, stepIndex)}
+                                className={`
+                                  w-6 h-4 rounded flex-shrink-0 transition-all duration-200
+                                  ${patterns[padIndex][stepIndex]?.active 
+                                    ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-md shadow-cyan-500/50' 
+                                    : 'bg-gray-600/50 hover:bg-gray-500/70 backdrop-blur-sm'
+                                  }
+                                  ${currentStep === stepIndex && patterns[padIndex][stepIndex]?.active
+                                    ? 'ring-2 ring-red-400 ring-opacity-75'
+                                    : ''
+                                  }
+                                `}
+                                title={`Track ${padIndex + 1} (${samples[padIndex]?.name || 'Empty'}), Step ${stepIndex + 1}`}
+                              />
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : displayMode === 'patterns' ? (
+                  <div className="h-full overflow-auto">
+                    <PatternManager
+                      currentPattern={patterns}
+                      currentBpm={bpm[0]}
+                      currentSwing={swing[0]}
+                      onLoadPattern={(pattern) => {
+                        setPatterns(pattern.steps);
+                        setBpm([pattern.bpm]);
+                        setSwing([pattern.swing]);
+                        setCurrentPatternName(pattern.name);
+                        toast.success(`Loaded pattern "${pattern.name}"`);
+                      }}
+                      onSavePattern={(name, description, genre) => {
+                        const pattern: Pattern = {
+                          name,
+                          steps: patterns,
+                          bpm: bpm[0],
+                          swing: swing[0],
+                          length: sequencerLength
+                        };
+                        setSavedPatterns(prev => [...prev, pattern]);
+                        toast.success(`Saved pattern "${name}"`);
+                      }}
+                    />
+                  </div>
+                ) : displayMode === 'editor' ? (
+                  <div className="h-full overflow-auto">
+                    {editingSample !== null && samples[editingSample] ? (
+                      <WaveformEditor
+                        sample={samples[editingSample]}
+                        onSampleUpdate={(updatedSample) => {
+                          const newSamples = [...samples];
+                          newSamples[editingSample] = updatedSample;
+                          setSamples(newSamples);
+                        }}
+                        onClose={() => setEditingSample(null)}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-400">
+                        <div className="text-center">
+                          <Edit className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>No sample selected for editing</p>
+                          <p className="text-xs mt-2">Click EDITOR with a track selected to edit its sample</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : displayMode === 'export' ? (
+                  <div className="h-full overflow-auto">
+                    <AudioExporter
+                      patterns={patterns}
+                      samples={samples}
+                      bpm={bpm[0]}
+                      swing={swing[0]}
+                      trackVolumes={trackVolumes}
+                      trackMutes={trackMutes}
+                      trackSolos={trackSolos}
+                      sequencerLength={sequencerLength}
+                      masterVolume={masterVolume}
+                    />
+                  </div>
+                ) : displayMode === 'song' ? (
+                  <div className="h-full overflow-auto">
+                    <SongMode
+                      patterns={savedPatterns}
+                      songs={songs}
+                      currentSong={currentSong}
+                      isPlaying={isPlaying}
+                      isPatternChaining={isPatternChaining}
+                      onCreateSong={(song) => setSongs(prev => [...prev, song])}
+                      onDeleteSong={(songIndex) => setSongs(prev => prev.filter((_, i) => i !== songIndex))}
+                      onSelectSong={setCurrentSong}
+                      onPlaySong={() => setIsPlaying(true)}
+                      onStopSong={() => setIsPlaying(false)}
+                      onAddPatternToSong={(songIndex, patternName) => {
+                        setSongs(prev => prev.map((song, i) => 
+                          i === songIndex 
+                            ? { ...song, patterns: [...song.patterns, patternName] }
+                            : song
+                        ));
+                      }}
+                      onRemovePatternFromSong={(songIndex, patternIndex) => {
+                        setSongs(prev => prev.map((song, i) => 
+                          i === songIndex 
+                            ? { ...song, patterns: song.patterns.filter((_, pi) => pi !== patternIndex) }
+                            : song
+                        ));
+                      }}
+                      onMovePattern={(songIndex, fromIndex, toIndex) => {
+                        setSongs(prev => prev.map((song, i) => {
+                          if (i === songIndex) {
+                            const newPatterns = [...song.patterns];
+                            const [removed] = newPatterns.splice(fromIndex, 1);
+                            newPatterns.splice(toIndex, 0, removed);
+                            return { ...song, patterns: newPatterns };
+                          }
+                          return song;
+                        }));
+                      }}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
           {/* Right Drum Pads */}
-          <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden">
+          <div className="bg-gray-900/80 backdrop-blur-md p-6 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
             
-            <div className="grid grid-cols-4 gap-2 relative z-10">
+            <div className="grid grid-cols-4 gap-4 relative z-10 h-full">
               {Array.from({length: 16}, (_, i) => (
                 <ContextMenu key={i}>
                   <ContextMenuTrigger asChild>
@@ -1882,7 +2149,7 @@ const DrumMachine = () => {
                       onTouchStart={() => handlePadPress(i)}
                       onTouchEnd={() => handlePadRelease(i)}
                       className={`
-                        h-16 w-16 rounded-lg text-xs font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
+                        h-24 w-24 rounded-lg text-sm font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
                         ${samples[i]?.buffer 
                           ? getPadColor(i) + '/80 border-cyan-400/50 text-white shadow-lg shadow-cyan-500/30' 
                           : 'bg-gray-700/40 border-purple-400/30 text-gray-300 hover:bg-gray-600/50 hover:border-purple-400/50'
