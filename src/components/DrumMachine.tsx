@@ -12,8 +12,11 @@ import { AudioExporter } from './AudioExporter';
 import { SongMode } from './SongMode';
 import { VisualFeedback, WaveformVisualizer } from './VisualFeedback';
 import { VolumeKnob } from './VolumeKnob';
+import { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
+import { SampleOrganizer } from './SampleOrganizer';
 import { useNavigate } from 'react-router-dom';
 import * as mm from '@magenta/music';
+import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts';
 
 interface Sample {
   buffer: AudioBuffer | null;
@@ -1082,6 +1085,31 @@ const DrumMachine = () => {
     }
   };
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onPlay: () => isPlaying ? handlePause() : handlePlay(),
+    onStop: handleStop,
+    onRecord: () => setIsPatternRecording(!isPatternRecording),
+    onClear: clearPattern,
+    onRandomize: randomizePattern,
+    onFill: () => {
+      const targetTrack = selectedTrack ?? selectedPad;
+      if (targetTrack !== null) {
+        fillPattern(targetTrack, 'all');
+      }
+    },
+    onBpmIncrease: () => setBpm([Math.min(200, bpm[0] + 5)]),
+    onBpmDecrease: () => setBpm([Math.max(60, bpm[0] - 5)]),
+    onVolumeUp: () => setMasterVolume(prev => Math.min(1, prev + 0.1)),
+    onVolumeDown: () => setMasterVolume(prev => Math.max(0, prev - 0.1)),
+    onPadPress: (padIndex) => handlePadPress(padIndex),
+    onStepToggle: (stepIndex) => {
+      if (selectedTrack !== null && stepIndex < sequencerLength) {
+        toggleStep(selectedTrack, stepIndex);
+      }
+    }
+  });
+
   return (
     <div className="min-h-screen bg-black p-2 font-mono">
       <div className="max-w-7xl mx-auto">
@@ -1090,10 +1118,21 @@ const DrumMachine = () => {
           <div className="flex items-center justify-between">
             <div className="text-white font-bold text-lg tracking-wider">X BEAT STUDIO</div>
             <div className="flex gap-2">
+              <SampleOrganizer 
+                samples={samples}
+                onSampleSelect={(sample, padIndex) => {
+                  const newSamples = [...samples];
+                  newSamples[padIndex] = sample;
+                  setSamples(newSamples);
+                  toast.success(`Sample loaded to pad ${padIndex + 1}!`);
+                }}
+                selectedPad={selectedPad}
+              />
+              <KeyboardShortcutsHelp />
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="bg-gray-800 border-gray-600 text-gray-300 text-xs hover:bg-purple-800/20 hover:border-purple-400"
+                className="bg-gray-800 border-gray-600 text-gray-300 text-xs hover:bg-purple-800/20 hover:border-purple-400 neon-border"
                 onClick={() => navigate('/library')}
               >
                 <Music className="w-3 h-3 mr-1" />
@@ -1102,7 +1141,7 @@ const DrumMachine = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                className="bg-gray-800 border-gray-600 text-gray-300 text-xs neon-border"
                 onClick={() => setDisplayMode('sequencer')}
               >
                 SEQUENCER
@@ -1110,7 +1149,7 @@ const DrumMachine = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="bg-gray-800 border-gray-600 text-gray-300 text-xs"
+                className="bg-gray-800 border-gray-600 text-gray-300 text-xs neon-border"
                 onClick={() => setDisplayMode('mixer')}
               >
                 MIXER
