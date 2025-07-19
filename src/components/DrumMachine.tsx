@@ -59,6 +59,8 @@ const DrumMachine = () => {
   const [savedPatterns, setSavedPatterns] = useState<Pattern[]>([]);
   const [currentPatternName, setCurrentPatternName] = useState('Pattern 1');
   const [editingSample, setEditingSample] = useState<number | null>(null);
+  const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
+  const [pendingSample, setPendingSample] = useState<{ sample: Sample; padIndex: number } | null>(null);
   const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
   const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor'>('sequencer');
   const [masterVolume, setMasterVolume] = useState([80]);
@@ -620,17 +622,15 @@ const DrumMachine = () => {
     // Use the sample's gate mode setting
     const sampleGateMode = samples[padIndex]?.gateMode ?? true;
     
-    // Stop any currently playing source for this pad if in gate mode
-    if (sampleGateMode) {
-      const currentSource = playingSources.get(padIndex);
-      if (currentSource) {
-        currentSource.stop();
-        setPlayingSources(prev => {
-          const newMap = new Map(prev);
-          newMap.delete(padIndex);
-          return newMap;
-        });
-      }
+    // ALWAYS stop any currently playing source for this pad to prevent overlap
+    const currentSource = playingSources.get(padIndex);
+    if (currentSource) {
+      currentSource.stop();
+      setPlayingSources(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(padIndex);
+        return newMap;
+      });
     }
     const source = audioContextRef.current.createBufferSource();
     const gainNode = audioContextRef.current.createGain();
@@ -715,16 +715,18 @@ const DrumMachine = () => {
       const arrayBuffer = await file.arrayBuffer();
       if (audioContextRef.current) {
         const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
-        const newSamples = [...samples];
-        newSamples[padIndex] = {
+        const sample = {
           buffer: audioBuffer,
           name: file.name.replace(/\.[^/.]+$/, ""),
           startTime: 0,
           endTime: 1,
           gateMode: true
         };
-        setSamples(newSamples);
-        toast.success(`Sample "${file.name}" loaded!`);
+        
+        // Set pending sample for editor confirmation
+        setPendingSample({ sample, padIndex });
+        setDisplayMode('editor');
+        toast.info(`Sample "${file.name}" loaded! Please confirm edit points in the editor.`);
       }
     } catch (error) {
       toast.error('Failed to load sample');
@@ -830,13 +832,8 @@ const DrumMachine = () => {
       if (padIndex !== undefined && padIndex >= 0 && padIndex < 16) {
         if (status === 144 && velocity > 0) {
           console.log('Triggering pad', padIndex, 'from MIDI note', note);
-          // Note On - use same logic as pad press but trigger playPad directly
-          playPad(padIndex, velocity);
-          
-          // Add to pattern if recording
-          if (isPatternRecording && isPlaying) {
-            toggleStep(padIndex, currentStep);
-          }
+          // Note On - use exact same logic as handlePadPress for consistency
+          handlePadPress(padIndex);
           
           // Visual feedback
           setSelectedPad(padIndex);
@@ -846,7 +843,7 @@ const DrumMachine = () => {
         console.log('No mapping found for MIDI note', note);
       }
     }
-  }, [midiMapping, midiLearning, playPad, isPatternRecording, isPlaying, currentStep, toggleStep]);
+  }, [midiMapping, midiLearning, handlePadPress]);
 
   // Update MIDI event listeners when handleMIDIMessage changes
   useEffect(() => {
@@ -923,6 +920,37 @@ const DrumMachine = () => {
       'bg-red-500', 'bg-yellow-400', 'bg-blue-300', 'bg-red-400'
     ];
     return colors[index] || 'bg-gray-600';
+  };
+
+  const updateSample = (updatedSample: Sample) => {
+    if (pendingSample) {
+      // Update pending sample
+      setPendingSample({ ...pendingSample, sample: updatedSample });
+    } else if (selectedSample) {
+      const newSamples = [...samples];
+      const index = newSamples.findIndex(s => s === selectedSample);
+      if (index !== -1) {
+        newSamples[index] = updatedSample;
+        setSamples(newSamples);
+      }
+    }
+  };
+
+  const confirmPendingSample = () => {
+    if (pendingSample) {
+      const newSamples = [...samples];
+      newSamples[pendingSample.padIndex] = pendingSample.sample;
+      setSamples(newSamples);
+      setPendingSample(null);
+      toast.success(`Sample confirmed and loaded to pad ${pendingSample.padIndex + 1}!`);
+    }
+  };
+
+  const cancelPendingSample = () => {
+    if (pendingSample) {
+      setPendingSample(null);
+      toast.info('Sample loading cancelled');
+    }
   };
 
   return (
@@ -1127,33 +1155,57 @@ const DrumMachine = () => {
               </div>
             ) : (
               <div className="h-full">
-                <div className="text-center mb-2">
-                  <p className="text-gray-300 text-sm">
-                    {selectedPad !== null && samples[selectedPad]?.buffer 
-                      ? `Editing: ${samples[selectedPad].name}` 
-                      : 'Select a pad to edit'
-                    }
-                  </p>
-                </div>
-                
-                {selectedPad !== null && samples[selectedPad]?.buffer ? (
-                  <WaveformEditor
-                    sample={samples[selectedPad]}
-                    onSampleUpdate={(updatedSample) => {
-                      const newSamples = [...samples];
-                      newSamples[selectedPad] = updatedSample;
-                      setSamples(newSamples);
-                      toast.success('Sample settings saved!');
-                    }}
-                    onClose={() => setSelectedPad(null)}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-48">
-                    <div className="text-center text-gray-400">
-                      <Edit className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Click on a drum pad to edit its sample</p>
+                {pendingSample ? (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
+                      <h3 className="text-lg font-semibold text-accent">Confirm Sample for Pad {pendingSample.padIndex + 1}</h3>
+                      <p className="text-sm text-muted-foreground">Please review and adjust the sample before loading it to the pad.</p>
+                      <div className="flex gap-2 mt-2">
+                        <Button onClick={confirmPendingSample} variant="default" size="sm">
+                          Confirm & Load
+                        </Button>
+                        <Button onClick={cancelPendingSample} variant="outline" size="sm">
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
+                    <WaveformEditor
+                      sample={pendingSample.sample}
+                      onSampleUpdate={updateSample}
+                      onClose={cancelPendingSample}
+                    />
                   </div>
+                ) : (
+                  <>
+                    <div className="text-center mb-2">
+                      <p className="text-gray-300 text-sm">
+                        {selectedPad !== null && samples[selectedPad]?.buffer 
+                          ? `Editing: ${samples[selectedPad].name}` 
+                          : 'Select a pad to edit or upload a new sample to edit'
+                        }
+                      </p>
+                    </div>
+                    
+                    {selectedPad !== null && samples[selectedPad]?.buffer ? (
+                      <WaveformEditor
+                        sample={samples[selectedPad]}
+                        onSampleUpdate={(updatedSample) => {
+                          const newSamples = [...samples];
+                          newSamples[selectedPad] = updatedSample;
+                          setSamples(newSamples);
+                          toast.success('Sample settings saved!');
+                        }}
+                        onClose={() => setSelectedPad(null)}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-48">
+                        <div className="text-center text-gray-400">
+                          <Edit className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                          <p>Click on a drum pad to edit its sample or upload a new sample</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
