@@ -1253,7 +1253,7 @@ const DrumMachine = () => {
                 
                 <div className="h-full overflow-auto">
                   {/* Step numbers row */}
-                  <div className="flex gap-1 mb-2 ml-[84px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 6 (volume) + 12 (mute/solo) + 4 (gaps) = 84px */}
+                  <div className="flex gap-1 mb-2 ml-[96px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 6 (volume) + 12 (mute/solo) + 4 (gaps) = 96px */}
                     {Array.from({length: sequencerLength}, (_, stepIndex) => (
                       <div key={stepIndex} className={`
                         w-8 h-6 rounded text-xs flex items-center justify-center flex-shrink-0 transition-all duration-300
@@ -1682,7 +1682,7 @@ const DrumMachine = () => {
         </div>
 
         {/* Main Layout Container */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {/* Left Control Panel */}
           <div className="space-y-2">
             {/* Volume & Main Controls */}
@@ -1862,34 +1862,6 @@ const DrumMachine = () => {
                   </Button>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Center Track Controls */}
-          <div className="bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-purple-500/10 rounded-lg pointer-events-none"></div>
-            <div className="relative z-10">
-            <div className="space-y-3">
-              <div className="text-xs text-gray-400 mb-4">TRACK CONTROLS</div>
-              
-              {/* Track Volume Controls */}
-              <div className="grid grid-cols-4 gap-2">
-                {Array.from({length: 16}, (_, i) => (
-                  <VolumeKnob
-                    key={i}
-                    value={trackVolumes[i]}
-                    onChange={(value) => {
-                      const newVolumes = [...trackVolumes];
-                      newVolumes[i] = value;
-                      setTrackVolumes(newVolumes);
-                    }}
-                    size="sm"
-                    label={`T${i + 1}`}
-                  />
-                ))}
-              </div>
-
-            </div>
             </div>
           </div>
 
