@@ -20,9 +20,10 @@ const DrumMachine = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [currentStep, setCurrentStep] = useState(-1);
   const [bpm, setBpm] = useState([120]);
+  const [sequencerLength, setSequencerLength] = useState(16);
   const [samples, setSamples] = useState<Sample[]>(Array(16).fill({ buffer: null, name: '' }));
   const [patterns, setPatterns] = useState<PatternStep[][]>(
-    Array(16).fill(null).map(() => Array(16).fill({ active: false, velocity: 80 }))
+    Array(16).fill(null).map(() => Array(64).fill({ active: false, velocity: 80 }))
   );
   const [trackVolumes, setTrackVolumes] = useState<number[]>(Array(16).fill(80));
   const [selectedPad, setSelectedPad] = useState<number | null>(null);
@@ -49,7 +50,7 @@ const DrumMachine = () => {
     const stepTime = (60 / bpm[0] / 4) * 1000; // 16th notes
     const interval = setInterval(() => {
       setCurrentStep(prev => {
-        const nextStep = (prev + 1) % 16;
+        const nextStep = (prev + 1) % sequencerLength;
         
         // Play samples for active steps
         patterns.forEach((pattern, padIndex) => {
@@ -63,7 +64,7 @@ const DrumMachine = () => {
     }, stepTime);
 
     return () => clearInterval(interval);
-  }, [isPlaying, bpm, patterns, samples]);
+  }, [isPlaying, bpm, patterns, samples, sequencerLength]);
 
   const playPad = useCallback((padIndex: number, velocity: number = 80) => {
     if (!audioContextRef.current || !samples[padIndex]?.buffer) return;
@@ -265,108 +266,132 @@ const DrumMachine = () => {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Drum Pads */}
-          <div className="bg-gradient-panel rounded-lg p-6 shadow-panel">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Volume2 className="h-5 w-5" />
-              Drum Pads
-            </h2>
-            <div className="grid grid-cols-4 gap-3">
-              {Array.from({ length: 16 }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => handlePadPress(i)}
-                  className={`
-                    aspect-square rounded-lg font-bold text-sm transition-all duration-150 active:scale-95
-                    ${samples[i]?.buffer 
-                      ? 'bg-gradient-active text-primary-foreground shadow-glow' 
-                      : 'bg-gradient-pad text-foreground hover:bg-secondary'
-                    }
-                    ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-destructive' : ''}
-                    shadow-pad hover:shadow-glow
-                  `}
+        {/* Drum Pads */}
+        <div className="bg-gradient-panel rounded-lg p-6 mb-6 shadow-panel">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Volume2 className="h-5 w-5" />
+            Drum Pads
+          </h2>
+          <div className="grid grid-cols-4 gap-3">
+            {Array.from({ length: 16 }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => handlePadPress(i)}
+                className={`
+                  aspect-square rounded-lg font-bold text-sm transition-all duration-150 active:scale-95
+                  ${samples[i]?.buffer 
+                    ? 'bg-gradient-active text-primary-foreground shadow-glow' 
+                    : 'bg-gradient-pad text-foreground hover:bg-secondary'
+                  }
+                  ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-destructive' : ''}
+                  shadow-pad hover:shadow-glow
+                `}
+              >
+                {samples[i]?.buffer ? samples[i].name.split(' ')[1] : isRecording && selectedPad === i ? 'REC' : i + 1}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-4">
+            {recordMode 
+              ? "Record mode: Tap pads to record from microphone" 
+              : "Tap empty pads to load samples, tap filled pads to play"
+            }
+          </p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            onChange={handleFileLoad}
+            className="hidden"
+          />
+        </div>
+
+        {/* Step Sequencer with Volume Controls */}
+        <div className="bg-gradient-panel rounded-lg p-6 shadow-panel">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Step Sequencer</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Steps:</span>
+              {[16, 32, 64].map((steps) => (
+                <Button
+                  key={steps}
+                  variant={sequencerLength === steps ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSequencerLength(steps)}
                 >
-                  {samples[i]?.buffer ? samples[i].name.split(' ')[1] : isRecording && selectedPad === i ? 'REC' : i + 1}
-                </button>
+                  {steps}
+                </Button>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground mt-4">
-              {recordMode 
-                ? "Record mode: Tap pads to record from microphone" 
-                : "Tap empty pads to load samples, tap filled pads to play"
-              }
-            </p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="audio/*"
-              onChange={handleFileLoad}
-              className="hidden"
-            />
           </div>
+          
+          <div className="space-y-2">
+            {/* Step indicators */}
+            <div className={`grid gap-1 mb-4 ${
+              sequencerLength === 16 ? 'grid-cols-16' : 
+              sequencerLength === 32 ? 'grid-cols-32' : 
+              'grid-cols-64'
+            }`}>
+              {Array.from({ length: sequencerLength }, (_, i) => (
+                <div
+                  key={i}
+                  className={`
+                    h-2 rounded-sm
+                    ${currentStep === i ? 'bg-step-playing' : 'bg-muted'}
+                  `}
+                />
+              ))}
+            </div>
 
-          {/* Step Sequencer with Volume Controls */}
-          <div className="bg-gradient-panel rounded-lg p-6 shadow-panel">
-            <h2 className="text-xl font-semibold mb-4">16-Step Sequencer</h2>
-            <div className="space-y-2">
-              {/* Step indicators */}
-              <div className="grid grid-cols-16 gap-1 mb-4">
-                {Array.from({ length: 16 }, (_, i) => (
-                  <div
-                    key={i}
-                    className={`
-                      h-2 rounded-sm
-                      ${currentStep === i ? 'bg-step-playing' : 'bg-muted'}
-                    `}
-                  />
-                ))}
-              </div>
-
-              {/* Pattern grid with volume controls */}
-              <div className="space-y-1 max-h-80 overflow-y-auto">
-                {Array.from({ length: 16 }, (_, padIndex) => (
-                  <div key={padIndex} className="flex items-center gap-2">
-                    {/* Pad indicator */}
-                    <div className="w-8 flex items-center justify-center">
-                      <div className={`
-                        w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold
-                        ${samples[padIndex]?.buffer 
-                          ? 'bg-gradient-active text-primary-foreground' 
-                          : 'bg-muted text-muted-foreground'
-                        }
-                      `}>
-                        {padIndex + 1}
-                      </div>
+            {/* Pattern grid with volume controls */}
+            <div className="space-y-1 max-h-80 overflow-y-auto">
+              {Array.from({ length: 16 }, (_, padIndex) => (
+                <div key={padIndex} className="flex items-center gap-2">
+                  {/* Pad indicator */}
+                  <div className="w-8 flex items-center justify-center">
+                    <div className={`
+                      w-6 h-6 rounded-sm flex items-center justify-center text-xs font-bold
+                      ${samples[padIndex]?.buffer 
+                        ? 'bg-gradient-active text-primary-foreground' 
+                        : 'bg-muted text-muted-foreground'
+                      }
+                    `}>
+                      {padIndex + 1}
                     </div>
+                  </div>
 
-                    {/* Volume control */}
-                    <div className="w-16 flex items-center">
-                      <Slider
-                        value={[trackVolumes[padIndex]]}
-                        onValueChange={(value) => handleTrackVolumeChange(padIndex, value)}
-                        min={0}
-                        max={100}
-                        step={1}
-                        className="w-full"
-                        disabled={!samples[padIndex]?.buffer}
-                      />
-                    </div>
+                  {/* Volume control */}
+                  <div className="w-16 flex items-center">
+                    <Slider
+                      value={[trackVolumes[padIndex]]}
+                      onValueChange={(value) => handleTrackVolumeChange(padIndex, value)}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="w-full"
+                      disabled={!samples[padIndex]?.buffer}
+                    />
+                  </div>
 
-                    {/* Volume display */}
-                    <div className="w-8 text-xs text-center">
-                      {samples[padIndex]?.buffer ? trackVolumes[padIndex] : '--'}
-                    </div>
+                  {/* Volume display */}
+                  <div className="w-8 text-xs text-center">
+                    {samples[padIndex]?.buffer ? trackVolumes[padIndex] : '--'}
+                  </div>
 
-                    {/* Step buttons */}
-                    <div className="grid grid-cols-16 gap-1 flex-1">
-                      {Array.from({ length: 16 }, (_, stepIndex) => (
+                  {/* Step buttons - scrollable container */}
+                  <div className="flex-1 overflow-x-auto">
+                    <div className={`grid gap-1 ${
+                      sequencerLength === 16 ? 'grid-cols-16' : 
+                      sequencerLength === 32 ? 'grid-cols-32' : 
+                      'grid-cols-64'
+                    } min-w-fit`}>
+                      {Array.from({ length: sequencerLength }, (_, stepIndex) => (
                         <button
                           key={stepIndex}
                           onClick={() => toggleStep(padIndex, stepIndex)}
                           disabled={!samples[padIndex]?.buffer}
                           className={`
-                            h-6 w-full rounded-sm transition-all duration-150
+                            h-6 w-6 min-w-[1.5rem] rounded-sm transition-all duration-150
                             ${patterns[padIndex][stepIndex]?.active 
                               ? 'bg-step-active shadow-sm' 
                               : samples[padIndex]?.buffer 
@@ -380,8 +405,8 @@ const DrumMachine = () => {
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
