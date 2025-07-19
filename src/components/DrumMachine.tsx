@@ -809,7 +809,7 @@ const DrumMachine = () => {
               {/* Track Volume Controls */}
               <div className="grid grid-cols-4 gap-2">
                 {Array.from({length: 16}, (_, i) => (
-                  <div key={i} className="flex justify-center">
+                  <div key={i} className="flex justify-center items-center">
                     <VolumeKnob
                       value={trackVolumes[i]}
                       onChange={(value) => {
