@@ -142,8 +142,25 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
     onSampleUpdate(updatedSample);
   };
 
-  const playPreview = () => {
-    if (!audioContextRef.current || !sample.buffer) return;
+  const playPreview = async () => {
+    if (!audioContextRef.current || !sample.buffer) {
+      console.log('Missing audio context or buffer:', { 
+        audioContext: !!audioContextRef.current, 
+        buffer: !!sample.buffer 
+      });
+      return;
+    }
+
+    // Resume audio context if suspended (required by browsers)
+    if (audioContextRef.current.state === 'suspended') {
+      try {
+        await audioContextRef.current.resume();
+      } catch (error) {
+        console.error('Failed to resume audio context:', error);
+        toast.error('Failed to start audio playback');
+        return;
+      }
+    }
 
     // Stop any currently playing source first (always stop for previews)
     if (currentSource) {
@@ -156,23 +173,39 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
       return;
     }
 
-    const source = audioContextRef.current.createBufferSource();
-    source.buffer = sample.buffer;
+    try {
+      const source = audioContextRef.current.createBufferSource();
+      source.buffer = sample.buffer;
 
-    const duration = sample.buffer.duration;
-    const startTime = sample.startTime * duration;
-    const endTime = sample.endTime * duration;
-    const playDuration = endTime - startTime;
+      // Apply pitch adjustment
+      source.playbackRate.value = Math.pow(2, sample.pitch / 12);
 
-    source.connect(audioContextRef.current.destination);
-    source.onended = () => {
+      // Create gain node for volume control
+      const gainNode = audioContextRef.current.createGain();
+      gainNode.gain.value = sample.volume;
+
+      const duration = sample.buffer.duration;
+      const startTime = sample.startTime * duration;
+      const endTime = sample.endTime * duration;
+      const playDuration = endTime - startTime;
+
+      // Connect: source -> gain -> destination
+      source.connect(gainNode);
+      gainNode.connect(audioContextRef.current.destination);
+
+      source.onended = () => {
+        setIsPlaying(false);
+        setCurrentSource(null);
+      };
+
+      source.start(0, startTime, playDuration);
+      setCurrentSource(source);
+      setIsPlaying(true);
+    } catch (error) {
+      console.error('Failed to play preview:', error);
+      toast.error('Failed to play preview');
       setIsPlaying(false);
-      setCurrentSource(null);
-    };
-
-    source.start(0, startTime, playDuration);
-    setCurrentSource(source);
-    setIsPlaying(true);
+    }
   };
 
   const resetSelection = () => {
