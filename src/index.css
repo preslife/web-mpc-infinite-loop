@@ -1,3 +1,4 @@
+@import url("https://cdn.josetxu.com/fonts/Alarm-Clock.ttf");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -209,4 +210,134 @@
   .text-shadow-glow-pink {
     text-shadow: var(--text-glow-pink);
   }
+  }
+
+/* Volume Knob Styles */
+.volume-knob-slider {
+  width: 10em;
+  height: 10em;
+  position: relative;
+  cursor: pointer;
+  --shd: drop-shadow(-1px -2px 1px #111) drop-shadow(0px 1px 1px #404040);
+  --tra: all 0.4s ease 0s;
+}
+
+.volume-knob-slider::before {
+  content: "";
+  position: absolute;
+  background: linear-gradient(-90deg, #525252 0%, #373737 100%);
+  width: 10em;
+  height: 10em;
+  border-radius: 50%;
+  box-shadow: -20px 0px 20px #757575, 20px 0px 35px #111111, inset -5px 0px 6px #242424, inset 5px 0px 6px #979797;
+}
+
+.volume-knob-knob {
+  width: 10em;
+  height: 10em;
+  position: relative;
+  cursor: pointer;
+}
+
+.volume-knob-knob::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 29px;
+  background: radial-gradient(circle at 50% 45%, var(--mut) 5px, #fff0 6px), radial-gradient(circle at 50% 50%, #404040 5px, #fff0 7px), radial-gradient(circle at 50% 40%, #1118 5px, #fff0 6px), linear-gradient(0deg, #373737, #2e2e2e);
+  box-shadow: 0px -1px 1px #111, 0px 1px 1px #555;
+  border: 2px solid #2e2e2e;
+  border-radius: 50%;
+  box-sizing: border-box;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.volume-knob-knob::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 5px solid #00bcd410;
+  width: 130%;
+  height: 130%;
+  border-radius: 50%;
+  transition: var(--tra);
+}
+
+.volume-knob-slider:active .volume-knob-knob::before {
+  box-shadow: 0px 0px 5px 1px var(--c1), 0px 0px 30px 1px var(--c1), 0px 0px 2px 0px var(--c1) inset, 0px -1px 1px #1118, 0px 3px 3px #404040;
+  border-color: var(--c1);
+}
+
+.volume-knob-slider:active .volume-knob-knob::after {
+  box-shadow: 0px 0px 10px #349beb, inset 0px 0px 10px #349beb;
+}
+
+.volume-knob-slider:active * {
+  --c1: #c7e6ff;
+}
+
+.volume-knob-glow {
+  top: 50%;
+  left: 50%;
+  position: absolute;
+  border-radius: 100%;
+  transform: translate(-50%, -50%);
+  width: 130%;
+  height: 130%;
+  z-index: -2;
+}
+
+.volume-knob-glow:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% + 10px);
+  height: calc(100% + 10px);
+  border-radius: 50%;
+  box-shadow: 0 0 10px #349beb8a, 0 0 0 1px #0007;
+  background: radial-gradient(circle at 50% 50%, #333333 6.5em, #fff0 calc(6.5em + 1px)), linear-gradient(-90deg, var(--c1) 0 calc(var(--vol) * 1%), #fff0 0% 100%);
+  filter: drop-shadow(0px 0px 4px #000) drop-shadow(0px 0px 1px #349beb8a) drop-shadow(0px 0px 2px #349beb8a);
+}
+
+.volume-knob-number {
+  position: absolute;
+  bottom: calc(50% - 6em);
+  left: calc(50% - 1em);
+  width: 1.75em;
+  height: 1.75em;
+  background: #282828;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-family: "Alarm Clock", Arial, Helvetica, serif;
+  color: #39c1ff;
+  border-radius: 99%;
+  box-shadow: 0px 0px 10px 0px #000000 inset, 0px 0px 100px -80px #39c1ff inset;
+  border: 2px solid #0001;
+  filter: var(--shd);
+  text-shadow: 0px 0px 3px #000000, 0px 0px 2px #000000, 0px 0px 3px #39c1ff;
+}
+
+.volume-knob-number:after {
+  content: "88";
+  position: absolute;
+  color: #0001;
+  z-index: -1;
+  text-shadow: 0px 0px 1px #0001;
+  filter: var(--shd);
+}
+
+.volume-knob-slider:active .volume-knob-number {
+  box-shadow: 0px 0px 10px 0px #000000 inset, 0px 0px 100px -40px #335564 inset, 0px 0px 30px 0px #8edbff;
+  text-shadow: 0px 0px 2px #2196f3, 0px 0px 2px #2196f3, 0px 0px 2px #23759b, 0px 0px 20px #144054, 0px 0px 25px #39c1ff;
+  color: #c7eaff;
 }

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 
 interface VolumeKnobProps {
   value: number;
@@ -8,118 +8,98 @@ interface VolumeKnobProps {
 }
 
 export const VolumeKnob = ({ value, onChange, size = 'md', label }: VolumeKnobProps) => {
-  const [isDragging, setIsDragging] = useState(false);
+  const sliderRef = useRef<HTMLDivElement>(null);
   const knobRef = useRef<HTMLDivElement>(null);
-  const initialAngleRef = useRef<number>(0);
-  const initialValueRef = useRef<number>(0);
 
-  const sizeClasses = {
-    sm: { container: 'w-16 h-16', knob: 'w-16 h-16', number: 'text-xs w-6 h-6' },
-    md: { container: 'w-20 h-20', knob: 'w-20 h-20', number: 'text-sm w-7 h-7' },
-    lg: { container: 'w-24 h-24', knob: 'w-24 h-24', number: 'text-base w-8 h-8' }
+  const sizeMap = {
+    sm: { scale: 0.6 },
+    md: { scale: 0.8 },
+    lg: { scale: 1.0 }
   };
 
-  const calculateAngle = useCallback((e: MouseEvent, rect: DOMRect) => {
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    const deltaX = centerX - e.clientX;
-    const deltaY = centerY - e.clientY;
-    const rad = Math.atan2(deltaY, deltaX);
+  const calculateDegree = useCallback((e: MouseEvent) => {
+    if (!sliderRef.current) return 0;
+    const rect = sliderRef.current.getBoundingClientRect();
+    const x1 = rect.left + rect.width / 2;
+    const y1 = rect.top + rect.height / 2;
+    const x2 = e.clientX;
+    const y2 = e.clientY;
+    const deltax = x1 - x2;
+    const deltay = y1 - y2;
+    const rad = Math.atan2(deltay, deltax);
     let deg = rad * (180 / Math.PI);
     return deg;
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!knobRef.current) return;
-    
-    setIsDragging(true);
-    const rect = knobRef.current.getBoundingClientRect();
-    initialAngleRef.current = calculateAngle(e.nativeEvent, rect);
-    initialValueRef.current = value;
+    if (!knobRef.current || !sliderRef.current) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!knobRef.current) return;
+    const handleRotate = (e: MouseEvent) => {
+      const result = Math.floor(calculateDegree(e) - 180);
+      if (knobRef.current) {
+        knobRef.current.style.transform = `rotate(${result}deg)`;
+      }
       
-      const rect = knobRef.current.getBoundingClientRect();
-      const currentAngle = calculateAngle(e, rect);
-      const angleDiff = initialAngleRef.current - currentAngle;
+      let val = Math.floor(calculateDegree(e) + 90);
+      let ran = 0;
+      if (val > 0 && val < 181) ran = val / 180;
+      if (val > 180) ran = Math.abs((val - 360) / 180);
+      if (val < 0) ran = Math.abs(val) / 180;
       
-      // Convert angle difference to value change (more sensitive)
-      const valueChange = angleDiff / 3.6; // 360 degrees = 100 value units
-      let newValue = initialValueRef.current + valueChange;
+      let num = Math.floor(ran * 100);
+      if (num < 10) num = num;
+      if (num >= 100) num = 99;
       
-      // Clamp between 0 and 100
-      newValue = Math.max(0, Math.min(100, newValue));
-      onChange(newValue);
+      onChange(num);
+      
+      if (sliderRef.current) {
+        sliderRef.current.style.setProperty('--vol', Math.floor(ran * 100).toString());
+      }
     };
 
     const handleMouseUp = () => {
-      setIsDragging(false);
-      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mousemove', handleRotate);
       document.removeEventListener('mouseup', handleMouseUp);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mousemove', handleRotate);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [value, onChange, calculateAngle]);
+  }, [calculateDegree, onChange]);
 
-  // Calculate rotation based on value (0-100 maps to roughly 270 degrees of rotation)
-  const rotation = (value / 100) * 270 - 135;
+  // Update CSS variable when value changes
+  useEffect(() => {
+    if (sliderRef.current) {
+      sliderRef.current.style.setProperty('--vol', value.toString());
+    }
+  }, [value]);
+
   const displayValue = Math.floor(value).toString().padStart(2, '0');
+  const currentScale = sizeMap[size].scale;
 
   return (
     <div className="relative flex flex-col items-center gap-2">
       {label && <div className="text-xs text-gray-400">{label}</div>}
       
-      <div className={`relative ${sizeClasses[size].container}`}>
-        {/* Outer ring with progress indicator */}
-        <div 
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full rounded-full"
-          style={{
-            background: `radial-gradient(circle at 50% 50%, #333333 70%, transparent 71%), conic-gradient(from 0deg, transparent 0%, transparent ${(value / 100) * 100}%, #00ddff ${(value / 100) * 100}%, #00ddff ${(value / 100) * 100 + 1}%, transparent ${(value / 100) * 100 + 2}%, transparent 100%)`,
-            border: '2px solid #00bcd420'
-          }}
-        />
-        
-        {/* Main knob */}
+      <div 
+        ref={sliderRef}
+        className="volume-knob-slider"
+        style={{
+          transform: `rotate(90deg) scale(${currentScale})`,
+          '--vol': value,
+          '--c1': '#00ddff',
+          '--mut': '#39c1ff'
+        } as React.CSSProperties}
+      >
+        <div className="volume-knob-glow"></div>
         <div 
           ref={knobRef}
-          className={`relative ${sizeClasses[size].knob} rounded-full cursor-pointer select-none`}
-          style={{
-            background: 'linear-gradient(145deg, #525252 0%, #373737 100%)',
-            boxShadow: isDragging 
-              ? '0px -20px 20px #757575, 0px 20px 35px #111111, inset 0px 5px 6px #979797, inset 0px -5px 6px #242424'
-              : '0px -20px 20px #757575, 0px 20px 35px #111111, inset 0px 5px 6px #979797, inset 0px -5px 6px #242424'
-          }}
+          className="volume-knob-knob"
           onMouseDown={handleMouseDown}
-        >
-          {/* Knob indicator */}
-          <div 
-            className="absolute top-3 left-1/2 w-6 h-6 rounded-full transition-all duration-200"
-            style={{
-              background: `radial-gradient(circle at 50% 45%, ${isDragging ? '#c7e6ff' : '#39c1ff'} 4px, transparent 5px), radial-gradient(circle at 50% 50%, #404040 4px, transparent 6px), radial-gradient(circle at 50% 40%, #1118 4px, transparent 5px), linear-gradient(0deg, #373737, #2e2e2e)`,
-              boxShadow: '0px -1px 1px #111, 0px 1px 1px #555',
-              border: `2px solid ${isDragging ? '#00ddff' : '#2e2e2e'}`,
-              transform: `translateX(-50%) rotate(${rotation}deg)`
-            }}
-          />
-        </div>
-        
-        {/* Value display */}
-        <div 
-          className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-8 ${sizeClasses[size].number} rounded-full flex items-center justify-center font-mono`}
           style={{
-            background: '#282828',
-            color: isDragging ? '#c7eaff' : '#39c1ff',
-            fontFamily: '"Alarm Clock", "Orbitron", monospace',
-            boxShadow: '0px 0px 10px 0px #000000 inset, 0px 0px 100px -80px #39c1ff inset',
-            border: '2px solid #0001',
-            textShadow: '0px 0px 3px #000000, 0px 0px 2px #000000, 0px 0px 3px #39c1ff',
-            filter: 'drop-shadow(-1px -2px 1px #111) drop-shadow(0px 1px 1px #404040)'
+            transform: `rotate(${(value / 100) * 270 - 135}deg)`
           }}
-        >
-          {displayValue}
-        </div>
+        ></div>
+        <div className="volume-knob-number">{displayValue}</div>
       </div>
     </div>
   );
