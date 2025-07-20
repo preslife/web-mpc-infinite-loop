@@ -1002,11 +1002,39 @@ const DrumMachine = () => {
     }
     const source = audioContextRef.current.createBufferSource();
     const gainNode = audioContextRef.current.createGain();
-    source.buffer = samples[padIndex].buffer;
+    
+    // Get sample data
+    const sample = samples[padIndex];
+    let buffer = sample.buffer!;
+    
+    // Apply reverse effect by creating a reversed buffer if needed
+    if (sample.reverse) {
+      const reversedBuffer = audioContextRef.current.createBuffer(
+        buffer.numberOfChannels,
+        buffer.length,
+        buffer.sampleRate
+      );
+      
+      for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+        const originalData = buffer.getChannelData(channel);
+        const reversedData = reversedBuffer.getChannelData(channel);
+        
+        for (let i = 0; i < originalData.length; i++) {
+          reversedData[i] = originalData[originalData.length - 1 - i];
+        }
+      }
+      
+      buffer = reversedBuffer;
+    }
+    
+    source.buffer = buffer;
+
+    // Apply pitch adjustment
+    const pitchRate = Math.pow(2, sample.pitch / 12);
+    source.playbackRate.value = pitchRate;
 
     // Calculate sample slice timing
-    const sample = samples[padIndex];
-    const duration = sample.buffer!.duration;
+    const duration = buffer.duration;
     const startTime = sample.startTime * duration;
     const endTime = sample.endTime * duration;
     const sliceDuration = endTime - startTime;
