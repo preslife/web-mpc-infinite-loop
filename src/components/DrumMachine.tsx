@@ -14,9 +14,11 @@ import { VolumeKnob } from './VolumeKnob';
 import { SimpleKnob } from './SimpleKnob';
 import { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
 import { SampleOrganizer } from './SampleOrganizer';
+import { NeuralDrumGenerator } from './NeuralDrumGenerator';
 import { useNavigate } from 'react-router-dom';
 import * as mm from '@magenta/music';
 import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts';
+import { SampleGenerator, defaultSampleConfigs } from '@/utils/sampleGenerator';
 interface Sample {
   buffer: AudioBuffer | null;
   name: string;
@@ -86,7 +88,7 @@ const DrumMachine = () => {
     padIndex: number;
   } | null>(null);
   const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
-  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'patterns' | 'export' | 'song'>('sequencer');
+  const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'patterns' | 'export' | 'song' | 'neural'>('sequencer');
   const [masterVolume, setMasterVolume] = useState(0.8);
 
   // Song mode state
@@ -112,6 +114,7 @@ const DrumMachine = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingChunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sampleGeneratorRef = useRef<SampleGenerator | null>(null);
 
   // MIDI support state
   const [midiAccess, setMidiAccess] = useState<MIDIAccess | null>(null);
@@ -1243,6 +1246,10 @@ const DrumMachine = () => {
             <Button onClick={() => setDisplayMode('song')} variant={displayMode === 'song' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'song' ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300 shadow-lg shadow-yellow-500/25' : 'bg-gray-800 border-gray-600 text-gray-300'}`}>
               SONG
             </Button>
+            <Button onClick={() => setDisplayMode('neural')} variant={displayMode === 'neural' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'neural' ? 'bg-purple-500/20 border-purple-400 text-purple-300 shadow-lg shadow-purple-500/25' : 'bg-gray-800 border-gray-600 text-gray-300'}`}>
+              <Sparkles className="w-3 h-3 mr-1" />
+              AI
+            </Button>
           </div>
 
           {/* Display Content */}
@@ -1431,6 +1438,8 @@ const DrumMachine = () => {
             }} />
               </div> : displayMode === 'export' ? <div className="h-full overflow-auto p-4">
                 <AudioExporter patterns={patterns} samples={samples} bpm={bpm[0]} sequencerLength={sequencerLength} trackVolumes={trackVolumes} trackMutes={trackMutes} trackSolos={trackSolos} masterVolume={masterVolume} swing={swing[0]} />
+              </div> : displayMode === 'neural' ? <div className="h-full overflow-auto p-4">
+                <NeuralDrumGenerator patterns={patterns} onPatternGenerated={setPatterns} bpm={bpm[0]} sequencerLength={sequencerLength} />
               </div> : <div className="h-full overflow-auto">
                 {pendingSample ? <div className="h-full overflow-auto p-2">
                     <WaveformEditor sample={pendingSample.sample} onSampleUpdate={updateSample} onConfirm={confirmPendingSample} showConfirm={true} onClose={cancelPendingSample} audioContext={audioContextRef.current} />

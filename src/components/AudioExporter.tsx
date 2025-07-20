@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { Download, Music, FileAudio, Zap } from 'lucide-react';
 import { toast } from 'sonner';
+import { MP3Encoder } from '@/utils/mp3Encoder';
 
 interface PatternStep {
   active: boolean;
@@ -239,6 +240,11 @@ export const AudioExporter = ({
     return new Blob([arrayBuffer], { type: 'audio/wav' });
   };
 
+  const audioBufferToMp3 = (buffer: AudioBuffer): Blob => {
+    const encoder = new MP3Encoder(buffer.sampleRate, buffer.numberOfChannels, 128);
+    return encoder.encodeBuffer(buffer);
+  };
+
   const downloadBlob = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -272,7 +278,7 @@ export const AudioExporter = ({
         const buffer = await renderAudioBuffer(durationBars);
         setExportProgress(90);
         
-        const blob = audioBufferToWav(buffer);
+        const blob = exportFormat === 'mp3' ? audioBufferToMp3(buffer) : audioBufferToWav(buffer);
         setExportProgress(100);
         
         const filename = `pattern-${Date.now()}.${exportFormat}`;
@@ -287,7 +293,7 @@ export const AudioExporter = ({
         let downloadCount = 0;
         Object.entries(stemBuffers).forEach(([padIndex, buffer]) => {
           const sampleName = samples[parseInt(padIndex)]?.name || `Track_${padIndex}`;
-          const blob = audioBufferToWav(buffer);
+          const blob = exportFormat === 'mp3' ? audioBufferToMp3(buffer) : audioBufferToWav(buffer);
           const filename = `${sampleName}-stem-${Date.now()}.${exportFormat}`;
           setTimeout(() => downloadBlob(blob, filename), downloadCount * 100);
           downloadCount++;
