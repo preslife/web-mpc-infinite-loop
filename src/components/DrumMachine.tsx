@@ -87,6 +87,10 @@ const DrumMachine = () => {
     sample: Sample;
     padIndex: number;
   } | null>(null);
+  const [sampleQueue, setSampleQueue] = useState<{
+    sample: Sample;
+    padIndex: number;
+  }[]>([]);
   const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
   const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'patterns' | 'export' | 'song' | 'neural'>('sequencer');
   const [masterVolume, setMasterVolume] = useState(0.8);
@@ -375,16 +379,17 @@ const DrumMachine = () => {
           volume: 0.8
         };
         
-        console.log(`Setting pending sample for pad ${padIndex}: ${sample.name}`);
-        // Set pending sample for editor confirmation
-        setPendingSample({
+        console.log(`Adding sample to queue for pad ${padIndex}: ${sample.name}`);
+        // Add to queue instead of setting pending immediately
+        setSampleQueue(prev => [...prev, {
           sample,
           padIndex
-        });
+        }]);
         
-        // Switch to editor mode for confirmation
-        console.log('Switching to editor mode');
-        setDisplayMode('editor');
+        // If no sample is currently pending, start processing queue
+        if (!pendingSample) {
+          processNextInQueue();
+        }
         return;
       }
       
@@ -402,16 +407,17 @@ const DrumMachine = () => {
         volume: 0.8
       };
       
-      console.log(`Setting pending sample for pad ${padIndex}: ${sample.name}`);
-      // Set pending sample for editor confirmation (same as normal upload workflow)
-      setPendingSample({
+      console.log(`Adding sample to queue for pad ${padIndex}: ${sample.name}`);
+      // Add to queue instead of setting pending immediately
+      setSampleQueue(prev => [...prev, {
         sample,
         padIndex
-      });
+      }]);
       
-      // Switch to editor mode for confirmation
-      console.log('Switching to editor mode');
-      setDisplayMode('editor');
+      // If no sample is currently pending, start processing queue
+      if (!pendingSample) {
+        processNextInQueue();
+      }
       
     } catch (error) {
       console.error(`Failed to load sample ${name} from ${url}:`, error);
@@ -447,13 +453,15 @@ const DrumMachine = () => {
           volume: 0.8
         };
         
-        console.log(`Setting fallback pending sample for pad ${padIndex}: ${sample.name}`);
-        setPendingSample({
+        console.log(`Adding fallback sample to queue for pad ${padIndex}: ${sample.name}`);
+        setSampleQueue(prev => [...prev, {
           sample,
           padIndex
-        });
+        }]);
         
-        setDisplayMode('editor');
+        if (!pendingSample) {
+          processNextInQueue();
+        }
       } catch (synthError) {
         console.error('Failed to generate synthetic sample:', synthError);
         toast.error(`Failed to load or generate sample: ${name}`);
@@ -1280,6 +1288,21 @@ const DrumMachine = () => {
       }
     }
   };
+  
+  // Process next sample in queue
+  const processNextInQueue = () => {
+    setSampleQueue(prev => {
+      if (prev.length > 0) {
+        const [nextSample, ...remaining] = prev;
+        setPendingSample(nextSample);
+        setDisplayMode('editor');
+        console.log(`Processing next sample from queue: ${nextSample.sample.name} for pad ${nextSample.padIndex}`);
+        return remaining;
+      }
+      return prev;
+    });
+  };
+
   const confirmPendingSample = () => {
     if (pendingSample) {
       const newSamples = [...samples];
@@ -1287,12 +1310,18 @@ const DrumMachine = () => {
       setSamples(newSamples);
       setPendingSample(null);
       toast.success(`Sample confirmed and loaded to pad ${pendingSample.padIndex + 1}!`);
+      
+      // Process next sample in queue if any
+      setTimeout(() => processNextInQueue(), 100);
     }
   };
   const cancelPendingSample = () => {
     if (pendingSample) {
       setPendingSample(null);
       toast.info('Sample loading cancelled');
+      
+      // Process next sample in queue if any
+      setTimeout(() => processNextInQueue(), 100);
     }
   };
 
