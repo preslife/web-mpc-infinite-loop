@@ -1236,7 +1236,7 @@ const DrumMachine = () => {
                 
                 <div className="h-full overflow-auto">
                   {/* Step numbers row */}
-                  <div className="flex gap-1 mb-2 ml-[126px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 5 (volume) + 5 (pan) + 12 (mute/solo) + 4 (gaps) = 126px */}
+                  <div className="flex gap-1 mb-2 ml-[142px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 8 (volume) + 8 (pan) + 12 (mute/solo) + 4 (gaps) = 142px */}
                     {Array.from({
                   length: sequencerLength
                 }, (_, stepIndex) => <div key={stepIndex} className={`
@@ -1248,7 +1248,7 @@ const DrumMachine = () => {
                   </div>
                   
                   {/* Track rows with labels */}
-                  <div className="space-y-0.5">
+                  <div className="space-y-0">  {/* Removed spacing between track rows */}
                     {Array.from({
                   length: 16
                 }, (_, padIndex) => <div key={padIndex} className="flex items-center gap-1 overflow-x-auto">
@@ -1276,7 +1276,7 @@ const DrumMachine = () => {
                         </ContextMenu>
                         
                         {/* Volume knob */}
-                        <div className="flex-shrink-0 w-5">
+                        <div className="flex-shrink-0 w-8 -mr-1">
                           <VolumeKnob value={trackVolumes[padIndex]} onChange={value => {
                       const newVolumes = [...trackVolumes];
                       newVolumes[padIndex] = value;
@@ -1285,7 +1285,7 @@ const DrumMachine = () => {
                         </div>
                         
                         {/* Pan knob */}
-                        <div className="flex-shrink-0 w-5">
+                        <div className="flex-shrink-0 w-8 -mr-1">
                           <VolumeKnob value={trackPans[padIndex]} onChange={value => {
                       const newPans = [...trackPans];
                       newPans[padIndex] = value;
