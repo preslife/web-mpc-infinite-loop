@@ -1206,10 +1206,6 @@ const DrumMachine = () => {
               toast.success(`Sample loaded to pad ${padIndex + 1}!`);
             }} selectedPad={selectedPad} />
               <KeyboardShortcutsHelp />
-              <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs hover:bg-purple-800/20 hover:border-purple-400 neon-border" onClick={() => navigate('/library')}>
-                <Music className="w-3 h-3 mr-1" />
-                LIBRARY
-              </Button>
               <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs neon-border" onClick={() => setDisplayMode('sequencer')}>
                 SEQUENCER
               </Button>
