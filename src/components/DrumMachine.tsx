@@ -505,11 +505,23 @@ const DrumMachine = () => {
 
   // Helper function to check if pattern operations are possible
   const canPerformPatternOperations = () => {
+    const loadedCount = getLoadedSamplesCount();
+    console.log('canPerformPatternOperations check:', {
+      patternTarget,
+      loadedCount,
+      selectedTrack,
+      selectedPad,
+      neuralEnabled,
+      isGenerating
+    });
+    
     if (patternTarget === 'all') {
-      return getLoadedSamplesCount() > 0;
+      return loadedCount > 0;
     } else {
       const targetTrack = selectedTrack !== null ? selectedTrack : selectedPad;
-      return targetTrack !== null && samples[targetTrack]?.buffer;
+      const hasBuffer = targetTrack !== null && samples[targetTrack]?.buffer;
+      console.log('Single track check:', { targetTrack, hasBuffer });
+      return hasBuffer;
     }
   };
 
