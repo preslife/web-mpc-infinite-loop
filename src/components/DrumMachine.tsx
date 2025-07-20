@@ -66,6 +66,7 @@ const DrumMachine = () => {
     velocity: 80
   })));
   const [trackVolumes, setTrackVolumes] = useState<number[]>(Array(16).fill(80));
+  const [trackPans, setTrackPans] = useState<number[]>(Array(16).fill(50)); // 50 = center pan
   const [trackMutes, setTrackMutes] = useState<boolean[]>(Array(16).fill(false));
   const [trackSolos, setTrackSolos] = useState<boolean[]>(Array(16).fill(false));
   const [selectedPad, setSelectedPad] = useState<number | null>(null);
@@ -209,6 +210,7 @@ const DrumMachine = () => {
     eqMid?: BiquadFilterNode;
     eqHigh?: BiquadFilterNode;
     gainNode?: GainNode;
+    panner?: StereoPannerNode;
   }>>(new Map());
 
   // Initialize Web Audio API and Neural Network
@@ -364,6 +366,10 @@ const DrumMachine = () => {
     // Create effect nodes
     const nodes: any = {};
 
+    // Panner for stereo positioning (always create this)
+    nodes.panner = context.createStereoPanner();
+    nodes.panner.pan.value = ((trackPans[trackIndex] - 50) / 50); // Convert 0-100 to -1 to 1
+
     // Reverb
     if (effects.reverb.enabled) {
       nodes.reverb = context.createConvolver();
@@ -413,7 +419,7 @@ const DrumMachine = () => {
       nodes.eqHigh.gain.value = effects.eq.high;
     }
     effectNodesRef.current.set(trackIndex, nodes);
-  }, [trackEffects, createReverbImpulse]);
+  }, [trackEffects, trackPans, createReverbImpulse]);
 
   // Connect audio through effects chain
   const connectEffectsChain = useCallback((source: AudioNode, trackIndex: number, destination: AudioNode) => {
@@ -442,11 +448,18 @@ const DrumMachine = () => {
     const mixer = audioContextRef.current!.createGain();
     currentNode.connect(mixer);
 
+    // Pan control (always active) - connect mixer through panner to final destination
+    let finalDestination = destination;
+    if (effects.panner) {
+      finalDestination = effects.panner;
+      effects.panner.connect(destination);
+    }
+
     // Delay
     if (effects.delay && effects.delayGain && effects.delayFeedback && effects.delayWet && effects.delayDry) {
       // Dry signal
       mixer.connect(effects.delayDry);
-      effects.delayDry.connect(destination);
+      effects.delayDry.connect(finalDestination);
 
       // Wet signal
       mixer.connect(effects.delay);
@@ -454,24 +467,24 @@ const DrumMachine = () => {
       effects.delay.connect(effects.delayFeedback);
       effects.delayFeedback.connect(effects.delay);
       effects.delayGain.connect(effects.delayWet);
-      effects.delayWet.connect(destination);
+      effects.delayWet.connect(finalDestination);
     }
 
     // Reverb
     if (effects.reverb && effects.reverbGain && effects.reverbDry) {
       // Dry signal
       mixer.connect(effects.reverbDry);
-      effects.reverbDry.connect(destination);
+      effects.reverbDry.connect(finalDestination);
 
       // Wet signal
       mixer.connect(effects.reverb);
       effects.reverb.connect(effects.reverbGain);
-      effects.reverbGain.connect(destination);
+      effects.reverbGain.connect(finalDestination);
     }
 
     // If no time-based effects, connect directly
     if (!effects.delay && !effects.reverb) {
-      mixer.connect(destination);
+      mixer.connect(finalDestination);
     }
   }, []);
 
@@ -1223,11 +1236,11 @@ const DrumMachine = () => {
                 
                 <div className="h-full overflow-auto">
                   {/* Step numbers row */}
-                  <div className="flex gap-1 mb-2 ml-[96px] overflow-x-auto mx-[152px]"> {/* Aligned with track content: 14 (label) + 6 (volume) + 12 (mute/solo) + 4 (gaps) = 96px */}
+                  <div className="flex gap-1 mb-2 ml-[126px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 5 (volume) + 5 (pan) + 12 (mute/solo) + 4 (gaps) = 126px */}
                     {Array.from({
                   length: sequencerLength
                 }, (_, stepIndex) => <div key={stepIndex} className={`
-                        w-8 h-6 rounded text-xs flex items-center justify-center flex-shrink-0 transition-all duration-300
+                        w-6 h-5 rounded text-xs flex items-center justify-center flex-shrink-0 transition-all duration-300
                         ${currentStep === stepIndex ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/50 scale-110' : 'bg-gray-700/50 text-gray-400 backdrop-blur-sm'}
                       `}>
                         {stepIndex + 1}
@@ -1235,7 +1248,7 @@ const DrumMachine = () => {
                   </div>
                   
                   {/* Track rows with labels */}
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     {Array.from({
                   length: 16
                 }, (_, padIndex) => <div key={padIndex} className="flex items-center gap-1 overflow-x-auto">
@@ -1263,11 +1276,20 @@ const DrumMachine = () => {
                         </ContextMenu>
                         
                         {/* Volume knob */}
-                        <div className="flex-shrink-0 w-6">
+                        <div className="flex-shrink-0 w-5">
                           <VolumeKnob value={trackVolumes[padIndex]} onChange={value => {
                       const newVolumes = [...trackVolumes];
                       newVolumes[padIndex] = value;
                       setTrackVolumes(newVolumes);
+                    }} size="sm" />
+                        </div>
+                        
+                        {/* Pan knob */}
+                        <div className="flex-shrink-0 w-5">
+                          <VolumeKnob value={trackPans[padIndex]} onChange={value => {
+                      const newPans = [...trackPans];
+                      newPans[padIndex] = value;
+                      setTrackPans(newPans);
                     }} size="sm" />
                         </div>
                         
@@ -1293,7 +1315,7 @@ const DrumMachine = () => {
                         {Array.from({
                     length: sequencerLength
                   }, (_, stepIndex) => <button key={stepIndex} onClick={() => toggleStep(padIndex, stepIndex)} className={`
-                              w-8 h-6 rounded flex-shrink-0 transition-all duration-200
+                              w-6 h-5 rounded flex-shrink-0 transition-all duration-200
                               ${patterns[padIndex][stepIndex]?.active ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-md shadow-cyan-500/50' : 'bg-gray-600/50 hover:bg-gray-500/70 backdrop-blur-sm'}
                               ${currentStep === stepIndex && patterns[padIndex][stepIndex]?.active ? 'ring-2 ring-red-400 ring-opacity-75' : ''}
                             `} title={`Track ${padIndex + 1} (${samples[padIndex]?.name || 'Empty'}), Step ${stepIndex + 1}`} />)}
