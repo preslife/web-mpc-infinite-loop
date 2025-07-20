@@ -2123,7 +2123,6 @@ const DrumMachine = () => {
             </div>
           </div>
         </div>}
-            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       
