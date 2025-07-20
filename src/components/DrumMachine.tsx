@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
-
 import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit, RefreshCw, Sparkles, X, Music } from 'lucide-react';
 import { toast } from 'sonner';
 import { WaveformEditor } from './WaveformEditor';
@@ -1165,10 +1164,10 @@ const DrumMachine = () => {
         </div>
 
         {/* Main Display Area */}
-        <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-96 relative overflow-hidden px-[6px] my-[7px] mx-[76px]">
-              {/* Neon glass effect overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
+        <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[76px]">
+          {/* Neon glass effect overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
           
           {/* Toggle buttons */}
           <div className="flex gap-2 mb-4 relative z-10">
@@ -1372,14 +1371,11 @@ const DrumMachine = () => {
                       </div>}
                   </>}
               </div>}
-            </div>
           </div>
         </div>
 
-        {/* Controls and Drum Pads */}
-        <div className="flex flex-col gap-2 p-2">
-              {/* Waveform Visualizer Panel */}
-              <div className="backdrop-blur-md p-2 mb-2 rounded-lg border border-cyan-500/20 shadow-lg shadow-cyan-500/10 relative overflow-hidden px-[18px] mx-[75px] bg-indigo-950">
+        {/* Waveform Visualizer Panel */}
+        <div className="backdrop-blur-md p-2 mb-2 rounded-lg border border-cyan-500/20 shadow-lg shadow-cyan-500/10 relative overflow-hidden px-[18px] mx-[75px] bg-indigo-950">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 rounded-lg pointer-events-none"></div>
           <div className="relative z-10 flex items-center justify-center gap-2">
             <span className="text-xs text-cyan-400 font-medium">WAVEFORM</span>
@@ -1597,18 +1593,18 @@ const DrumMachine = () => {
             </div>
           </div>
 
-              {/* Drum Pads */}
-              <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
-                
-                <div className="grid grid-cols-4 gap-2 relative z-10">
+          {/* Right Drum Pads */}
+          <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden my-[8 px] mx-[69px] px-[12px] my-[156px] py-[12px]">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
+            
+            <div className="grid grid-cols-4 gap-2 relative z-10">
               {Array.from({
               length: 16
             }, (_, i) => <ContextMenu key={i}>
                   <ContextMenuTrigger asChild>
-                     <button onClick={() => setSelectedPad(i)} onMouseDown={() => handlePadPress(i)} onMouseUp={() => handlePadRelease(i)} onMouseLeave={() => handlePadRelease(i)} onTouchStart={() => handlePadPress(i)} onTouchEnd={() => handlePadRelease(i)} className={`
-                        h-20 w-20 rounded-lg text-sm font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
+                    <button onClick={() => setSelectedPad(i)} onMouseDown={() => handlePadPress(i)} onMouseUp={() => handlePadRelease(i)} onMouseLeave={() => handlePadRelease(i)} onTouchStart={() => handlePadPress(i)} onTouchEnd={() => handlePadRelease(i)} className={`
+                        h-16 w-16 rounded-lg text-xs font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
                         ${samples[i]?.buffer ? getPadColor(i) + '/80 border-cyan-400/50 text-white shadow-lg shadow-cyan-500/30' : 'bg-gray-700/40 border-purple-400/30 text-gray-300 hover:bg-gray-600/50 hover:border-purple-400/50'}
                         ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-red-500 shadow-lg shadow-red-500/50' : ''}
                         ${selectedPad === i ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/70 border-cyan-400' : ''}
@@ -2116,14 +2112,10 @@ const DrumMachine = () => {
                 </div>}
             </div>
           </div>
-        </div>
-        }
-
-        {/* Visual Feedback Overlay */}
-        <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
-      </div>
-    </div>
-  );
+        </div>}
+      
+      {/* Visual Feedback Overlay */}
+      <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
+    </div>;
 };
-
 export default DrumMachine;
