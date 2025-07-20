@@ -2118,7 +2118,7 @@ const DrumMachine = () => {
           </div>
         </div>
         }
-        
+
         {/* Visual Feedback Overlay */}
         <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
       </div>
