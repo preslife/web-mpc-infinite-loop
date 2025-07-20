@@ -786,8 +786,11 @@ const DrumMachine = () => {
     // Combine pattern velocity with track volume and master volume
     const finalVolume = velocity / 127 * (trackVolumes[padIndex] / 100) * masterVolume;
     gainNode.gain.value = finalVolume;
+    
+    // Initialize and connect through effects chain
+    initializeTrackEffects(padIndex);
     source.connect(gainNode);
-    gainNode.connect(audioContextRef.current.destination);
+    connectEffectsChain(gainNode, padIndex, audioContextRef.current.destination);
 
     // Track the source if in gate mode
     if (sampleGateMode) {
