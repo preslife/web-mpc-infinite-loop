@@ -327,8 +327,8 @@ const DrumMachine = () => {
       const response = await fetch(url);
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
-      const newSamples = [...samples];
-      newSamples[padIndex] = {
+      
+      const sample: Sample = {
         buffer: audioBuffer,
         name: name,
         startTime: 0,
@@ -338,10 +338,19 @@ const DrumMachine = () => {
         reverse: false,
         volume: 0.8
       };
-      setSamples(newSamples);
+      
+      // Set pending sample for editor confirmation (same as normal upload workflow)
+      setPendingSample({
+        sample,
+        padIndex
+      });
+      
+      // Switch to editor mode for confirmation
+      setDisplayMode('editor');
+      
     } catch (error) {
       console.warn(`Failed to load sample ${name}:`, error);
-      // Don't show error toast for individual samples as some URLs might be placeholder
+      toast.error(`Failed to load sample: ${name}`);
     }
   };
 
