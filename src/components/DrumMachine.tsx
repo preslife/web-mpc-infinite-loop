@@ -526,7 +526,7 @@ const DrumMachine = () => {
     }
   };
   const generateSequence = async () => {
-    if (!rnnRef.current || !neuralEnabled) {
+    if (!neuralEnabled) {
       toast.error('Neural drum engine not initialized.');
       return;
     }
@@ -572,7 +572,7 @@ const DrumMachine = () => {
       };
 
       // Generate continuation
-      const continuation = await rnnRef.current.continueSequence(seedSequence, sequencerLength - seedLength, temperature[0]);
+      const continuation = await rnnRef.current!.continueSequence(seedSequence, sequencerLength - seedLength, temperature[0]);
 
       // Update patterns with the generated sequence - only for target tracks
       const newPatterns = [...patterns];
