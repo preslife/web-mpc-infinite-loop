@@ -1598,7 +1598,7 @@ const DrumMachine = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
             
-            <div className="grid grid-cols-4 gap-3 relative z-10">
+            <div className="grid grid-cols-4 gap-2 relative z-10">
               {Array.from({
               length: 16
             }, (_, i) => <ContextMenu key={i}>
