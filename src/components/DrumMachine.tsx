@@ -1286,7 +1286,7 @@ const DrumMachine = () => {
                               setTrackVolumes(newVolumes);
                             }} 
                             size={20}
-                            color="#00ddff"
+                            color="hsl(var(--primary))"
                           />
                         </div>
                         
@@ -1300,7 +1300,7 @@ const DrumMachine = () => {
                               setTrackPans(newPans);
                             }} 
                             size={20}
-                            color="#ff6b35"
+                            color="hsl(var(--accent))"
                           />
                         </div>
                         
