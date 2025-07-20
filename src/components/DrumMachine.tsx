@@ -323,13 +323,14 @@ const DrumMachine = () => {
   // Load a single sample from URL
   const loadSampleFromUrl = async (url: string, name: string, padIndex: number) => {
     try {
-      console.log(`Attempting to load sample: ${name} from URL: ${url}`);
+      console.log(`Attempting to load sample: ${name} from URL: ${url} for pad ${padIndex}`);
       if (!audioContextRef.current) return;
       
       const response = await fetch(url);
       console.log(`Fetch response status: ${response.status}, ok: ${response.ok}`);
       
       if (!response.ok) {
+        console.log(`HTTP error, generating synthetic ${name} sample`);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
@@ -339,19 +340,25 @@ const DrumMachine = () => {
       // Check if response is actually HTML (error page) instead of audio
       const text = new TextDecoder().decode(arrayBuffer.slice(0, 100));
       if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
-        console.log('Detected HTML response, falling back to synthetic sample');
+        console.log(`Detected HTML response for ${name}, generating synthetic sample`);
+        
         // Generate synthetic sample instead
         const { SampleGenerator } = await import('../utils/sampleGenerator');
         const generator = new SampleGenerator(audioContextRef.current);
         
         let audioBuffer: AudioBuffer;
-        if (name.toLowerCase().includes('kick')) {
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes('kick')) {
+          console.log('Generating synthetic kick');
           audioBuffer = generator.generateKick();
-        } else if (name.toLowerCase().includes('snare')) {
+        } else if (lowerName.includes('snare')) {
+          console.log('Generating synthetic snare');
           audioBuffer = generator.generateSnare();
-        } else if (name.toLowerCase().includes('hat')) {
+        } else if (lowerName.includes('hat') || lowerName.includes('hi-hat')) {
+          console.log('Generating synthetic hi-hat');
           audioBuffer = generator.generateHiHat();
         } else {
+          console.log('Generating synthetic percussion');
           audioBuffer = generator.generatePerc();
         }
         
@@ -359,7 +366,7 @@ const DrumMachine = () => {
         
         const sample: Sample = {
           buffer: audioBuffer,
-          name: name,
+          name: `${name} (Generated)`,
           startTime: 0,
           endTime: 1,
           gateMode: true,
@@ -368,6 +375,7 @@ const DrumMachine = () => {
           volume: 0.8
         };
         
+        console.log(`Setting pending sample for pad ${padIndex}: ${sample.name}`);
         // Set pending sample for editor confirmation
         setPendingSample({
           sample,
@@ -375,6 +383,7 @@ const DrumMachine = () => {
         });
         
         // Switch to editor mode for confirmation
+        console.log('Switching to editor mode');
         setDisplayMode('editor');
         return;
       }
@@ -393,6 +402,7 @@ const DrumMachine = () => {
         volume: 0.8
       };
       
+      console.log(`Setting pending sample for pad ${padIndex}: ${sample.name}`);
       // Set pending sample for editor confirmation (same as normal upload workflow)
       setPendingSample({
         sample,
@@ -400,11 +410,54 @@ const DrumMachine = () => {
       });
       
       // Switch to editor mode for confirmation
+      console.log('Switching to editor mode');
       setDisplayMode('editor');
       
     } catch (error) {
       console.error(`Failed to load sample ${name} from ${url}:`, error);
-      toast.error(`Failed to load sample: ${name} - ${error.message}`);
+      
+      // On any error, try to generate a synthetic sample as fallback
+      try {
+        console.log(`Generating fallback synthetic sample for ${name}`);
+        if (!audioContextRef.current) return;
+        
+        const { SampleGenerator } = await import('../utils/sampleGenerator');
+        const generator = new SampleGenerator(audioContextRef.current);
+        
+        let audioBuffer: AudioBuffer;
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes('kick')) {
+          audioBuffer = generator.generateKick();
+        } else if (lowerName.includes('snare')) {
+          audioBuffer = generator.generateSnare();
+        } else if (lowerName.includes('hat') || lowerName.includes('hi-hat')) {
+          audioBuffer = generator.generateHiHat();
+        } else {
+          audioBuffer = generator.generatePerc();
+        }
+        
+        const sample: Sample = {
+          buffer: audioBuffer,
+          name: `${name} (Generated)`,
+          startTime: 0,
+          endTime: 1,
+          gateMode: true,
+          pitch: 0,
+          reverse: false,
+          volume: 0.8
+        };
+        
+        console.log(`Setting fallback pending sample for pad ${padIndex}: ${sample.name}`);
+        setPendingSample({
+          sample,
+          padIndex
+        });
+        
+        setDisplayMode('editor');
+      } catch (synthError) {
+        console.error('Failed to generate synthetic sample:', synthError);
+        toast.error(`Failed to load or generate sample: ${name}`);
+      }
     }
   };
 
