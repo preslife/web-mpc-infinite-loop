@@ -499,7 +499,25 @@ const DrumMachine = () => {
         </div>
 
         {/* Main content area with conditional rendering */}
-        {displayMode === 'editor' ? (
+        {displayMode === 'patterns' ? (
+          <div className="h-full overflow-auto p-4">
+            <div className="text-center text-white">Pattern Manager - Coming Soon</div>
+          </div>
+        ) : displayMode === 'export' ? (
+          <div className="h-full overflow-auto p-4">
+            <AudioExporter 
+              patterns={patterns} 
+              samples={samples} 
+              bpm={bpm[0]} 
+              sequencerLength={sequencerLength} 
+              trackVolumes={trackVolumes} 
+              trackMutes={trackMutes} 
+              trackSolos={trackSolos} 
+              masterVolume={masterVolume} 
+              swing={swing[0]} 
+            />
+          </div>
+        ) : displayMode === 'editor' ? (
           <div className="h-full overflow-auto">
             {pendingSample ? (
               <div className="h-full overflow-auto p-2">
@@ -523,9 +541,66 @@ const DrumMachine = () => {
             )}
           </div>
         ) : (
-          <div className="text-center p-4">
-            <SampleLibrary onLoadKit={loadKitSamples} onLoadSample={() => {}} />
-            <p className="text-gray-400 mt-4">Load samples from the library above to get started</p>
+          <div className="bg-gray-900 rounded border border-gray-700 mx-[15px] mb-2">
+            {/* Main Sequencer Interface */}
+            <div className="p-4">
+              <div className="grid grid-cols-4 gap-2 mb-4">
+                {Array.from({ length: 16 }, (_, i) => (
+                  <Button
+                    key={i}
+                    variant="outline"
+                    size="lg"
+                    className={`h-16 text-white font-bold text-sm border-2 transition-all duration-100 ${
+                      samples[i]?.buffer ? 'bg-blue-600 border-blue-400' : 'bg-gray-700 border-gray-600'
+                    } ${selectedPad === i ? 'ring-2 ring-purple-400' : ''}`}
+                    onClick={() => handlePadPress(i)}
+                  >
+                    {samples[i]?.name ? samples[i].name.slice(0, 8) : `PAD ${i + 1}`}
+                  </Button>
+                ))}
+              </div>
+              
+              {/* Basic Controls */}
+              <div className="flex gap-4 items-center justify-center">
+                <Button
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  variant="outline"
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  {isPlaying ? 'PAUSE' : 'PLAY'}
+                </Button>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-white text-sm">BPM:</span>
+                  <Slider
+                    value={bpm}
+                    onValueChange={setBpm}
+                    min={60}
+                    max={200}
+                    step={1}
+                    className="w-24"
+                  />
+                  <span className="text-white text-sm w-8">{bpm[0]}</span>
+                </div>
+                
+                <Button
+                  onClick={() => setDisplayMode('editor')}
+                  variant="outline"
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  EDIT
+                </Button>
+              </div>
+            </div>
+            
+            {/* Sample Library */}
+            <div className="p-4 border-t border-gray-700">
+              <SampleLibrary onLoadKit={loadKitSamples} onLoadSample={() => {}} />
+            </div>
           </div>
         )}
 
