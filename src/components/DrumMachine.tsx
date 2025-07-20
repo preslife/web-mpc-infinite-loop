@@ -312,12 +312,31 @@ const DrumMachine = () => {
   // Load samples from a drum kit
   const loadKitSamples = async (kit: any) => {
     try {
-      const newSamples = [...samples];
+      console.log(`Loading kit: ${kit.name} with ${kit.samples.length} samples`);
+      
+      // Load all samples in parallel (don't await individual ones)
+      const loadPromises = [];
       for (let i = 0; i < Math.min(kit.samples.length, 16); i++) {
         const sample = kit.samples[i];
-        await loadSampleFromUrl(sample.url, sample.name, i);
+        console.log(`Starting load for sample ${i}: ${sample.name} from ${sample.url}`);
+        // Don't await here - let them all start loading in parallel
+        loadPromises.push(loadSampleFromUrl(sample.url, sample.name, i));
       }
-      toast.success(`Loaded ${kit.name} drum kit!`);
+      
+      // Wait for all to complete (or fail)
+      const results = await Promise.allSettled(loadPromises);
+      
+      let successCount = 0;
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          successCount++;
+          console.log(`Sample ${index} loaded successfully`);
+        } else {
+          console.error(`Sample ${index} failed:`, result.reason);
+        }
+      });
+      
+      toast.success(`Started loading ${kit.name} drum kit! (${successCount}/${kit.samples.length} samples queued)`);
     } catch (error) {
       console.error('Error loading kit:', error);
       toast.error('Failed to load some samples from kit');
@@ -387,9 +406,18 @@ const DrumMachine = () => {
         }]);
         
         // If no sample is currently pending, start processing queue
-        if (!pendingSample) {
-          processNextInQueue();
-        }
+        setTimeout(() => {
+          setSampleQueue(prev => {
+            if (prev.length > 0 && !pendingSample) {
+              const [nextSample, ...remaining] = prev;
+              setPendingSample(nextSample);
+              setDisplayMode('editor');
+              console.log(`Processing next sample from queue: ${nextSample.sample.name} for pad ${nextSample.padIndex}`);
+              return remaining;
+            }
+            return prev;
+          });
+        }, 100);
         return;
       }
       
@@ -1272,6 +1300,21 @@ const DrumMachine = () => {
     const colors = ['bg-yellow-600', 'bg-blue-500', 'bg-cyan-500', 'bg-pink-500', 'bg-purple-600', 'bg-blue-400', 'bg-green-500', 'bg-pink-400', 'bg-yellow-500', 'bg-orange-500', 'bg-cyan-400', 'bg-blue-600', 'bg-red-500', 'bg-yellow-400', 'bg-blue-300', 'bg-red-400'];
     return colors[index] || 'bg-gray-600';
   };
+  
+  // Process next sample in queue
+  const processNextInQueue = () => {
+    setSampleQueue(prev => {
+      if (prev.length > 0) {
+        const [nextSample, ...remaining] = prev;
+        setPendingSample(nextSample);
+        setDisplayMode('editor');
+        console.log(`Processing next sample from queue: ${nextSample.sample.name} for pad ${nextSample.padIndex}`);
+        return remaining;
+      }
+      return prev;
+    });
+  };
+  
   const updateSample = (updatedSample: Sample) => {
     if (pendingSample) {
       // Update pending sample
@@ -1287,22 +1330,7 @@ const DrumMachine = () => {
         setSamples(newSamples);
       }
     }
-  };
   
-  // Process next sample in queue
-  const processNextInQueue = () => {
-    setSampleQueue(prev => {
-      if (prev.length > 0) {
-        const [nextSample, ...remaining] = prev;
-        setPendingSample(nextSample);
-        setDisplayMode('editor');
-        console.log(`Processing next sample from queue: ${nextSample.sample.name} for pad ${nextSample.padIndex}`);
-        return remaining;
-      }
-      return prev;
-    });
-  };
-
   const confirmPendingSample = () => {
     if (pendingSample) {
       const newSamples = [...samples];
@@ -2320,6 +2348,6 @@ const DrumMachine = () => {
       
       {/* Visual Feedback Overlay */}
       <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
-    </div>;
+    </div>
 };
 export default DrumMachine;
