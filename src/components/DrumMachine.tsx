@@ -1164,14 +1164,11 @@ const DrumMachine = () => {
           </div>
         </div>
 
-        {/* Resizable Layout Container */}
-        <ResizablePanelGroup direction="vertical" className="h-[80vh] w-full">
-          {/* Main Display Panel */}
-          <ResizablePanel defaultSize={70} minSize={50}>
-            <div className="bg-gray-900 p-4 rounded border border-gray-700 h-full relative overflow-hidden">
-              {/* Neon glass effect overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
+        {/* Main Display Area */}
+        <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[76px]">
+          {/* Neon glass effect overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
           
           {/* Toggle buttons */}
           <div className="flex gap-2 mb-4 relative z-10">
@@ -1377,13 +1374,10 @@ const DrumMachine = () => {
               </div>}
             </div>
           </div>
-          </ResizablePanel>
+        </div>
 
-          <ResizableHandle withHandle />
-
-          {/* Bottom Panel - Controls and Drum Pads */}
-          <ResizablePanel defaultSize={30} minSize={20}>
-            <div className="h-full flex flex-row gap-2">
+        {/* Waveform Visualizer Panel */}
+        <div className="backdrop-blur-md p-2 mb-2 rounded-lg border border-cyan-500/20 shadow-lg shadow-cyan-500/10 relative overflow-hidden px-[18px] mx-[75px] bg-indigo-950">
         <div className="backdrop-blur-md p-2 mb-2 rounded-lg border border-cyan-500/20 shadow-lg shadow-cyan-500/10 relative overflow-hidden px-[18px] mx-[75px] bg-indigo-950">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 rounded-lg pointer-events-none"></div>
           <div className="relative z-10 flex items-center justify-center gap-2">
@@ -2122,8 +2116,6 @@ const DrumMachine = () => {
             </div>
           </div>
         </div>}
-          </ResizablePanel>
-        </ResizablePanelGroup>
       
         {/* Visual Feedback Overlay */}
         <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
