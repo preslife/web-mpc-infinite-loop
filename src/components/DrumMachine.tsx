@@ -1138,8 +1138,9 @@ const DrumMachine = () => {
       }
     }
   });
-  return <div className="min-h-screen bg-black p-2 font-mono">
-      <div className="max-w-7xl mx-auto">
+  return (
+    <LayoutEditor>
+    <div>
         {/* Top Control Bar */}
         <div className="bg-gray-900 p-2 mb-2 rounded border border-gray-700">
           <div className="flex items-center justify-between">
@@ -2112,10 +2113,12 @@ const DrumMachine = () => {
                 </div>}
             </div>
           </div>
-        </div>}
+         </div>}
       
-      {/* Visual Feedback Overlay */}
-      <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
-    </div>;
+         {/* Visual Feedback Overlay */}
+         <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
+       </div>
+    </LayoutEditor>
+  );
 };
 export default DrumMachine;
