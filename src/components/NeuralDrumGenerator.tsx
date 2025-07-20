@@ -138,19 +138,29 @@ export const NeuralDrumGenerator = ({
       
       if (generationType !== 'new') {
         seedSequence = convertPatternToNoteSequence(patterns);
+        console.log('Seed sequence created:', seedSequence);
       }
 
+      const baseSequence = seedSequence || {
+        notes: [],
+        totalTime: 0,
+        ticksPerQuarter: 220,
+        quantizationInfo: {
+          stepsPerQuarter: 4
+        }
+      };
+
+      console.log('Calling continueSequence with:', { baseSequence, steps: stepsToGenerate[0], temp: temperature[0] });
+
       const generatedSequence = await musicRNN.continueSequence(
-        seedSequence || {
-          notes: [],
-          totalTime: 0,
-          ticksPerQuarter: 220
-        },
+        baseSequence,
         stepsToGenerate[0],
         temperature[0]
       );
 
+      console.log('Generated sequence:', generatedSequence);
       const newPattern = convertNoteSequenceToPattern(generatedSequence);
+      console.log('Converted pattern:', newPattern);
       
       if (generationType === 'fill') {
         // Combine with existing pattern
@@ -162,8 +172,10 @@ export const NeuralDrumGenerator = ({
             return step;
           })
         );
+        console.log('Applying combined pattern:', combinedPattern);
         onPatternGenerated(combinedPattern);
       } else {
+        console.log('Applying new pattern:', newPattern);
         onPatternGenerated(newPattern);
       }
 
