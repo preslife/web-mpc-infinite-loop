@@ -1630,6 +1630,112 @@ const DrumMachine = () => {
                 </div>
               </div>
 
+              {/* Effect Buttons */}
+              <div className="mb-3">
+                <div className="grid grid-cols-4 gap-2">
+                  <Button 
+                    onClick={() => {
+                      if (selectedEffectTrack !== null) {
+                        const newEffects = [...trackEffects];
+                        newEffects[selectedEffectTrack] = {
+                          ...newEffects[selectedEffectTrack],
+                          reverb: {
+                            ...newEffects[selectedEffectTrack].reverb,
+                            enabled: !newEffects[selectedEffectTrack].reverb.enabled
+                          }
+                        };
+                        setTrackEffects(newEffects);
+                      }
+                    }}
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedEffectTrack === null}
+                    className={`text-xs ${
+                      selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.reverb?.enabled
+                        ? 'bg-green-600/30 border-green-500 text-green-300' 
+                        : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
+                    }`}
+                  >
+                    REVERB
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      if (selectedEffectTrack !== null) {
+                        const newEffects = [...trackEffects];
+                        newEffects[selectedEffectTrack] = {
+                          ...newEffects[selectedEffectTrack],
+                          delay: {
+                            ...newEffects[selectedEffectTrack].delay,
+                            enabled: !newEffects[selectedEffectTrack].delay.enabled
+                          }
+                        };
+                        setTrackEffects(newEffects);
+                      }
+                    }}
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedEffectTrack === null}
+                    className={`text-xs ${
+                      selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.delay?.enabled
+                        ? 'bg-blue-600/30 border-blue-500 text-blue-300' 
+                        : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
+                    }`}
+                  >
+                    DELAY
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      if (selectedEffectTrack !== null) {
+                        const newEffects = [...trackEffects];
+                        newEffects[selectedEffectTrack] = {
+                          ...newEffects[selectedEffectTrack],
+                          filter: {
+                            ...newEffects[selectedEffectTrack].filter,
+                            enabled: !newEffects[selectedEffectTrack].filter.enabled
+                          }
+                        };
+                        setTrackEffects(newEffects);
+                      }
+                    }}
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedEffectTrack === null}
+                    className={`text-xs ${
+                      selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.filter?.enabled
+                        ? 'bg-purple-600/30 border-purple-500 text-purple-300' 
+                        : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
+                    }`}
+                  >
+                    FILTER
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      if (selectedEffectTrack !== null) {
+                        const newEffects = [...trackEffects];
+                        newEffects[selectedEffectTrack] = {
+                          ...newEffects[selectedEffectTrack],
+                          eq: {
+                            ...newEffects[selectedEffectTrack].eq,
+                            enabled: !newEffects[selectedEffectTrack].eq.enabled
+                          }
+                        };
+                        setTrackEffects(newEffects);
+                      }
+                    }}
+                    variant="outline"
+                    size="sm"
+                    disabled={selectedEffectTrack === null}
+                    className={`text-xs ${
+                      selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.eq?.enabled
+                        ? 'bg-orange-600/30 border-orange-500 text-orange-300' 
+                        : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
+                    }`}
+                  >
+                    EQ
+                  </Button>
+                </div>
+              </div>
+
               {selectedEffectTrack !== null && <div className="space-y-2">
                   {/* Reverb */}
                   <div className="space-y-1">
