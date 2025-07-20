@@ -1556,41 +1556,6 @@ const DrumMachine = () => {
               </div>
             </div>
 
-            {/* Track Controls */}
-            <div className="bg-gray-900/80 backdrop-blur-md p-2 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
-              <div className="relative z-10">
-              <div className="space-y-2">
-                <div className="text-center text-xs text-gray-400 mb-2">
-                  {selectedTrack !== null ? `Track ${selectedTrack + 1} Selected` : 'No Track Selected'}
-                </div>
-                <Button onClick={() => setTrackSolos(trackSolos.map(() => false))} variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">
-                  UNSOLO
-                </Button>
-                <Button onClick={() => setTrackMutes(trackMutes.map(() => false))} variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">
-                  UNMUTE
-                </Button>
-              </div>
-              </div>
-            </div>
-
-            {/* Side Panel Controls */}
-            <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-orange-500/30 shadow-lg shadow-orange-500/20 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-red-500/5 to-pink-500/10 rounded-lg pointer-events-none"></div>
-              <div className="relative z-10">
-                <div className="text-xs text-gray-400 mb-2">AUDIO RECORDING</div>
-                <div className="space-y-2">
-                  <Button onClick={() => setRecordMode(!recordMode)} variant="outline" size="sm" className={`w-full text-xs ${recordMode ? 'bg-red-700 border-red-600 text-white' : 'bg-gray-800 border-gray-600 text-gray-300'}`} title="Record audio samples from microphone">
-                    <Mic className="h-3 w-3 mr-2" />
-                    {recordMode ? 'RECORDING AUDIO' : 'RECORD AUDIO'}
-                  </Button>
-                  <Button onClick={clearPattern} variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs" title="Clear all patterns">
-                    <RotateCcw className="h-3 w-3 mr-2" />
-                    CLEAR
-                  </Button>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Right Drum Pads */}
