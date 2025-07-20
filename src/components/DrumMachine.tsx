@@ -11,6 +11,7 @@ import { AudioExporter } from './AudioExporter';
 import { SongMode } from './SongMode';
 import { VisualFeedback, WaveformVisualizer } from './VisualFeedback';
 import { VolumeKnob } from './VolumeKnob';
+import { SimpleKnob } from './SimpleKnob';
 import { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
 import { SampleOrganizer } from './SampleOrganizer';
 import { useNavigate } from 'react-router-dom';
@@ -1236,7 +1237,7 @@ const DrumMachine = () => {
                 
                 <div className="h-full overflow-auto">
                   {/* Step numbers row */}
-                  <div className="flex gap-1 mb-2 ml-[142px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 8 (volume) + 8 (pan) + 12 (mute/solo) + 4 (gaps) = 142px */}
+                  <div className="flex gap-1 mb-2 ml-[134px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 6 (volume) + 6 (pan) + 12 (mute/solo) + 4 (gaps) = 134px */}
                     {Array.from({
                   length: sequencerLength
                 }, (_, stepIndex) => <div key={stepIndex} className={`
@@ -1276,21 +1277,31 @@ const DrumMachine = () => {
                         </ContextMenu>
                         
                         {/* Volume knob */}
-                        <div className="flex-shrink-0 w-8 -mr-1">
-                          <VolumeKnob value={trackVolumes[padIndex]} onChange={value => {
-                      const newVolumes = [...trackVolumes];
-                      newVolumes[padIndex] = value;
-                      setTrackVolumes(newVolumes);
-                    }} size="sm" />
+                        <div className="flex-shrink-0 w-6">
+                          <SimpleKnob 
+                            value={trackVolumes[padIndex]} 
+                            onChange={value => {
+                              const newVolumes = [...trackVolumes];
+                              newVolumes[padIndex] = value;
+                              setTrackVolumes(newVolumes);
+                            }} 
+                            size={20}
+                            color="#00ddff"
+                          />
                         </div>
                         
                         {/* Pan knob */}
-                        <div className="flex-shrink-0 w-8 -mr-1">
-                          <VolumeKnob value={trackPans[padIndex]} onChange={value => {
-                      const newPans = [...trackPans];
-                      newPans[padIndex] = value;
-                      setTrackPans(newPans);
-                    }} size="sm" />
+                        <div className="flex-shrink-0 w-6">
+                          <SimpleKnob 
+                            value={trackPans[padIndex]} 
+                            onChange={value => {
+                              const newPans = [...trackPans];
+                              newPans[padIndex] = value;
+                              setTrackPans(newPans);
+                            }} 
+                            size={20}
+                            color="#ff6b35"
+                          />
                         </div>
                         
                         {/* Mute/Solo buttons */}
