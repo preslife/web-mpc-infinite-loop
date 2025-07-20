@@ -111,7 +111,7 @@ export const NeuralDrumGenerator = ({
 
     noteSequence.notes?.forEach(note => {
       const trackIndex = reverseDrumMap[note.pitch!] ?? null;
-      if (trackIndex !== null && trackIndex < 16) {
+      if (trackIndex !== null && trackIndex < 16 && selectedTracks.includes(trackIndex)) {
         // Use quantized step if available, otherwise calculate from time
         const stepIndex = note.quantizedStartStep !== undefined 
           ? note.quantizedStartStep 
