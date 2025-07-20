@@ -145,6 +145,14 @@ const DrumMachine = () => {
   const [patternTarget, setPatternTarget] = useState<'all' | 'selected'>('all');
   const sequencerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Sample loading queue state
+  const [sampleQueue, setSampleQueue] = useState<Array<{
+    sample: Sample;
+    padIndex: number;
+    name: string;
+  }>>([]);
+  const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
+
   // Audio effects state
   const [trackEffects, setTrackEffects] = useState<Array<{
     reverb: {
@@ -308,15 +316,60 @@ const DrumMachine = () => {
   // Load samples from a drum kit
   const loadKitSamples = async (kit: any) => {
     try {
-      const newSamples = [...samples];
+      const loadedSamples: Array<{
+        sample: Sample;
+        padIndex: number;
+        name: string;
+      }> = [];
+
+      // Load all samples into memory first
       for (let i = 0; i < Math.min(kit.samples.length, 16); i++) {
-        const sample = kit.samples[i];
-        await loadSampleFromUrl(sample.url, sample.name, i);
+        const kitSample = kit.samples[i];
+        try {
+          if (!audioContextRef.current) continue;
+          const response = await fetch(kitSample.url);
+          const arrayBuffer = await response.arrayBuffer();
+          const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
+          
+          const sample: Sample = {
+            buffer: audioBuffer,
+            name: kitSample.name,
+            startTime: 0,
+            endTime: 1,
+            gateMode: true,
+            pitch: 0,
+            reverse: false,
+            volume: 0.8
+          };
+
+          loadedSamples.push({
+            sample,
+            padIndex: i,
+            name: kitSample.name
+          });
+        } catch (error) {
+          console.warn(`Failed to load sample ${kitSample.name}:`, error);
+          toast.error(`Failed to load sample: ${kitSample.name}`);
+        }
       }
-      toast.success(`Loaded ${kit.name} drum kit!`);
+
+      // Set up the queue and start with the first sample
+      setSampleQueue(loadedSamples);
+      setCurrentQueueIndex(0);
+      
+      if (loadedSamples.length > 0) {
+        setPendingSample({
+          sample: loadedSamples[0].sample,
+          padIndex: loadedSamples[0].padIndex
+        });
+        setDisplayMode('editor');
+        toast.info(`Loading ${kit.name}: Confirm sample 1 of ${loadedSamples.length}`);
+      } else {
+        toast.error('No valid samples found in kit');
+      }
     } catch (error) {
       console.error('Error loading kit:', error);
-      toast.error('Failed to load some samples from kit');
+      toast.error('Failed to load drum kit');
     }
   };
 
@@ -353,6 +406,73 @@ const DrumMachine = () => {
       toast.error(`Failed to load sample: ${name}`);
     }
   };
+
+  // Process next sample in the queue
+  const processNextInQueue = useCallback(() => {
+    if (sampleQueue.length === 0) return;
+    
+    const nextIndex = currentQueueIndex + 1;
+    if (nextIndex < sampleQueue.length) {
+      setCurrentQueueIndex(nextIndex);
+      const nextSample = sampleQueue[nextIndex];
+      setPendingSample({
+        sample: nextSample.sample,
+        padIndex: nextSample.padIndex
+      });
+      setDisplayMode('editor');
+      toast.info(`Confirm sample ${nextIndex + 1} of ${sampleQueue.length}: ${nextSample.name}`);
+    } else {
+      // All samples processed
+      setSampleQueue([]);
+      setCurrentQueueIndex(0);
+      toast.success('All kit samples loaded successfully!');
+      setDisplayMode('sequencer');
+    }
+  }, [sampleQueue, currentQueueIndex]);
+
+  // Handle sample confirmation from the editor
+  const handleSampleConfirm = useCallback((confirmedSample: Sample, padIndex: number) => {
+    // Update the samples array with the confirmed sample
+    const newSamples = [...samples];
+    newSamples[padIndex] = confirmedSample;
+    setSamples(newSamples);
+    
+    // Clear pending sample
+    setPendingSample(null);
+    
+    // Process next sample in queue if exists
+    if (sampleQueue.length > 0 && currentQueueIndex < sampleQueue.length - 1) {
+      processNextInQueue();
+    } else if (sampleQueue.length > 0) {
+      // This was the last sample in the queue
+      setSampleQueue([]);
+      setCurrentQueueIndex(0);
+      toast.success('All kit samples loaded successfully!');
+      setDisplayMode('sequencer');
+    } else {
+      // Single sample load
+      setDisplayMode('sequencer');
+    }
+  }, [samples, sampleQueue, currentQueueIndex, processNextInQueue]);
+
+  // Handle sample rejection/skip
+  const handleSampleReject = useCallback(() => {
+    setPendingSample(null);
+    
+    // Process next sample in queue if exists
+    if (sampleQueue.length > 0 && currentQueueIndex < sampleQueue.length - 1) {
+      processNextInQueue();
+    } else if (sampleQueue.length > 0) {
+      // This was the last sample in the queue
+      setSampleQueue([]);
+      setCurrentQueueIndex(0);
+      toast.success('Kit loading completed!');
+      setDisplayMode('sequencer');
+    } else {
+      // Single sample load
+      setDisplayMode('sequencer');
+    }
+  }, [sampleQueue, currentQueueIndex, processNextInQueue]);
 
   // Create reverb impulse response
   const createReverbImpulse = useCallback((roomSize: number, decay: number) => {
@@ -1175,17 +1295,14 @@ const DrumMachine = () => {
   };
   const confirmPendingSample = () => {
     if (pendingSample) {
-      const newSamples = [...samples];
-      newSamples[pendingSample.padIndex] = pendingSample.sample;
-      setSamples(newSamples);
-      setPendingSample(null);
+      handleSampleConfirm(pendingSample.sample, pendingSample.padIndex);
       toast.success(`Sample confirmed and loaded to pad ${pendingSample.padIndex + 1}!`);
     }
   };
   const cancelPendingSample = () => {
     if (pendingSample) {
-      setPendingSample(null);
-      toast.info('Sample loading cancelled');
+      handleSampleReject();
+      toast.info('Sample skipped');
     }
   };
 
