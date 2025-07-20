@@ -2112,10 +2112,9 @@ const DrumMachine = () => {
                     Try using Chrome, Edge, or Firefox with a MIDI controller connected.
                   </div>
                 </div>}
-              </div>
             </div>
           </div>
-        </div>
+        </div>}
         
         {/* Visual Feedback Overlay */}
         <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
