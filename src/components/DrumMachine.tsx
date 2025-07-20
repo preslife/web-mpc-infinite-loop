@@ -327,9 +327,34 @@ const DrumMachine = () => {
         const kitSample = kit.samples[i];
         try {
           if (!audioContextRef.current) continue;
-          const response = await fetch(kitSample.url);
-          const arrayBuffer = await response.arrayBuffer();
-          const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
+          
+          let audioBuffer: AudioBuffer;
+          
+          // For the default kit, generate synthetic samples instead of loading broken files
+          if (kit.id === 'default-kit') {
+            if (!sampleGeneratorRef.current) {
+              sampleGeneratorRef.current = new SampleGenerator(audioContextRef.current);
+            }
+            
+            switch (kitSample.type) {
+              case 'kick':
+                audioBuffer = sampleGeneratorRef.current.generateKick(60, 0.5);
+                break;
+              case 'snare':
+                audioBuffer = sampleGeneratorRef.current.generateSnare(0.2);
+                break;
+              case 'hihat':
+                audioBuffer = sampleGeneratorRef.current.generateHiHat(0.1);
+                break;
+              default:
+                audioBuffer = sampleGeneratorRef.current.generateKick(60, 0.5);
+            }
+          } else {
+            // Try to load from URL for other kits
+            const response = await fetch(kitSample.url);
+            const arrayBuffer = await response.arrayBuffer();
+            audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
+          }
           
           const sample: Sample = {
             buffer: audioBuffer,
@@ -349,7 +374,52 @@ const DrumMachine = () => {
           });
         } catch (error) {
           console.warn(`Failed to load sample ${kitSample.name}:`, error);
-          toast.error(`Failed to load sample: ${kitSample.name}`);
+          
+          // Fallback to synthetic generation if loading fails
+          if (audioContextRef.current) {
+            try {
+              if (!sampleGeneratorRef.current) {
+                sampleGeneratorRef.current = new SampleGenerator(audioContextRef.current);
+              }
+              
+              let fallbackBuffer: AudioBuffer;
+              switch (kitSample.type) {
+                case 'kick':
+                  fallbackBuffer = sampleGeneratorRef.current.generateKick(60, 0.5);
+                  break;
+                case 'snare':
+                  fallbackBuffer = sampleGeneratorRef.current.generateSnare(0.2);
+                  break;
+                case 'hihat':
+                  fallbackBuffer = sampleGeneratorRef.current.generateHiHat(0.1);
+                  break;
+                default:
+                  fallbackBuffer = sampleGeneratorRef.current.generateKick(60, 0.5);
+              }
+              
+              const fallbackSample: Sample = {
+                buffer: fallbackBuffer,
+                name: `${kitSample.name} (Generated)`,
+                startTime: 0,
+                endTime: 1,
+                gateMode: true,
+                pitch: 0,
+                reverse: false,
+                volume: 0.8
+              };
+
+              loadedSamples.push({
+                sample: fallbackSample,
+                padIndex: i,
+                name: `${kitSample.name} (Generated)`
+              });
+              
+              toast.info(`Generated fallback sample for ${kitSample.name}`);
+            } catch (genError) {
+              console.error(`Failed to generate fallback for ${kitSample.name}:`, genError);
+              toast.error(`Failed to load/generate sample: ${kitSample.name}`);
+            }
+          }
         }
       }
 
