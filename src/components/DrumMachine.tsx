@@ -1611,16 +1611,23 @@ const DrumMachine = () => {
               
               {/* Track selector */}
               <div className="mb-3">
-                <Select value={selectedEffectTrack?.toString() || ""} onValueChange={value => setSelectedEffectTrack(parseInt(value))}>
-                  <SelectTrigger className="h-6 text-xs bg-gray-800 border-gray-600">
-                    <SelectValue placeholder="Select track..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({
-                    length: 16
-                  }, (_, i) => <SelectItem key={i} value={i.toString()}>Track {i + 1}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-8 gap-1">
+                  {Array.from({ length: 16 }, (_, i) => (
+                    <Button 
+                      key={i}
+                      onClick={() => setSelectedEffectTrack(i)}
+                      variant="outline"
+                      size="sm"
+                      className={`h-6 w-8 text-xs p-0 ${
+                        selectedEffectTrack === i 
+                          ? 'bg-yellow-600/30 border-yellow-500 text-yellow-300' 
+                          : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      {i + 1}
+                    </Button>
+                  ))}
+                </div>
               </div>
 
               {selectedEffectTrack !== null && <div className="space-y-2">
