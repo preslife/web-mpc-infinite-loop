@@ -1192,7 +1192,7 @@ const DrumMachine = () => {
   return <div className="min-h-screen bg-black p-2 font-mono">
       <div className="max-w-7xl mx-auto">
         {/* Top Control Bar */}
-        <div className="bg-gray-900 p-2 mb-2 rounded border border-gray-700">
+        <div className="bg-gray-900 p-2 mb-2 rounded border border-gray-700 mx-[15px]">
           <div className="flex items-center justify-between">
             <div className="text-white font-bold text-lg tracking-wider">X BEAT STUDIO</div>
             <div className="flex gap-2">
@@ -2031,7 +2031,7 @@ const DrumMachine = () => {
         <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileLoad} className="hidden" />
 
         {/* MIDI Status Panel */}
-        <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700 relative overflow-hidden">
+        <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700 relative overflow-hidden mx-[15px]">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded pointer-events-none"></div>
           
           <div className="relative z-10">
