@@ -1165,9 +1165,9 @@ const DrumMachine = () => {
         </div>
 
         {/* Resizable Layout Container - Vertical */}
-        <ResizablePanelGroup direction="vertical" className="min-h-[80vh] w-full">
+        <ResizablePanelGroup direction="vertical" className="h-screen w-full">
           {/* Top Panel - Main Display Area */}
-          <ResizablePanel defaultSize={65} minSize={40}>
+          <ResizablePanel defaultSize={50} minSize={30} maxSize={70}>
             <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-full relative overflow-hidden px-[6px] my-[7px] mx-[76px]">
               {/* Neon glass effect overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
@@ -1382,8 +1382,8 @@ const DrumMachine = () => {
           <ResizableHandle withHandle />
 
           {/* Bottom Panel - Controls and Drum Pads */}
-          <ResizablePanel defaultSize={35} minSize={25}>
-            <div className="flex flex-col gap-2">
+          <ResizablePanel defaultSize={50} minSize={30} maxSize={70}>
+            <div className="h-full overflow-y-auto flex flex-col gap-2 p-2">
               {/* Waveform Visualizer Panel */}
               <div className="backdrop-blur-md p-2 mb-2 rounded-lg border border-cyan-500/20 shadow-lg shadow-cyan-500/10 relative overflow-hidden px-[18px] mx-[75px] bg-indigo-950">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 rounded-lg pointer-events-none"></div>
