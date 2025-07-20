@@ -1165,7 +1165,7 @@ const DrumMachine = () => {
         </div>
 
         {/* Resizable Layout Container - Vertical */}
-        <ResizablePanelGroup direction="vertical" className="h-screen w-full">
+        <ResizablePanelGroup direction="vertical" className="min-h-[600px] w-full flex-1">
           {/* Top Panel - Main Display Area */}
           <ResizablePanel defaultSize={50} minSize={30} maxSize={70}>
             <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-full relative overflow-hidden px-[6px] my-[7px] mx-[76px]">
