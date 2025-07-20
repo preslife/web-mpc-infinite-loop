@@ -1242,7 +1242,7 @@ const DrumMachine = () => {
                   </div>
                 </div>
                 
-                <div className="h-96 overflow-y-auto">  {/* Increased height and added scroll */}
+                <div className="h-64 overflow-y-auto">  {/* Added scroll for all tracks */}
                   {/* Step numbers row */}
                   <div className="flex gap-1 mb-2 ml-[134px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 6 (volume) + 6 (pan) + 12 (mute/solo) + 4 (gaps) = 134px */}
                     {Array.from({
