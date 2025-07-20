@@ -88,6 +88,7 @@ const DrumMachine = () => {
     padIndex: number;
   } | null>(null);
   const [playingSources, setPlayingSources] = useState<Map<number, AudioBufferSourceNode>>(new Map());
+  const [playingGainNodes, setPlayingGainNodes] = useState<Map<number, GainNode>>(new Map());
   const [displayMode, setDisplayMode] = useState<'sequencer' | 'editor' | 'patterns' | 'export' | 'song' | 'neural'>('sequencer');
   const [masterVolume, setMasterVolume] = useState(0.8);
 
@@ -1048,16 +1049,24 @@ const DrumMachine = () => {
     source.connect(gainNode);
     connectEffectsChain(gainNode, padIndex, audioContextRef.current.destination);
 
-    // Track the source if in gate mode
+    // Track both source and gain node for real-time volume control
+    setPlayingSources(prev => new Map(prev).set(padIndex, source));
+    setPlayingGainNodes(prev => new Map(prev).set(padIndex, gainNode));
+    
+    source.onended = () => {
+      setPlayingSources(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(padIndex);
+        return newMap;
+      });
+      setPlayingGainNodes(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(padIndex);
+        return newMap;
+      });
+    };
+
     if (sampleGateMode) {
-      setPlayingSources(prev => new Map(prev).set(padIndex, source));
-      source.onended = () => {
-        setPlayingSources(prev => {
-          const newMap = new Map(prev);
-          newMap.delete(padIndex);
-          return newMap;
-        });
-      };
       // For gate mode, play the slice duration (respects start/end points)
       source.start(0, startTime, sliceDuration);
     } else {
@@ -1065,6 +1074,29 @@ const DrumMachine = () => {
       source.start(0, startTime, sliceDuration);
     }
   }, [samples, trackVolumes, trackMutes, trackSolos, playingSources, initializeTrackEffects, connectEffectsChain]);
+
+  // Update track volumes in real-time for currently playing sources
+  useEffect(() => {
+    playingGainNodes.forEach((gainNode, padIndex) => {
+      if (gainNode) {
+        // Get the current velocity from the pattern or use track volume as default
+        const velocity = 80; // You could track this per playing source if needed
+        const finalVolume = velocity / 127 * (trackVolumes[padIndex] / 100) * masterVolume;
+        gainNode.gain.value = finalVolume;
+      }
+    });
+  }, [trackVolumes, masterVolume, playingGainNodes]);
+
+  // Update master volume in real-time for all currently playing sources
+  useEffect(() => {
+    playingGainNodes.forEach((gainNode, padIndex) => {
+      if (gainNode) {
+        const velocity = 80; // You could track this per playing source if needed
+        const finalVolume = velocity / 127 * (trackVolumes[padIndex] / 100) * masterVolume;
+        gainNode.gain.value = finalVolume;
+      }
+    });
+  }, [masterVolume, trackVolumes, playingGainNodes]);
   const startRecording = async (padIndex: number) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
