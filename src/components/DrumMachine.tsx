@@ -1282,7 +1282,7 @@ const DrumMachine = () => {
                     <div className={`w-2 h-2 rounded-full ${midiEnabled ? 'bg-green-400' : 'bg-red-400'}`}></div>
                     
                     {/* Neural Generate Button */}
-                    <Button onClick={generateSequence} disabled={!neuralEnabled || isGenerating || !canPerformPatternOperations()} title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : neuralEnabled ? `Generate AI patterns for ${getOperationDescription()}` : 'Neural engine not available'} className="h-8 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 my-0 px-[20px] py-0">
+                    <Button onClick={generateSequence} disabled={isGenerating} title={neuralEnabled ? `Generate AI patterns for ${getOperationDescription()}` : 'Neural engine not available'} className="h-8 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 my-0 px-[20px] py-0">
                       {isGenerating ? <RefreshCw className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
                       {isGenerating ? 'Generating...' : 'Generate'}
                     </Button>
