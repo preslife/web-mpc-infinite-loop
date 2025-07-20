@@ -1315,7 +1315,7 @@ const DrumMachine = () => {
                         </ContextMenu>
                         
                         {/* Volume knob */}
-                        <div className="flex gap-3 flex-shrink-1 w-8">
+                        <div className="flex gap-4 flex-shrink-0 w-10">
                           <VolumeKnob
                             value={trackVolumes[padIndex]}
                             onChange={(value) => {
