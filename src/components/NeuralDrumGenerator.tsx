@@ -53,7 +53,10 @@ export const NeuralDrumGenerator = ({
     const noteSequence: mm.INoteSequence = {
       notes: [],
       totalTime: (sequencerLength / 4) * (60 / bpm), // Total time in seconds
-      ticksPerQuarter: 220
+      ticksPerQuarter: 220,
+      quantizationInfo: {
+        stepsPerQuarter: 4
+      }
     };
 
     // Map drum pads to MIDI drum notes (General MIDI drum kit)
@@ -80,13 +83,10 @@ export const NeuralDrumGenerator = ({
       if (selectedTracks.includes(trackIndex)) {
         track.forEach((step, stepIndex) => {
           if (step.active && stepIndex < sequencerLength) {
-            const startTime = (stepIndex / 4) * (60 / bpm);
-            const endTime = startTime + 0.1; // Short drum hits
-            
             noteSequence.notes!.push({
               pitch: drumMap[trackIndex] || 36,
-              startTime,
-              endTime,
+              quantizedStartStep: stepIndex,
+              quantizedEndStep: stepIndex + 1,
               velocity: step.velocity
             });
           }
@@ -112,7 +112,11 @@ export const NeuralDrumGenerator = ({
     noteSequence.notes?.forEach(note => {
       const trackIndex = reverseDrumMap[note.pitch!] ?? null;
       if (trackIndex !== null && trackIndex < 16) {
-        const stepIndex = Math.floor((note.startTime! / (60 / bpm)) * 4);
+        // Use quantized step if available, otherwise calculate from time
+        const stepIndex = note.quantizedStartStep !== undefined 
+          ? note.quantizedStartStep 
+          : Math.floor((note.startTime! / (60 / bpm)) * 4);
+        
         if (stepIndex < sequencerLength) {
           newPattern[trackIndex][stepIndex] = {
             active: true,
