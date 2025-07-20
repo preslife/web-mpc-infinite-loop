@@ -26,19 +26,41 @@ interface DrumKit {
 
 const DRUM_KITS: DrumKit[] = [
   {
-    id: '808-classic',
-    name: '808 Classic',
-    description: 'Classic TR-808 drum machine sounds',
+    id: 'default-kit',
+    name: 'Default Kit',
+    description: 'Basic drum kit with kick, snare, and hi-hat',
     category: 'electronic',
     samples: [
-      { name: 'BD_808', url: '/samples/808/kick.wav', type: 'kick' },
-      { name: 'SD_808', url: '/samples/808/snare.wav', type: 'snare' },
-      { name: 'HH_808', url: '/samples/808/hihat.wav', type: 'hihat' },
-      { name: 'OH_808', url: '/samples/808/openhat.wav', type: 'openhat' },
-      { name: 'CP_808', url: '/samples/808/clap.wav', type: 'perc' },
-      { name: 'CY_808', url: '/samples/808/crash.wav', type: 'crash' },
-      { name: 'CB_808', url: '/samples/808/cowbell.wav', type: 'perc' },
-      { name: 'MA_808', url: '/samples/808/maracas.wav', type: 'perc' },
+      { name: 'Kick', url: '/samples/kick.wav', type: 'kick' },
+      { name: 'Snare', url: '/samples/snare.wav', type: 'snare' },
+      { name: 'Hi-Hat', url: '/samples/hihat.wav', type: 'hihat' },
+    ],
+    patterns: [
+      {
+        name: 'Basic Beat',
+        bpm: 120,
+        steps: [
+          [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false], // Kick
+          [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], // Snare
+          [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false], // Hi-hat
+        ]
+      }
+    ]
+  },
+  {
+    id: '808-classic',
+    name: '808 Classic',
+    description: 'Classic TR-808 drum machine sounds (Preview Only)',
+    category: 'electronic',
+    samples: [
+      { name: 'BD_808', url: '/samples/kick.wav', type: 'kick' },
+      { name: 'SD_808', url: '/samples/snare.wav', type: 'snare' },
+      { name: 'HH_808', url: '/samples/hihat.wav', type: 'hihat' },
+      { name: 'OH_808', url: '/samples/hihat.wav', type: 'openhat' },
+      { name: 'CP_808', url: '/samples/snare.wav', type: 'perc' },
+      { name: 'CY_808', url: '/samples/hihat.wav', type: 'crash' },
+      { name: 'CB_808', url: '/samples/kick.wav', type: 'perc' },
+      { name: 'MA_808', url: '/samples/hihat.wav', type: 'perc' },
     ],
     patterns: [
       {
@@ -55,81 +77,33 @@ const DRUM_KITS: DrumKit[] = [
   {
     id: 'trap-modern',
     name: 'Trap Modern',
-    description: 'Hard-hitting trap drums with crispy hi-hats',
+    description: 'Hard-hitting trap drums (Using default samples)',
     category: 'hip-hop',
     samples: [
-      { name: 'Trap_Kick', url: '/samples/trap/kick.wav', type: 'kick' },
-      { name: 'Trap_Snare', url: '/samples/trap/snare.wav', type: 'snare' },
-      { name: 'Trap_HH', url: '/samples/trap/hihat.wav', type: 'hihat' },
-      { name: 'Trap_OH', url: '/samples/trap/openhat.wav', type: 'openhat' },
-      { name: 'Trap_Perc1', url: '/samples/trap/perc1.wav', type: 'perc' },
-      { name: 'Trap_Perc2', url: '/samples/trap/perc2.wav', type: 'perc' },
-      { name: 'Trap_Crash', url: '/samples/trap/crash.wav', type: 'crash' },
-      { name: 'Trap_Rim', url: '/samples/trap/rim.wav', type: 'perc' },
+      { name: 'Trap_Kick', url: '/samples/kick.wav', type: 'kick' },
+      { name: 'Trap_Snare', url: '/samples/snare.wav', type: 'snare' },
+      { name: 'Trap_HH', url: '/samples/hihat.wav', type: 'hihat' },
+      { name: 'Trap_OH', url: '/samples/hihat.wav', type: 'openhat' },
+      { name: 'Trap_Perc1', url: '/samples/snare.wav', type: 'perc' },
+      { name: 'Trap_Perc2', url: '/samples/kick.wav', type: 'perc' },
+      { name: 'Trap_Crash', url: '/samples/hihat.wav', type: 'crash' },
+      { name: 'Trap_Rim', url: '/samples/snare.wav', type: 'perc' },
     ]
   },
   {
     id: 'house-classic',
     name: 'House Classic',
-    description: 'Classic house music drums with punchy kicks',
+    description: 'Classic house music drums (Using default samples)',
     category: 'electronic',
     samples: [
-      { name: 'House_Kick', url: '/samples/house/kick.wav', type: 'kick' },
-      { name: 'House_Snare', url: '/samples/house/snare.wav', type: 'snare' },
-      { name: 'House_HH_C', url: '/samples/house/hihat_closed.wav', type: 'hihat' },
-      { name: 'House_HH_O', url: '/samples/house/hihat_open.wav', type: 'openhat' },
-      { name: 'House_Perc', url: '/samples/house/perc.wav', type: 'perc' },
-      { name: 'House_Clap', url: '/samples/house/clap.wav', type: 'perc' },
-      { name: 'House_Crash', url: '/samples/house/crash.wav', type: 'crash' },
-      { name: 'House_Ride', url: '/samples/house/ride.wav', type: 'perc' },
-    ]
-  },
-  {
-    id: 'acoustic-rock',
-    name: 'Acoustic Rock',
-    description: 'Natural acoustic drum kit for rock music',
-    category: 'acoustic',
-    samples: [
-      { name: 'Rock_Kick', url: '/samples/acoustic/kick.wav', type: 'kick' },
-      { name: 'Rock_Snare', url: '/samples/acoustic/snare.wav', type: 'snare' },
-      { name: 'Rock_HH', url: '/samples/acoustic/hihat.wav', type: 'hihat' },
-      { name: 'Rock_OH', url: '/samples/acoustic/openhat.wav', type: 'openhat' },
-      { name: 'Rock_Tom1', url: '/samples/acoustic/tom1.wav', type: 'perc' },
-      { name: 'Rock_Tom2', url: '/samples/acoustic/tom2.wav', type: 'perc' },
-      { name: 'Rock_Crash', url: '/samples/acoustic/crash.wav', type: 'crash' },
-      { name: 'Rock_Ride', url: '/samples/acoustic/ride.wav', type: 'perc' },
-    ]
-  },
-  {
-    id: 'techno-industrial',
-    name: 'Techno Industrial',
-    description: 'Dark industrial techno sounds',
-    category: 'electronic',
-    samples: [
-      { name: 'Techno_Kick', url: '/samples/techno/kick.wav', type: 'kick' },
-      { name: 'Techno_Snare', url: '/samples/techno/snare.wav', type: 'snare' },
-      { name: 'Techno_HH', url: '/samples/techno/hihat.wav', type: 'hihat' },
-      { name: 'Techno_OH', url: '/samples/techno/openhat.wav', type: 'openhat' },
-      { name: 'Techno_Perc1', url: '/samples/techno/perc1.wav', type: 'perc' },
-      { name: 'Techno_Perc2', url: '/samples/techno/perc2.wav', type: 'perc' },
-      { name: 'Techno_FX', url: '/samples/techno/fx.wav', type: 'other' },
-      { name: 'Techno_Noise', url: '/samples/techno/noise.wav', type: 'other' },
-    ]
-  },
-  {
-    id: 'dnb-jungle',
-    name: 'DnB Jungle',
-    description: 'Breakbeat drums for drum & bass',
-    category: 'electronic',
-    samples: [
-      { name: 'Amen_Kick', url: '/samples/dnb/kick.wav', type: 'kick' },
-      { name: 'Amen_Snare', url: '/samples/dnb/snare.wav', type: 'snare' },
-      { name: 'Amen_HH', url: '/samples/dnb/hihat.wav', type: 'hihat' },
-      { name: 'Break_Perc1', url: '/samples/dnb/perc1.wav', type: 'perc' },
-      { name: 'Break_Perc2', url: '/samples/dnb/perc2.wav', type: 'perc' },
-      { name: 'Reese_Hit', url: '/samples/dnb/reese.wav', type: 'other' },
-      { name: 'DnB_Crash', url: '/samples/dnb/crash.wav', type: 'crash' },
-      { name: 'Sub_Bass', url: '/samples/dnb/sub.wav', type: 'other' },
+      { name: 'House_Kick', url: '/samples/kick.wav', type: 'kick' },
+      { name: 'House_Snare', url: '/samples/snare.wav', type: 'snare' },
+      { name: 'House_HH_C', url: '/samples/hihat.wav', type: 'hihat' },
+      { name: 'House_HH_O', url: '/samples/hihat.wav', type: 'openhat' },
+      { name: 'House_Perc', url: '/samples/snare.wav', type: 'perc' },
+      { name: 'House_Clap', url: '/samples/snare.wav', type: 'perc' },
+      { name: 'House_Crash', url: '/samples/hihat.wav', type: 'crash' },
+      { name: 'House_Ride', url: '/samples/hihat.wav', type: 'perc' },
     ]
   }
 ];
