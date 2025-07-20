@@ -1615,7 +1615,7 @@ const DrumMachine = () => {
         {/* Bottom Row - Effects Panel */}
         <div className="flex gap-4">
           {/* Effects Panel */}
-          <div className="flex-1 bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden">
+          <div className="flex-1 bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden my-[9px] mx-[11px]">
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-red-500/10 rounded-lg pointer-events-none"></div>
             <div className="relative z-10">
               <div className="text-xs text-gray-400 mb-2">AUDIO EFFECTS</div>
@@ -1969,7 +1969,7 @@ const DrumMachine = () => {
             <div className="grid grid-cols-3 gap-6">
               {/* Global Controls */}
               <div>
-                <div className="text-xs text-gray-400 mb-2">GLOBAL</div>
+                <div className="text-xs text-gray-400 mb-2 mx-[10px]">GLOBAL</div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400 w-12">Swing</span>
