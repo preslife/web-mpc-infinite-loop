@@ -2122,4 +2122,5 @@ const DrumMachine = () => {
     </LayoutEditor>
   );
 };
+
 export default DrumMachine;
