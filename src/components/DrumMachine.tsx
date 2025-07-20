@@ -1315,7 +1315,7 @@ const DrumMachine = () => {
                         </ContextMenu>
                         
                         {/* Volume knob */}
-                        <div className="flex-shrink-0 w-6">
+                        <div className="<div className="flex gap-2 flex-shrink-0 w-6">
                           <VolumeKnob
                             value={trackVolumes[padIndex]}
                             onChange={(value) => {
@@ -1882,7 +1882,7 @@ const DrumMachine = () => {
                       onTouchStart={() => handlePadPress(i)}
                       onTouchEnd={() => handlePadRelease(i)}
                       className={`
-                        h-24 w-24 rounded-lg text-sm font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
+                        h-16 w-16 rounded-lg text-xs font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
                         ${samples[i]?.buffer 
                           ? getPadColor(i) + '/80 border-cyan-400/50 text-white shadow-lg shadow-cyan-500/30' 
                           : 'bg-gray-700/40 border-purple-400/30 text-gray-300 hover:bg-gray-600/50 hover:border-purple-400/50'
