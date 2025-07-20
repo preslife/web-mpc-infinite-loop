@@ -28,6 +28,7 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSource, setCurrentSource] = useState<AudioBufferSourceNode | null>(null);
+  const [currentGainNode, setCurrentGainNode] = useState<GainNode | null>(null);
   const [waveformData, setWaveformData] = useState<Float32Array | null>(null);
   const [pitch, setPitch] = useState(1.0);
   const [isNormalizing, setIsNormalizing] = useState(false);
@@ -55,6 +56,13 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
 
     setWaveformData(filteredData);
   }, [sample.buffer]);
+
+  // Update volume in real-time while playing
+  useEffect(() => {
+    if (currentGainNode && isPlaying) {
+      currentGainNode.gain.value = sample.volume;
+    }
+  }, [sample.volume, currentGainNode, isPlaying]);
 
   // Draw waveform
   useEffect(() => {
@@ -164,6 +172,7 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
       console.log('Stopping current source');
       currentSource.stop();
       setCurrentSource(null);
+      setCurrentGainNode(null);
     }
 
     if (isPlaying) {
@@ -209,11 +218,13 @@ export const WaveformEditor = ({ sample, onSampleUpdate, onClose, onConfirm, sho
         console.log('Audio playback ended');
         setIsPlaying(false);
         setCurrentSource(null);
+        setCurrentGainNode(null);
       };
 
       console.log('Starting audio playback...');
       source.start(0, startTime, playDuration);
       setCurrentSource(source);
+      setCurrentGainNode(gainNode);
       setIsPlaying(true);
       console.log('Audio playback started');
     } catch (error) {
