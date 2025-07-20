@@ -1999,13 +1999,6 @@ const DrumMachine = () => {
             </div>
           </div>
 
-          {/* MIDI Control Button */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowMidiPanel(true)} className="bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30 transition-all duration-200">
-              <span className="text-xs font-medium">MIDI MAP</span>
-            </Button>
-            <div className={`w-2 h-2 rounded-full ${midiEnabled ? 'bg-green-400' : 'bg-red-400'}`}></div>
-          </div>
         </div>
 
         </div>
