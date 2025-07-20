@@ -13,6 +13,7 @@ import { VisualFeedback, WaveformVisualizer } from './VisualFeedback';
 import { VolumeKnob } from './VolumeKnob';
 import { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
 import { SampleOrganizer } from './SampleOrganizer';
+import { LayoutEditor } from './LayoutEditor';
 import { useNavigate } from 'react-router-dom';
 import * as mm from '@magenta/music';
 import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts';
@@ -1140,7 +1141,7 @@ const DrumMachine = () => {
   });
   return (
     <LayoutEditor>
-    <div>
+      <div>
         {/* Top Control Bar */}
         <div className="bg-gray-900 p-2 mb-2 rounded border border-gray-700">
           <div className="flex items-center justify-between">
@@ -2113,11 +2114,11 @@ const DrumMachine = () => {
                 </div>}
             </div>
           </div>
-         </div>}
+        </div>}
       
-         {/* Visual Feedback Overlay */}
-         <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
-       </div>
+        {/* Visual Feedback Overlay */}
+        <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
+      </div>
     </LayoutEditor>
   );
 };
