@@ -1221,6 +1221,13 @@ const DrumMachine = () => {
                   </div>
                   
                   <div className="flex items-center gap-2">
+                    {/* Neural Temperature Control */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">Temp</span>
+                      <Slider value={temperature} onValueChange={setTemperature} min={0.5} max={2.0} step={0.1} className="w-16" />
+                      <span className="text-xs text-gray-400 w-8">{temperature[0].toFixed(1)}</span>
+                    </div>
+                    
                     {/* MIDI Control Button */}
                     <Button variant="outline" size="sm" onClick={() => setShowMidiPanel(true)} className="bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30 transition-all duration-200">
                       <span className="text-xs font-medium">MIDI MAP</span>
@@ -1235,7 +1242,7 @@ const DrumMachine = () => {
                   </div>
                 </div>
                 
-                <div className="h-full overflow-auto">
+                <div className="h-96 overflow-y-auto">  {/* Increased height and added scroll */}
                   {/* Step numbers row */}
                   <div className="flex gap-1 mb-2 ml-[134px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 6 (volume) + 6 (pan) + 12 (mute/solo) + 4 (gaps) = 134px */}
                     {Array.from({
@@ -1994,60 +2001,6 @@ const DrumMachine = () => {
 
         </div>
 
-        {/* Additional Controls */}
-        <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded pointer-events-none"></div>
-          
-          <div className="relative z-10">
-            <div className="grid grid-cols-3 gap-6">
-              {/* Global Controls */}
-              <div>
-                <div className="text-xs text-gray-400 mb-2 mx-[10px]">GLOBAL</div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 w-12">Swing</span>
-                    <Slider value={swing} onValueChange={setSwing} min={0} max={100} step={1} className="flex-1" />
-                    <span className="text-xs text-gray-400 w-8">{swing[0]}%</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Neural Controls */}
-              <div>
-                <div className="text-xs text-gray-400 mb-2">NEURAL ENGINE</div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 w-12">Temp</span>
-                    <Slider value={temperature} onValueChange={setTemperature} min={0.5} max={2.0} step={0.1} className="flex-1" />
-                    <span className="text-xs text-gray-400 w-8">{temperature[0].toFixed(1)}</span>
-                  </div>
-                  <Button onClick={generateSequence} disabled={!neuralEnabled || isGenerating || !canPerformPatternOperations()} variant="outline" size="sm" className="w-full h-6 text-xs bg-gray-800 border-gray-600 disabled:opacity-50" title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : neuralEnabled ? `Generate AI patterns for ${getOperationDescription()}` : 'Neural engine not available'}>
-                    {isGenerating ? <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}
-                    {isGenerating ? 'Generating...' : 'Generate'}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Pattern Management */}
-              <div>
-                <div className="text-xs text-gray-400 mb-2">PATTERNS</div>
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-1">
-                    <Button onClick={savePattern} variant="outline" size="sm" className="h-6 text-xs bg-gray-800 border-gray-600">
-                      <Save className="h-3 w-3" />
-                    </Button>
-                    <Button onClick={clearPattern} variant="outline" size="sm" className="h-6 text-xs bg-gray-800 border-gray-600">
-                      <RotateCcw className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <Button onClick={randomizePattern} disabled={!canPerformPatternOperations()} variant="outline" size="sm" className={`w-full h-6 text-xs ${!canPerformPatternOperations() ? 'bg-gray-700/50 border-gray-600/50 text-gray-500 cursor-not-allowed' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`} title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : `Randomize patterns for ${getOperationDescription()}`}>
-                    Randomize
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileLoad} className="hidden" />
 
