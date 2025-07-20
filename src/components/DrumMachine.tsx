@@ -1425,7 +1425,7 @@ const DrumMachine = () => {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-400 w-8">BPM</span>
-                  <Slider value={bpm} onValueChange={setBpm} min={60} max={200} step={1} className="w-30 mx-[36px]" />
+                  <Slider value={bpm} onValueChange={setBpm} min={60} max={200} step={1} className="w-30 px-0 my-0 mx-[17px]" />
                   <span className="text-xs text-gray-300 w-8">{bpm[0]}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1604,7 +1604,7 @@ const DrumMachine = () => {
             }, (_, i) => <ContextMenu key={i}>
                   <ContextMenuTrigger asChild>
                     <button onClick={() => setSelectedPad(i)} onMouseDown={() => handlePadPress(i)} onMouseUp={() => handlePadRelease(i)} onMouseLeave={() => handlePadRelease(i)} onTouchStart={() => handlePadPress(i)} onTouchEnd={() => handlePadRelease(i)} className={`
-                        h-24 w-24 rounded-lg text-xs font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
+                        h-16 w-16 rounded-lg text-xs font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
                         ${samples[i]?.buffer ? getPadColor(i) + '/80 border-cyan-400/50 text-white shadow-lg shadow-cyan-500/30' : 'bg-gray-700/40 border-purple-400/30 text-gray-300 hover:bg-gray-600/50 hover:border-purple-400/50'}
                         ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-red-500 shadow-lg shadow-red-500/50' : ''}
                         ${selectedPad === i ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/70 border-cyan-400' : ''}
