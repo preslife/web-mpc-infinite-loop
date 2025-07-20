@@ -921,7 +921,24 @@ const DrumMachine = () => {
       if (isPlaying && isPatternRecording && currentStep >= 0) {
         const newPatterns = [...patterns];
         newPatterns[padIndex] = [...newPatterns[padIndex]];
-        newPatterns[padIndex][currentStep] = {
+        
+        // Apply quantization if enabled
+        let targetStep = currentStep;
+        if (quantizeEnabled) {
+          const gridSize = {
+            '1/16': 1,
+            '1/8': 2, 
+            '1/4': 4,
+            '1/2': 8
+          }[quantizeGrid];
+          
+          const quantizedStep = Math.round(currentStep / gridSize) * gridSize;
+          const strength = quantizeStrength / 100;
+          targetStep = Math.round(currentStep * (1 - strength) + quantizedStep * strength);
+          targetStep = Math.max(0, Math.min(sequencerLength - 1, targetStep));
+        }
+        
+        newPatterns[padIndex][targetStep] = {
           active: true,
           velocity: trackVolumes[padIndex]
         };
@@ -1006,7 +1023,24 @@ const DrumMachine = () => {
           if (isPlaying && isPatternRecording && currentStep >= 0) {
             const newPatterns = [...patterns];
             newPatterns[padIndex] = [...newPatterns[padIndex]];
-            newPatterns[padIndex][currentStep] = {
+            
+            // Apply quantization if enabled
+            let targetStep = currentStep;
+            if (quantizeEnabled) {
+              const gridSize = {
+                '1/16': 1,
+                '1/8': 2, 
+                '1/4': 4,
+                '1/2': 8
+              }[quantizeGrid];
+              
+              const quantizedStep = Math.round(currentStep / gridSize) * gridSize;
+              const strength = quantizeStrength / 100;
+              targetStep = Math.round(currentStep * (1 - strength) + quantizedStep * strength);
+              targetStep = Math.max(0, Math.min(sequencerLength - 1, targetStep));
+            }
+            
+            newPatterns[padIndex][targetStep] = {
               active: true,
               velocity: Math.round(velocity * trackVolumes[padIndex] / 127)
             };
@@ -1032,7 +1066,7 @@ const DrumMachine = () => {
         console.log('No mapping found for MIDI note', note);
       }
     }
-  }, [midiMapping, midiLearning, samples, isPlaying, isPatternRecording, currentStep, patterns, trackVolumes, playPad, handlePadRelease]);
+  }, [midiMapping, midiLearning, samples, isPlaying, isPatternRecording, currentStep, patterns, trackVolumes, playPad, handlePadRelease, quantizeEnabled, quantizeStrength, quantizeGrid, sequencerLength]);
 
   // Update MIDI event listeners when handleMIDIMessage changes
   useEffect(() => {
@@ -1425,14 +1459,6 @@ const DrumMachine = () => {
           </div>
         </div>
 
-        {/* Waveform Visualizer Panel */}
-        <div className="backdrop-blur-md p-2 mb-2 rounded-lg border border-cyan-500/20 shadow-lg shadow-cyan-500/10 relative overflow-hidden px-[18px] bg-indigo-950 mx-[15px]">
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 rounded-lg pointer-events-none"></div>
-          <div className="relative z-10 flex items-center justify-center gap-2">
-            <span className="text-xs text-cyan-400 font-medium">WAVEFORM</span>
-            <WaveformVisualizer isPlaying={isPlaying} className="flex-1 max-w-md" />
-          </div>
-        </div>
 
         {/* Transport Controls */}
         <div className="bg-gray-900/80 backdrop-blur-md p-4 mb-2 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden mx-[13px] px-[25px]">
