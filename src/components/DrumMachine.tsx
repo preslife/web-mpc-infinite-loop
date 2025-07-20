@@ -786,7 +786,7 @@ const DrumMachine = () => {
     // Combine pattern velocity with track volume and master volume
     const finalVolume = velocity / 127 * (trackVolumes[padIndex] / 100) * masterVolume;
     gainNode.gain.value = finalVolume;
-    
+
     // Initialize and connect through effects chain
     initializeTrackEffects(padIndex);
     source.connect(gainNode);
@@ -1167,7 +1167,7 @@ const DrumMachine = () => {
         </div>
 
         {/* Main Display Area */}
-        <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[76px]">
+        <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[15px]">
           {/* Neon glass effect overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
@@ -1386,7 +1386,7 @@ const DrumMachine = () => {
         </div>
 
         {/* Waveform Visualizer Panel */}
-        <div className="backdrop-blur-md p-2 mb-2 rounded-lg border border-cyan-500/20 shadow-lg shadow-cyan-500/10 relative overflow-hidden px-[18px] mx-[75px] bg-indigo-950">
+        <div className="backdrop-blur-md p-2 mb-2 rounded-lg border border-cyan-500/20 shadow-lg shadow-cyan-500/10 relative overflow-hidden px-[18px] bg-indigo-950 mx-[15px]">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 rounded-lg pointer-events-none"></div>
           <div className="relative z-10 flex items-center justify-center gap-2">
             <span className="text-xs text-cyan-400 font-medium">WAVEFORM</span>
@@ -1623,125 +1623,75 @@ const DrumMachine = () => {
               {/* Track selector */}
               <div className="mb-3">
                 <div className="grid grid-cols-8 gap-1">
-                  {Array.from({ length: 16 }, (_, i) => (
-                    <Button 
-                      key={i}
-                      onClick={() => setSelectedEffectTrack(i)}
-                      variant="outline"
-                      size="sm"
-                      className={`h-6 w-8 text-xs p-0 ${
-                        selectedEffectTrack === i 
-                          ? 'bg-yellow-600/30 border-yellow-500 text-yellow-300' 
-                          : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
-                      }`}
-                    >
+                  {Array.from({
+                  length: 16
+                }, (_, i) => <Button key={i} onClick={() => setSelectedEffectTrack(i)} variant="outline" size="sm" className={`h-6 w-8 text-xs p-0 ${selectedEffectTrack === i ? 'bg-yellow-600/30 border-yellow-500 text-yellow-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
                       {i + 1}
-                    </Button>
-                  ))}
+                    </Button>)}
                 </div>
               </div>
 
               {/* Effect Buttons */}
               <div className="mb-3">
                 <div className="grid grid-cols-4 gap-2">
-                  <Button 
-                    onClick={() => {
-                      if (selectedEffectTrack !== null) {
-                        const newEffects = [...trackEffects];
-                        newEffects[selectedEffectTrack] = {
-                          ...newEffects[selectedEffectTrack],
-                          reverb: {
-                            ...newEffects[selectedEffectTrack].reverb,
-                            enabled: !newEffects[selectedEffectTrack].reverb.enabled
-                          }
-                        };
-                        setTrackEffects(newEffects);
+                  <Button onClick={() => {
+                  if (selectedEffectTrack !== null) {
+                    const newEffects = [...trackEffects];
+                    newEffects[selectedEffectTrack] = {
+                      ...newEffects[selectedEffectTrack],
+                      reverb: {
+                        ...newEffects[selectedEffectTrack].reverb,
+                        enabled: !newEffects[selectedEffectTrack].reverb.enabled
                       }
-                    }}
-                    variant="outline"
-                    size="sm"
-                    disabled={selectedEffectTrack === null}
-                    className={`text-xs ${
-                      selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.reverb?.enabled
-                        ? 'bg-green-600/30 border-green-500 text-green-300' 
-                        : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
-                    }`}
-                  >
+                    };
+                    setTrackEffects(newEffects);
+                  }
+                }} variant="outline" size="sm" disabled={selectedEffectTrack === null} className={`text-xs ${selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.reverb?.enabled ? 'bg-green-600/30 border-green-500 text-green-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
                     REVERB
                   </Button>
-                  <Button 
-                    onClick={() => {
-                      if (selectedEffectTrack !== null) {
-                        const newEffects = [...trackEffects];
-                        newEffects[selectedEffectTrack] = {
-                          ...newEffects[selectedEffectTrack],
-                          delay: {
-                            ...newEffects[selectedEffectTrack].delay,
-                            enabled: !newEffects[selectedEffectTrack].delay.enabled
-                          }
-                        };
-                        setTrackEffects(newEffects);
+                  <Button onClick={() => {
+                  if (selectedEffectTrack !== null) {
+                    const newEffects = [...trackEffects];
+                    newEffects[selectedEffectTrack] = {
+                      ...newEffects[selectedEffectTrack],
+                      delay: {
+                        ...newEffects[selectedEffectTrack].delay,
+                        enabled: !newEffects[selectedEffectTrack].delay.enabled
                       }
-                    }}
-                    variant="outline"
-                    size="sm"
-                    disabled={selectedEffectTrack === null}
-                    className={`text-xs ${
-                      selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.delay?.enabled
-                        ? 'bg-blue-600/30 border-blue-500 text-blue-300' 
-                        : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
-                    }`}
-                  >
+                    };
+                    setTrackEffects(newEffects);
+                  }
+                }} variant="outline" size="sm" disabled={selectedEffectTrack === null} className={`text-xs ${selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.delay?.enabled ? 'bg-blue-600/30 border-blue-500 text-blue-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
                     DELAY
                   </Button>
-                  <Button 
-                    onClick={() => {
-                      if (selectedEffectTrack !== null) {
-                        const newEffects = [...trackEffects];
-                        newEffects[selectedEffectTrack] = {
-                          ...newEffects[selectedEffectTrack],
-                          filter: {
-                            ...newEffects[selectedEffectTrack].filter,
-                            enabled: !newEffects[selectedEffectTrack].filter.enabled
-                          }
-                        };
-                        setTrackEffects(newEffects);
+                  <Button onClick={() => {
+                  if (selectedEffectTrack !== null) {
+                    const newEffects = [...trackEffects];
+                    newEffects[selectedEffectTrack] = {
+                      ...newEffects[selectedEffectTrack],
+                      filter: {
+                        ...newEffects[selectedEffectTrack].filter,
+                        enabled: !newEffects[selectedEffectTrack].filter.enabled
                       }
-                    }}
-                    variant="outline"
-                    size="sm"
-                    disabled={selectedEffectTrack === null}
-                    className={`text-xs ${
-                      selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.filter?.enabled
-                        ? 'bg-purple-600/30 border-purple-500 text-purple-300' 
-                        : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
-                    }`}
-                  >
+                    };
+                    setTrackEffects(newEffects);
+                  }
+                }} variant="outline" size="sm" disabled={selectedEffectTrack === null} className={`text-xs ${selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.filter?.enabled ? 'bg-purple-600/30 border-purple-500 text-purple-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
                     FILTER
                   </Button>
-                  <Button 
-                    onClick={() => {
-                      if (selectedEffectTrack !== null) {
-                        const newEffects = [...trackEffects];
-                        newEffects[selectedEffectTrack] = {
-                          ...newEffects[selectedEffectTrack],
-                          eq: {
-                            ...newEffects[selectedEffectTrack].eq,
-                            enabled: !newEffects[selectedEffectTrack].eq.enabled
-                          }
-                        };
-                        setTrackEffects(newEffects);
+                  <Button onClick={() => {
+                  if (selectedEffectTrack !== null) {
+                    const newEffects = [...trackEffects];
+                    newEffects[selectedEffectTrack] = {
+                      ...newEffects[selectedEffectTrack],
+                      eq: {
+                        ...newEffects[selectedEffectTrack].eq,
+                        enabled: !newEffects[selectedEffectTrack].eq.enabled
                       }
-                    }}
-                    variant="outline"
-                    size="sm"
-                    disabled={selectedEffectTrack === null}
-                    className={`text-xs ${
-                      selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.eq?.enabled
-                        ? 'bg-orange-600/30 border-orange-500 text-orange-300' 
-                        : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
-                    }`}
-                  >
+                    };
+                    setTrackEffects(newEffects);
+                  }
+                }} variant="outline" size="sm" disabled={selectedEffectTrack === null} className={`text-xs ${selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.eq?.enabled ? 'bg-orange-600/30 border-orange-500 text-orange-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
                     EQ
                   </Button>
                 </div>
