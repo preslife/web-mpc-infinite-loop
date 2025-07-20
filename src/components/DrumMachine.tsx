@@ -1620,7 +1620,7 @@ const DrumMachine = () => {
             }, (_, i) => <ContextMenu key={i}>
                   <ContextMenuTrigger asChild>
                     <button onClick={() => setSelectedPad(i)} onMouseDown={() => handlePadPress(i)} onMouseUp={() => handlePadRelease(i)} onMouseLeave={() => handlePadRelease(i)} onTouchStart={() => handlePadPress(i)} onTouchEnd={() => handlePadRelease(i)} className={`
-                        h-24 w-24 rounded-lg text-sm font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
+                        h-28 w-28 rounded-lg text-sm font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
                         ${samples[i]?.buffer ? getPadColor(i) + '/80 border-cyan-400/50 text-white shadow-lg shadow-cyan-500/30' : 'bg-gray-700/40 border-purple-400/30 text-gray-300 hover:bg-gray-600/50 hover:border-purple-400/50'}
                         ${isRecording && selectedPad === i ? 'animate-pulse ring-2 ring-red-500 shadow-lg shadow-red-500/50' : ''}
                         ${selectedPad === i ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/70 border-cyan-400' : ''}
