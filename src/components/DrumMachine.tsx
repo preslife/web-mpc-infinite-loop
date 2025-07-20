@@ -336,6 +336,49 @@ const DrumMachine = () => {
       const arrayBuffer = await response.arrayBuffer();
       console.log(`ArrayBuffer length: ${arrayBuffer.byteLength} bytes`);
       
+      // Check if response is actually HTML (error page) instead of audio
+      const text = new TextDecoder().decode(arrayBuffer.slice(0, 100));
+      if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
+        console.log('Detected HTML response, falling back to synthetic sample');
+        // Generate synthetic sample instead
+        const { SampleGenerator } = await import('../utils/sampleGenerator');
+        const generator = new SampleGenerator(audioContextRef.current);
+        
+        let audioBuffer: AudioBuffer;
+        if (name.toLowerCase().includes('kick')) {
+          audioBuffer = generator.generateKick();
+        } else if (name.toLowerCase().includes('snare')) {
+          audioBuffer = generator.generateSnare();
+        } else if (name.toLowerCase().includes('hat')) {
+          audioBuffer = generator.generateHiHat();
+        } else {
+          audioBuffer = generator.generatePerc();
+        }
+        
+        console.log(`Generated synthetic ${name}: ${audioBuffer.duration}s, ${audioBuffer.sampleRate}Hz`);
+        
+        const sample: Sample = {
+          buffer: audioBuffer,
+          name: name,
+          startTime: 0,
+          endTime: 1,
+          gateMode: true,
+          pitch: 0,
+          reverse: false,
+          volume: 0.8
+        };
+        
+        // Set pending sample for editor confirmation
+        setPendingSample({
+          sample,
+          padIndex
+        });
+        
+        // Switch to editor mode for confirmation
+        setDisplayMode('editor');
+        return;
+      }
+      
       const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
       console.log(`Audio decoded successfully: ${audioBuffer.duration}s, ${audioBuffer.sampleRate}Hz`);
       
