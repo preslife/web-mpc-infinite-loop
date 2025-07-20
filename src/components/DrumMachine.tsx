@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Play, Pause, Square, Mic, Volume2, Upload, Save, FolderOpen, Copy, RotateCcw, VolumeX, Download, Edit, RefreshCw, Sparkles, X, Music } from 'lucide-react';
 import { toast } from 'sonner';
 import { WaveformEditor } from './WaveformEditor';
@@ -1163,11 +1164,14 @@ const DrumMachine = () => {
           </div>
         </div>
 
-        {/* Main Display Area */}
-        <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[76px]">
-          {/* Neon glass effect overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
+        {/* Resizable Layout Container */}
+        <ResizablePanelGroup direction="horizontal" className="h-[80vh] w-full">
+          {/* Main Display Panel */}
+          <ResizablePanel defaultSize={60} minSize={40}>
+            <div className="bg-gray-900 p-4 rounded border border-gray-700 h-full relative overflow-hidden">
+              {/* Neon glass effect overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
           
           {/* Toggle buttons */}
           <div className="flex gap-2 mb-4 relative z-10">
@@ -1371,10 +1375,14 @@ const DrumMachine = () => {
                       </div>}
                   </>}
               </div>}
-          </div>
-        </div>
+            </div>
+          </ResizablePanel>
 
-        {/* Waveform Visualizer Panel */}
+          <ResizableHandle withHandle />
+
+          {/* Right Side Panel - Drum Pads */}
+          <ResizablePanel defaultSize={40} minSize={30}>
+            <div className="h-full flex flex-col gap-2">
         <div className="backdrop-blur-md p-2 mb-2 rounded-lg border border-cyan-500/20 shadow-lg shadow-cyan-500/10 relative overflow-hidden px-[18px] mx-[75px] bg-indigo-950">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 rounded-lg pointer-events-none"></div>
           <div className="relative z-10 flex items-center justify-center gap-2">
@@ -1593,12 +1601,12 @@ const DrumMachine = () => {
             </div>
           </div>
 
-          {/* Right Drum Pads */}
-          <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden my-[8 px] mx-[69px] px-[12px] my-[156px] py-[12px]">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
-            
-            <div className="grid grid-cols-4 gap-2 relative z-10">
+              {/* Drum Pads */}
+              <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
+                
+                <div className="grid grid-cols-4 gap-2 relative z-10">
               {Array.from({
               length: 16
             }, (_, i) => <ContextMenu key={i}>
@@ -2113,9 +2121,13 @@ const DrumMachine = () => {
             </div>
           </div>
         </div>}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       
       {/* Visual Feedback Overlay */}
       <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
+      </div>
     </div>;
 };
 export default DrumMachine;
