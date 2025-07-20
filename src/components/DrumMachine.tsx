@@ -323,10 +323,21 @@ const DrumMachine = () => {
   // Load a single sample from URL
   const loadSampleFromUrl = async (url: string, name: string, padIndex: number) => {
     try {
+      console.log(`Attempting to load sample: ${name} from URL: ${url}`);
       if (!audioContextRef.current) return;
+      
       const response = await fetch(url);
+      console.log(`Fetch response status: ${response.status}, ok: ${response.ok}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const arrayBuffer = await response.arrayBuffer();
+      console.log(`ArrayBuffer length: ${arrayBuffer.byteLength} bytes`);
+      
       const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
+      console.log(`Audio decoded successfully: ${audioBuffer.duration}s, ${audioBuffer.sampleRate}Hz`);
       
       const sample: Sample = {
         buffer: audioBuffer,
@@ -349,8 +360,8 @@ const DrumMachine = () => {
       setDisplayMode('editor');
       
     } catch (error) {
-      console.warn(`Failed to load sample ${name}:`, error);
-      toast.error(`Failed to load sample: ${name}`);
+      console.error(`Failed to load sample ${name} from ${url}:`, error);
+      toast.error(`Failed to load sample: ${name} - ${error.message}`);
     }
   };
 

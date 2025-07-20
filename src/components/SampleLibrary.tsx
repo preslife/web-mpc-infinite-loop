@@ -31,9 +31,9 @@ const DRUM_KITS: DrumKit[] = [
     description: 'Basic drum kit with kick, snare, and hi-hat',
     category: 'electronic',
     samples: [
-      { name: 'Kick', url: './samples/kick.wav', type: 'kick' },
-      { name: 'Snare', url: './samples/snare.wav', type: 'snare' },
-      { name: 'Hi-Hat', url: './samples/hihat.wav', type: 'hihat' },
+      { name: 'Kick', url: '/samples/kick.wav', type: 'kick' },
+      { name: 'Snare', url: '/samples/snare.wav', type: 'snare' },
+      { name: 'Hi-Hat', url: '/samples/hihat.wav', type: 'hihat' },
     ],
     patterns: [
       {
@@ -53,14 +53,14 @@ const DRUM_KITS: DrumKit[] = [
     description: 'Classic TR-808 drum machine sounds (Preview Only)',
     category: 'electronic',
     samples: [
-      { name: 'BD_808', url: './samples/kick.wav', type: 'kick' },
-      { name: 'SD_808', url: './samples/snare.wav', type: 'snare' },
-      { name: 'HH_808', url: './samples/hihat.wav', type: 'hihat' },
-      { name: 'OH_808', url: './samples/hihat.wav', type: 'openhat' },
-      { name: 'CP_808', url: './samples/snare.wav', type: 'perc' },
-      { name: 'CY_808', url: './samples/hihat.wav', type: 'crash' },
-      { name: 'CB_808', url: './samples/kick.wav', type: 'perc' },
-      { name: 'MA_808', url: './samples/hihat.wav', type: 'perc' },
+      { name: 'BD_808', url: '/samples/kick.wav', type: 'kick' },
+      { name: 'SD_808', url: '/samples/snare.wav', type: 'snare' },
+      { name: 'HH_808', url: '/samples/hihat.wav', type: 'hihat' },
+      { name: 'OH_808', url: '/samples/hihat.wav', type: 'openhat' },
+      { name: 'CP_808', url: '/samples/snare.wav', type: 'perc' },
+      { name: 'CY_808', url: '/samples/hihat.wav', type: 'crash' },
+      { name: 'CB_808', url: '/samples/kick.wav', type: 'perc' },
+      { name: 'MA_808', url: '/samples/hihat.wav', type: 'perc' },
     ],
     patterns: [
       {
@@ -80,14 +80,14 @@ const DRUM_KITS: DrumKit[] = [
     description: 'Hard-hitting trap drums (Using default samples)',
     category: 'hip-hop',
     samples: [
-      { name: 'Trap_Kick', url: './samples/kick.wav', type: 'kick' },
-      { name: 'Trap_Snare', url: './samples/snare.wav', type: 'snare' },
-      { name: 'Trap_HH', url: './samples/hihat.wav', type: 'hihat' },
-      { name: 'Trap_OH', url: './samples/hihat.wav', type: 'openhat' },
-      { name: 'Trap_Perc1', url: './samples/snare.wav', type: 'perc' },
-      { name: 'Trap_Perc2', url: './samples/kick.wav', type: 'perc' },
-      { name: 'Trap_Crash', url: './samples/hihat.wav', type: 'crash' },
-      { name: 'Trap_Rim', url: './samples/snare.wav', type: 'perc' },
+      { name: 'Trap_Kick', url: '/samples/kick.wav', type: 'kick' },
+      { name: 'Trap_Snare', url: '/samples/snare.wav', type: 'snare' },
+      { name: 'Trap_HH', url: '/samples/hihat.wav', type: 'hihat' },
+      { name: 'Trap_OH', url: '/samples/hihat.wav', type: 'openhat' },
+      { name: 'Trap_Perc1', url: '/samples/snare.wav', type: 'perc' },
+      { name: 'Trap_Perc2', url: '/samples/kick.wav', type: 'perc' },
+      { name: 'Trap_Crash', url: '/samples/hihat.wav', type: 'crash' },
+      { name: 'Trap_Rim', url: '/samples/snare.wav', type: 'perc' },
     ]
   },
   {
@@ -96,14 +96,14 @@ const DRUM_KITS: DrumKit[] = [
     description: 'Classic house music drums (Using default samples)',
     category: 'electronic',
     samples: [
-      { name: 'House_Kick', url: './samples/kick.wav', type: 'kick' },
-      { name: 'House_Snare', url: './samples/snare.wav', type: 'snare' },
-      { name: 'House_HH_C', url: './samples/hihat.wav', type: 'hihat' },
-      { name: 'House_HH_O', url: './samples/hihat.wav', type: 'openhat' },
-      { name: 'House_Perc', url: './samples/snare.wav', type: 'perc' },
-      { name: 'House_Clap', url: './samples/snare.wav', type: 'perc' },
-      { name: 'House_Crash', url: './samples/hihat.wav', type: 'crash' },
-      { name: 'House_Ride', url: './samples/hihat.wav', type: 'perc' },
+      { name: 'House_Kick', url: '/samples/kick.wav', type: 'kick' },
+      { name: 'House_Snare', url: '/samples/snare.wav', type: 'snare' },
+      { name: 'House_HH_C', url: '/samples/hihat.wav', type: 'hihat' },
+      { name: 'House_HH_O', url: '/samples/hihat.wav', type: 'openhat' },
+      { name: 'House_Perc', url: '/samples/snare.wav', type: 'perc' },
+      { name: 'House_Clap', url: '/samples/snare.wav', type: 'perc' },
+      { name: 'House_Crash', url: '/samples/hihat.wav', type: 'crash' },
+      { name: 'House_Ride', url: '/samples/hihat.wav', type: 'perc' },
     ]
   }
 ];
