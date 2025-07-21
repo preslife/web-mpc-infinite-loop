@@ -1918,10 +1918,10 @@ const DrumMachine = () => {
         {/* Bottom Row - Effects Panel */}
         <div className="flex gap-4 bg-zinc-200">
           {/* Effects Panel */}
-          <div className="flex-1 bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden my-[9px] mx-[11px]">
+          <div className="flex-1 backdrop-blur-md p-4 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden my-[9px] mx-[11px] bg-zinc-200">
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-red-500/10 rounded-lg pointer-events-none"></div>
             <div className="relative z-10">
-              <div className="text-xs text-gray-400 mb-2">AUDIO EFFECTS</div>
+              <div className="text-xs text-gray-400 mb-2 bg-zinc-200">AUDIO EFFECTS</div>
               
               {/* Track selector */}
               <div className="mb-3">
