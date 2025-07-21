@@ -33,7 +33,10 @@ export default function Library() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Studio
           </Button>
-          <h1 className="text-lg font-semibold">X BEAT STUDIO - Sample Library</h1>
+          <div className="flex items-center gap-2">
+            <img src="/lovable-uploads/e43991ad-0319-4abf-85b7-f5c691b792a9.png" alt="XBEAT Studio" className="h-6 w-auto" />
+            <span className="text-lg font-semibold">Sample Library</span>
+          </div>
         </div>
       </div>
       
