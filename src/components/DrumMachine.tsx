@@ -1436,7 +1436,7 @@ const DrumMachine = () => {
       }
     }
   });
-  return <div className="min-h-screen bg-black p-2 font-mono">
+  return <div className="min-h-screen p-2 font-mono bg-zinc-200">
       <div className="max-w-7xl mx-auto bg-zinc-200">
         {/* Top Control Bar */}
         <div className="p-2 mb-2 rounded border border-gray-700 mx-[15px] bg-zinc-100">
