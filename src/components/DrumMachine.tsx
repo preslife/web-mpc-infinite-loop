@@ -1437,18 +1437,18 @@ const DrumMachine = () => {
     }
   });
   return <div className="min-h-screen bg-black p-2 font-mono">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto bg-zinc-200">
         {/* Top Control Bar */}
-        <div className="bg-gray-900 p-2 mb-2 rounded border border-gray-700 mx-[15px]">
-          <div className="flex items-center justify-between">
+        <div className="p-2 mb-2 rounded border border-gray-700 mx-[15px] bg-zinc-100">
+          <div className="flex items-center justify-between bg-zinc-200">
             <img src="/lovable-uploads/e43991ad-0319-4abf-85b7-f5c691b792a9.png" alt="XBEAT Studio" className="h-20 w-auto" />
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs hover:bg-purple-800/20 hover:border-purple-400 neon-border" onClick={() => navigate('/library')}>
+              <Button variant="outline" size="sm" onClick={() => navigate('/library')} className="border-gray-600 text-xs hover:border-purple-400 neon-border bg-gray-400 hover:bg-gray-300 text-slate-950">
                 <Music className="w-3 h-3 mr-1" />
                 LIBRARY
               </Button>
               <KeyboardShortcutsHelp />
-              <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs neon-border" onClick={() => setDisplayMode('sequencer')}>
+              <Button variant="outline" size="sm" onClick={() => setDisplayMode('sequencer')} className="border-gray-600 text-xs neon-border bg-gray-400 hover:bg-gray-300 text-slate-950">
                 SEQUENCER
               </Button>
             </div>
@@ -1456,7 +1456,7 @@ const DrumMachine = () => {
         </div>
 
         {/* Main Display Area */}
-        <div className="bg-gray-900 p-4 mb-2 rounded border border-gray-700 h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[15px]">
+        <div className="p-4 mb-2 rounded border border-gray-700 h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[15px] bg-zinc-200">
           {/* Neon glass effect overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
@@ -1698,7 +1698,7 @@ const DrumMachine = () => {
 
 
         {/* Transport Controls */}
-        <div className="bg-gray-900/80 backdrop-blur-md p-4 mb-2 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden mx-[13px] px-[25px]">
+        <div className="backdrop-blur-md p-4 mb-2 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden mx-[13px] px-[25px] bg-zinc-200">
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
           <div className="relative z-10">
             <div className="flex items-center justify-center gap-6">
@@ -1797,14 +1797,14 @@ const DrumMachine = () => {
           {/* Left Control Panel */}
           <div className="space-y-2">
             {/* Volume & Main Controls */}
-            <div className="bg-gray-900/80 backdrop-blur-md p-3 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden flex justify-center">
+            <div className="backdrop-blur-md p-3 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden flex justify-center bg-zinc-200">
               <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
               <div className="relative z-10">
                 <VolumeKnob value={masterVolume * 100} onChange={value => setMasterVolume(value / 100)} size="lg" label="MASTER VOLUME" />
               </div>
             </div>
 
-            <div className="bg-gray-900/80 backdrop-blur-md p-2 rounded-lg border border-blue-500/30 shadow-lg shadow-blue-500/20 relative overflow-hidden py-[9px] px-[10px]">
+            <div className="backdrop-blur-md p-2 rounded-lg border border-blue-500/30 shadow-lg shadow-blue-500/20 relative overflow-hidden py-[9px] px-[10px] bg-zinc-200">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-cyan-500/5 to-purple-500/10 rounded-lg pointer-events-none"></div>
               <div className="relative z-10">
                 <div className="space-y-2">
@@ -1852,7 +1852,7 @@ const DrumMachine = () => {
             </div>
 
             {/* Pattern Controls */}
-            <div className="bg-gray-900/80 backdrop-blur-md p-2 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden px-[10px] py-[11px]">
+            <div className="backdrop-blur-md p-2 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden px-[10px] py-[11px] bg-zinc-200">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
               <div className="relative z-10">
               <div className="space-y-2">
@@ -1873,7 +1873,7 @@ const DrumMachine = () => {
           </div>
 
           {/* Right Drum Pads */}
-          <div className="bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden">
+          <div className="backdrop-blur-md p-4 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden bg-zinc-200">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
             
@@ -1916,7 +1916,7 @@ const DrumMachine = () => {
         </div>
 
         {/* Bottom Row - Effects Panel */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 bg-zinc-200">
           {/* Effects Panel */}
           <div className="flex-1 bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden my-[9px] mx-[11px]">
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-red-500/10 rounded-lg pointer-events-none"></div>
@@ -2268,7 +2268,7 @@ const DrumMachine = () => {
         <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileLoad} className="hidden" />
 
         {/* MIDI Status Panel */}
-        <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700 relative overflow-hidden mx-[15px]">
+        <div className="mt-4 p-3 rounded border border-gray-700 relative overflow-hidden mx-[15px] bg-zinc-200">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded pointer-events-none"></div>
           
           <div className="relative z-10">
