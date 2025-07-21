@@ -328,15 +328,13 @@ const DrumMachine = () => {
         const kitSample = kit.samples[i];
         try {
           if (!audioContextRef.current) continue;
-          
           let audioBuffer: AudioBuffer;
-          
+
           // For the default kit, generate synthetic samples instead of loading broken files
           if (kit.id === 'default-kit') {
             if (!sampleGeneratorRef.current) {
               sampleGeneratorRef.current = new SampleGenerator(audioContextRef.current);
             }
-            
             switch (kitSample.type) {
               case 'kick':
                 audioBuffer = sampleGeneratorRef.current.generateKick(60, 0.5);
@@ -356,7 +354,6 @@ const DrumMachine = () => {
             const arrayBuffer = await response.arrayBuffer();
             audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
           }
-          
           const sample: Sample = {
             buffer: audioBuffer,
             name: kitSample.name,
@@ -367,7 +364,6 @@ const DrumMachine = () => {
             reverse: false,
             volume: 0.8
           };
-
           loadedSamples.push({
             sample,
             padIndex: i,
@@ -375,14 +371,13 @@ const DrumMachine = () => {
           });
         } catch (error) {
           console.warn(`Failed to load sample ${kitSample.name}:`, error);
-          
+
           // Fallback to synthetic generation if loading fails
           if (audioContextRef.current) {
             try {
               if (!sampleGeneratorRef.current) {
                 sampleGeneratorRef.current = new SampleGenerator(audioContextRef.current);
               }
-              
               let fallbackBuffer: AudioBuffer;
               switch (kitSample.type) {
                 case 'kick':
@@ -397,7 +392,6 @@ const DrumMachine = () => {
                 default:
                   fallbackBuffer = sampleGeneratorRef.current.generateKick(60, 0.5);
               }
-              
               const fallbackSample: Sample = {
                 buffer: fallbackBuffer,
                 name: `${kitSample.name} (Generated)`,
@@ -408,13 +402,11 @@ const DrumMachine = () => {
                 reverse: false,
                 volume: 0.8
               };
-
               loadedSamples.push({
                 sample: fallbackSample,
                 padIndex: i,
                 name: `${kitSample.name} (Generated)`
               });
-              
               toast.info(`Generated fallback sample for ${kitSample.name}`);
             } catch (genError) {
               console.error(`Failed to generate fallback for ${kitSample.name}:`, genError);
@@ -427,7 +419,6 @@ const DrumMachine = () => {
       // Set up the queue and start with the first sample
       setSampleQueue(loadedSamples);
       setCurrentQueueIndex(0);
-      
       if (loadedSamples.length > 0) {
         setPendingSample({
           sample: loadedSamples[0].sample,
@@ -451,7 +442,6 @@ const DrumMachine = () => {
       const response = await fetch(url);
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
-      
       const sample: Sample = {
         buffer: audioBuffer,
         name: name,
@@ -462,16 +452,15 @@ const DrumMachine = () => {
         reverse: false,
         volume: 0.8
       };
-      
+
       // Set pending sample for editor confirmation (same as normal upload workflow)
       setPendingSample({
         sample,
         padIndex
       });
-      
+
       // Switch to editor mode for confirmation
       setDisplayMode('editor');
-      
     } catch (error) {
       console.warn(`Failed to load sample ${name}:`, error);
       toast.error(`Failed to load sample: ${name}`);
@@ -481,7 +470,6 @@ const DrumMachine = () => {
   // Process next sample in the queue
   const processNextInQueue = useCallback(() => {
     if (sampleQueue.length === 0) return;
-    
     const nextIndex = currentQueueIndex + 1;
     if (nextIndex < sampleQueue.length) {
       setCurrentQueueIndex(nextIndex);
@@ -507,10 +495,10 @@ const DrumMachine = () => {
     const newSamples = [...samples];
     newSamples[padIndex] = confirmedSample;
     setSamples(newSamples);
-    
+
     // Clear pending sample
     setPendingSample(null);
-    
+
     // Process next sample in queue if exists
     if (sampleQueue.length > 0 && currentQueueIndex < sampleQueue.length - 1) {
       processNextInQueue();
@@ -529,7 +517,7 @@ const DrumMachine = () => {
   // Handle sample rejection/skip
   const handleSampleReject = useCallback(() => {
     setPendingSample(null);
-    
+
     // Process next sample in queue if exists
     if (sampleQueue.length > 0 && currentQueueIndex < sampleQueue.length - 1) {
       processNextInQueue();
@@ -572,7 +560,7 @@ const DrumMachine = () => {
 
     // Panner for stereo positioning (always create this)
     nodes.panner = context.createStereoPanner();
-    nodes.panner.pan.value = ((trackPans[trackIndex] - 50) / 50); // Convert 0-100 to -1 to 1
+    nodes.panner.pan.value = (trackPans[trackIndex] - 50) / 50; // Convert 0-100 to -1 to 1
 
     // Reverb
     if (effects.reverb.enabled) {
@@ -714,13 +702,15 @@ const DrumMachine = () => {
       neuralEnabled,
       isGenerating
     });
-    
     if (patternTarget === 'all') {
       return loadedCount > 0;
     } else {
       const targetTrack = selectedTrack !== null ? selectedTrack : selectedPad;
       const hasBuffer = targetTrack !== null && samples[targetTrack]?.buffer;
-      console.log('Single track check:', { targetTrack, hasBuffer });
+      console.log('Single track check:', {
+        targetTrack,
+        hasBuffer
+      });
       return hasBuffer;
     }
   };
@@ -1003,31 +993,23 @@ const DrumMachine = () => {
     }
     const source = audioContextRef.current.createBufferSource();
     const gainNode = audioContextRef.current.createGain();
-    
+
     // Get sample data
     const sample = samples[padIndex];
     let buffer = sample.buffer!;
-    
+
     // Apply reverse effect by creating a reversed buffer if needed
     if (sample.reverse) {
-      const reversedBuffer = audioContextRef.current.createBuffer(
-        buffer.numberOfChannels,
-        buffer.length,
-        buffer.sampleRate
-      );
-      
+      const reversedBuffer = audioContextRef.current.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
       for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
         const originalData = buffer.getChannelData(channel);
         const reversedData = reversedBuffer.getChannelData(channel);
-        
         for (let i = 0; i < originalData.length; i++) {
           reversedData[i] = originalData[originalData.length - 1 - i];
         }
       }
-      
       buffer = reversedBuffer;
     }
-    
     source.buffer = buffer;
 
     // Apply pitch adjustment
@@ -1052,7 +1034,6 @@ const DrumMachine = () => {
     // Track both source and gain node for real-time volume control
     setPlayingSources(prev => new Map(prev).set(padIndex, source));
     setPlayingGainNodes(prev => new Map(prev).set(padIndex, gainNode));
-    
     source.onended = () => {
       setPlayingSources(prev => {
         const newMap = new Map(prev);
@@ -1065,7 +1046,6 @@ const DrumMachine = () => {
         return newMap;
       });
     };
-
     if (sampleGateMode) {
       // For gate mode, play the slice duration (respects start/end points)
       source.start(0, startTime, sliceDuration);
@@ -1195,23 +1175,21 @@ const DrumMachine = () => {
       if (isPlaying && isPatternRecording && currentStep >= 0) {
         const newPatterns = [...patterns];
         newPatterns[padIndex] = [...newPatterns[padIndex]];
-        
+
         // Apply quantization if enabled
         let targetStep = currentStep;
         if (quantizeEnabled) {
           const gridSize = {
             '1/16': 1,
-            '1/8': 2, 
+            '1/8': 2,
             '1/4': 4,
             '1/2': 8
           }[quantizeGrid];
-          
           const quantizedStep = Math.round(currentStep / gridSize) * gridSize;
           const strength = quantizeStrength / 100;
           targetStep = Math.round(currentStep * (1 - strength) + quantizedStep * strength);
           targetStep = Math.max(0, Math.min(sequencerLength - 1, targetStep));
         }
-        
         newPatterns[padIndex][targetStep] = {
           active: true,
           velocity: trackVolumes[padIndex]
@@ -1297,23 +1275,21 @@ const DrumMachine = () => {
           if (isPlaying && isPatternRecording && currentStep >= 0) {
             const newPatterns = [...patterns];
             newPatterns[padIndex] = [...newPatterns[padIndex]];
-            
+
             // Apply quantization if enabled
             let targetStep = currentStep;
             if (quantizeEnabled) {
               const gridSize = {
                 '1/16': 1,
-                '1/8': 2, 
+                '1/8': 2,
                 '1/4': 4,
                 '1/2': 8
               }[quantizeGrid];
-              
               const quantizedStep = Math.round(currentStep / gridSize) * gridSize;
               const strength = quantizeStrength / 100;
               targetStep = Math.round(currentStep * (1 - strength) + quantizedStep * strength);
               targetStep = Math.max(0, Math.min(sequencerLength - 1, targetStep));
             }
-            
             newPatterns[padIndex][targetStep] = {
               active: true,
               velocity: Math.round(velocity * trackVolumes[padIndex] / 127)
@@ -1465,7 +1441,7 @@ const DrumMachine = () => {
         {/* Top Control Bar */}
         <div className="bg-gray-900 p-2 mb-2 rounded border border-gray-700 mx-[15px]">
           <div className="flex items-center justify-between">
-            <img src="/lovable-uploads/e43991ad-0319-4abf-85b7-f5c691b792a9.png" alt="XBEAT Studio" className="h-8 w-auto" />
+            <img src="/lovable-uploads/e43991ad-0319-4abf-85b7-f5c691b792a9.png" alt="XBEAT Studio" className="h-20 w-auto" />
             <div className="flex gap-2">
               <Button variant="outline" size="sm" className="bg-gray-800 border-gray-600 text-gray-300 text-xs hover:bg-purple-800/20 hover:border-purple-400 neon-border" onClick={() => navigate('/library')}>
                 <Music className="w-3 h-3 mr-1" />
@@ -1588,30 +1564,20 @@ const DrumMachine = () => {
                         
                         {/* Volume knob */}
                         <div className="flex-shrink-0 w-6">
-                          <SimpleKnob 
-                            value={trackVolumes[padIndex]} 
-                            onChange={value => {
-                              const newVolumes = [...trackVolumes];
-                              newVolumes[padIndex] = value;
-                              setTrackVolumes(newVolumes);
-                            }} 
-                            size={20}
-                            color="hsl(var(--primary))"
-                          />
+                          <SimpleKnob value={trackVolumes[padIndex]} onChange={value => {
+                      const newVolumes = [...trackVolumes];
+                      newVolumes[padIndex] = value;
+                      setTrackVolumes(newVolumes);
+                    }} size={20} color="hsl(var(--primary))" />
                         </div>
                         
                         {/* Pan knob */}
                         <div className="flex-shrink-0 w-6">
-                          <SimpleKnob 
-                            value={trackPans[padIndex]} 
-                            onChange={value => {
-                              const newPans = [...trackPans];
-                              newPans[padIndex] = value;
-                              setTrackPans(newPans);
-                            }} 
-                            size={20}
-                            color="hsl(var(--accent))"
-                          />
+                          <SimpleKnob value={trackPans[padIndex]} onChange={value => {
+                      const newPans = [...trackPans];
+                      newPans[padIndex] = value;
+                      setTrackPans(newPans);
+                    }} size={20} color="hsl(var(--accent))" />
                         </div>
                         
                         {/* Mute/Solo buttons */}
