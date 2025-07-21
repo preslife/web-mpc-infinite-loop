@@ -34,7 +34,7 @@ export default function Library() {
             Back to Studio
           </Button>
           <div className="flex items-center gap-2">
-            <img src="/lovable-uploads/e43991ad-0319-4abf-85b7-f5c691b792a9.png" alt="XBEAT Studio" className="h-6 w-auto" />
+            <img src="/lovable-uploads/8172f0a9-66b9-4449-b322-0291dc32073c.png" alt="XBEAT Studio" className="h-6 w-auto" />
             <span className="text-lg font-semibold">Sample Library</span>
           </div>
         </div>
