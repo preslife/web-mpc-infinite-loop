@@ -1440,7 +1440,7 @@ const DrumMachine = () => {
       <div className="max-w-7xl mx-auto bg-zinc-200">
         {/* Top Control Bar */}
         <div className="p-2 mb-2 rounded border border-gray-700 mx-[15px] bg-zinc-100">
-          <div className="flex items-center justify-between bg-zinc-200">
+          <div className="flex items-center justify-between bg-gray-300">
             <img src="/lovable-uploads/8172f0a9-66b9-4449-b322-0291dc32073c.png" alt="XBEAT Studio" className="h-20 w-auto" />
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => navigate('/library')} className="border-gray-600 text-xs hover:border-purple-400 neon-border bg-gray-400 hover:bg-gray-300 text-slate-950">
