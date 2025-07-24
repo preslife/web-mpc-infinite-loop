@@ -5,26 +5,26 @@
 
 @layer base {
   :root {
-    /* Base Colors */
-    --background: 220 13% 9%;
-    --foreground: 220 10% 97%;
-    --card: 0 0% 85%;
-    --card-foreground: 220 10% 97%;
-    --popover: 0 0% 85%;
-    --popover-foreground: 220 10% 97%;
-    --primary: 263 85% 65%;
-    --primary-foreground: 220 10% 5%;
-    --secondary: 0 0% 85%;
-    --secondary-foreground: 220 10% 97%;
-    --muted: 0 0% 85%;
-    --muted-foreground: 220 10% 60%;
-    --accent: 322 84% 68%;
-    --accent-foreground: 220 10% 5%;
+    /* Base Colors - Black and Gold Theme */
+    --background: 0 0% 5%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 45 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 0%;
+    --secondary-foreground: 45 100% 50%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 45 100% 70%;
+    --accent: 45 100% 50%;
+    --accent-foreground: 0 0% 0%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 220 10% 97%;
-    --border: 220 13% 20%;
-    --input: 0 0% 85%;
-    --ring: 263 85% 65%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 45 100% 50%;
+    --input: 0 0% 0%;
+    --ring: 45 100% 50%;
     --radius: 0.75rem;
 
     /* Glass Effect Variables */
@@ -34,14 +34,14 @@
     --glass-radius: 16px;
     --glass-blur: 12px;
 
-    /* Drum machine specific colors with glass effect */
-    --pad-active: var(--glass-hue1) 85% 65%;
-    --pad-inactive: 0 0% 85%;
-    --step-active: var(--glass-hue1) 85% 65%;
-    --step-playing: var(--glass-hue2) 84% 68%;
-    --led-green: 120 84% 65%;
+    /* Drum machine specific colors - Black and Gold */
+    --pad-active: 45 100% 50%;
+    --pad-inactive: 0 0% 0%;
+    --step-active: 45 100% 50%;
+    --step-playing: 45 100% 70%;
+    --led-green: 45 100% 50%;
     --led-red: 0 84% 65%;
-    --led-orange: 35 84% 65%;
+    --led-orange: 45 100% 50%;
 
     /* Glass gradients and effects */
     --gradient-glass: linear-gradient(135deg, 
@@ -88,22 +88,23 @@
   }
 
   .dark {
-    --background: 220 13% 5%;
-    --foreground: 220 10% 97%;
-    --card: 220 13% 7%;
-    --card-foreground: 220 10% 97%;
-    --popover: 220 13% 7%;
-    --popover-foreground: 220 10% 97%;
-    --primary: 263 85% 70%;
-    --primary-foreground: 220 10% 5%;
-    --secondary: 220 13% 10%;
-    --secondary-foreground: 220 10% 97%;
-    --muted: 220 13% 10%;
-    --muted-foreground: 220 10% 50%;
-    --accent: 322 84% 72%;
-    --accent-foreground: 220 10% 5%;
-    --border: 220 13% 15%;
-    --input: 220 13% 10%;
+    /* Dark mode also uses Black and Gold Theme */
+    --background: 0 0% 5%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 45 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 0%;
+    --secondary-foreground: 45 100% 50%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 45 100% 70%;
+    --accent: 45 100% 50%;
+    --accent-foreground: 0 0% 0%;
+    --border: 45 100% 50%;
+    --input: 0 0% 0%;
 
     /* Enhanced glass effects for dark mode */
     --gradient-glass: linear-gradient(135deg, 
