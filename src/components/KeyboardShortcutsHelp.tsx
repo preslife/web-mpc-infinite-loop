@@ -116,7 +116,7 @@ export const KeyboardShortcutsHelp = () => {
   const [open, setOpen] = useState(false);
   return <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="border-gray-600 text-xs hover:border-purple-400 neon-border bg-gray-400 hover:bg-gray-300 text-slate-950">
+        <Button variant="outline" size="sm" className="border-gray-600 text-xs hover:border-yellow-500 neon-border rounded-sm bg-black text-slate-50">
           <Keyboard className="w-3 h-3 mr-1" />
           SHORTCUTS
         </Button>
