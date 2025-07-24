@@ -1456,11 +1456,15 @@ const DrumMachine = () => {
         </div>
 
         {/* Main Display Area */}
-        <div className="glass-strong p-4 mb-2 rounded border border-gray-700 h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[15px] bg-zinc-200">
-          {/* Neon glass effect overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
+        <div className="neon-panel animate-glow p-4 mb-2 h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[15px]">
+          <div className="shine"></div>
+          <div className="shine shine-bottom"></div>
+          <div className="glow"></div>
+          <div className="glow glow-bottom"></div>
+          <div className="glow-bright"></div>
+          <div className="glow-bright glow-bottom"></div>
           
+          <div className="inner">
           {/* Toggle buttons */}
           <div className="flex gap-2 mb-4 relative z-10">
             <Button onClick={() => setDisplayMode('sequencer')} variant={displayMode === 'sequencer' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'sequencer' ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-lg shadow-cyan-500/25' : 'bg-gray-800 border-gray-600 text-gray-300'}`}>
@@ -2397,6 +2401,9 @@ const DrumMachine = () => {
       
       {/* Visual Feedback Overlay */}
       <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={parameters} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
