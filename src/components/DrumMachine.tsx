@@ -1495,7 +1495,7 @@ const DrumMachine = () => {
             {displayMode === 'sequencer' ? <div className="h-full">
                 <div className="flex justify-between items-center mb-4">
                   <div className="text-center flex-1">
-                    <h2 className="text-xl font-bold text-cyan-300 mb-2 text-shadow-glow">SEQUENCER</h2>
+                    <h2 className="text-xl font-bold text-accent mb-2 text-shadow-glow">SEQUENCER</h2>
                     <p className="text-foreground text-sm">{currentPatternName}</p>
                   </div>
                   
