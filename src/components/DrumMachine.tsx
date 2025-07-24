@@ -1441,7 +1441,7 @@ const DrumMachine = () => {
         {/* Top Control Bar */}
         <div className="p-2 mb-2 rounded border border-accent mx-[15px] bg-card">
           <div className="flex items-center justify-between bg-card">
-            <img src="/lovable-uploads/45687717-5e1c-4b40-9d77-7094cdc6caf0.png" alt="Xbeat STUDIO" className="h-20 w-auto" />
+            <img src="/lovable-uploads/d2f14b11-0401-4afa-8857-e05b6b1e1002.png" alt="Xbeat STUDIO" className="h-20 w-auto" />
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => navigate('/library')} className="border-accent text-xs bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground">
                 <Music className="w-3 h-3 mr-1" />
