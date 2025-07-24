@@ -87,16 +87,17 @@ export const DrumMachine: React.FC = () => {
     removeDcOffset: true,
     highpassFilter: 0,
     lowpassFilter: 22000,
-    gain: 1
+    gain: 1,
+    gateMode: false
   })));
   const [patterns, setPatterns] = useState<PatternStep[][]>(
     Array(16).fill(null).map(() => Array(16).fill(null).map(() => ({ active: false, velocity: 100 })))
   );
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [bpm, setBpm] = useState<number[]>([120]);
-  const [masterVolume, setMasterVolume] = useState<number[]>([80]);
-  const [swing, setSwing] = useState<number[]>([0]);
+  const [bpm, setBpm] = useState<number>(120);
+  const [masterVolume, setMasterVolume] = useState<number>(80);
+  const [swing, setSwing] = useState<number>(0);
   const [sequencerLength, setSequencerLength] = useState(16);
   const [selectedPad, setSelectedPad] = useState<number | null>(null);
   const [pendingSample, setPendingSample] = useState<{ sample: Sample; padIndex: number } | null>(null);
@@ -181,6 +182,15 @@ export const DrumMachine: React.FC = () => {
     };
   }, []);
 
+  const playPad = useCallback((index: number) => {
+    if (!audioContextRef.current || !samples[index]?.buffer) return;
+
+    const source = audioContextRef.current.createBufferSource();
+    source.buffer = samples[index].buffer;
+    source.connect(audioContextRef.current.destination);
+    source.start();
+  }, [samples]);
+
   const handleMIDIMessage = useCallback((message: any) => {
     const [status, note, velocity] = message.data;
 
@@ -208,14 +218,6 @@ export const DrumMachine: React.FC = () => {
     setPatterns(newPatterns);
   };
 
-  const playPad = useCallback((index: number) => {
-    if (!audioContextRef.current || !samples[index]?.buffer) return;
-
-    const source = audioContextRef.current.createBufferSource();
-    source.buffer = samples[index].buffer;
-    source.connect(audioContextRef.current.destination);
-    source.start();
-  }, [samples]);
 
   const handlePadRelease = (index: number) => {
     // Handle pad release logic here
@@ -259,7 +261,7 @@ export const DrumMachine: React.FC = () => {
 
           return nextStep;
         });
-      }, 60000 / bpm[0] / 4);
+      }, 60000 / bpm / 4);
     };
 
     scheduleStep();
@@ -474,12 +476,12 @@ export const DrumMachine: React.FC = () => {
                   <div className="h-full overflow-auto">
                     <PatternManager 
                       currentPattern={patterns} 
-                      currentBpm={bpm[0]} 
-                      currentSwing={swing[0]} 
+        currentBpm={bpm} 
+        currentSwing={swing}
                       onLoadPattern={(pattern) => {
                         setPatterns(pattern.steps);
-                        setBpm([pattern.bpm]);
-                        setSwing([pattern.swing]);
+        setBpm(pattern.bpm);
+        setSwing(pattern.swing);
                         setCurrentPatternName(pattern.name);
                         toast.success(`Loaded pattern "${pattern.name}"`);
                       }}
@@ -489,8 +491,8 @@ export const DrumMachine: React.FC = () => {
                           name,
                           description,
                           steps: patterns,
-                          bpm: bpm[0],
-                          swing: swing[0],
+          bpm: bpm,
+          swing: swing,
                           genre,
                           createdAt: new Date().toISOString(),
                           length: sequencerLength
@@ -504,13 +506,13 @@ export const DrumMachine: React.FC = () => {
                     <AudioExporter 
                       patterns={patterns} 
                       samples={samples} 
-                      bpm={bpm[0]} 
+      bpm={bpm}
                       sequencerLength={sequencerLength} 
                       trackVolumes={trackVolumes} 
                       trackMutes={trackMutes} 
                       trackSolos={trackSolos} 
                       masterVolume={masterVolume} 
-                      swing={swing[0]} 
+                      swing={swing} 
                     />
                   </div>
                 ) : displayMode === 'neural' ? (
@@ -518,7 +520,7 @@ export const DrumMachine: React.FC = () => {
                     <NeuralDrumGenerator 
                       patterns={patterns} 
                       onPatternGenerated={setPatterns} 
-                      bpm={bpm[0]} 
+      bpm={bpm}
                       sequencerLength={sequencerLength} 
                     />
                   </div>
@@ -568,10 +570,10 @@ export const DrumMachine: React.FC = () => {
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm text-gray-300 mb-2 block">BPM: {bpm[0]}</label>
-                    <Slider
-                      value={bpm}
-                      onValueChange={setBpm}
+    <label className="text-sm text-gray-300 mb-2 block">BPM: {bpm}</label>
+    <Slider
+      value={[bpm]}
+      onValueChange={(value) => setBpm(value[0])}
                       min={60}
                       max={200}
                       step={1}
@@ -580,10 +582,10 @@ export const DrumMachine: React.FC = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm text-gray-300 mb-2 block">Master Volume: {masterVolume[0]}%</label>
-                    <Slider
-                      value={masterVolume}
-                      onValueChange={setMasterVolume}
+    <label className="text-sm text-gray-300 mb-2 block">Master Volume: {masterVolume}%</label>
+    <Slider
+      value={[masterVolume]}
+      onValueChange={(value) => setMasterVolume(value[0])}
                       min={0}
                       max={100}
                       step={1}
@@ -592,10 +594,10 @@ export const DrumMachine: React.FC = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm text-gray-300 mb-2 block">Swing: {swing[0]}%</label>
-                    <Slider
-                      value={swing}
-                      onValueChange={setSwing}
+    <label className="text-sm text-gray-300 mb-2 block">Swing: {swing}%</label>
+    <Slider
+      value={[swing]}
+      onValueChange={(value) => setSwing(value[0])}
                       min={0}
                       max={100}
                       step={1}
@@ -612,7 +614,7 @@ export const DrumMachine: React.FC = () => {
         <VisualFeedback 
           isPlaying={isPlaying} 
           currentStep={currentStep} 
-          bpm={bpm[0]} 
+          bpm={bpm} 
           sequencerLength={sequencerLength} 
           patterns={patterns} 
         />
