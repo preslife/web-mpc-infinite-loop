@@ -1439,16 +1439,16 @@ const DrumMachine = () => {
   return <div className="min-h-screen p-2 font-mono bg-background">
       <div className="max-w-7xl mx-auto bg-background">
         {/* Top Control Bar */}
-        <div className="p-2 mb-2 rounded border border-gray-700 mx-[15px] bg-zinc-100">
-          <div className="flex items-center justify-between bg-gray-300">
-            <img src="/lovable-uploads/8172f0a9-66b9-4449-b322-0291dc32073c.png" alt="XBEAT Studio" className="h-20 w-auto" />
+        <div className="p-2 mb-2 rounded border border-accent mx-[15px] bg-card">
+          <div className="flex items-center justify-between bg-card">
+            <img src="/lovable-uploads/45687717-5e1c-4b40-9d77-7094cdc6caf0.png" alt="Xbeat STUDIO" className="h-20 w-auto" />
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => navigate('/library')} className="border-gray-600 text-xs hover:border-purple-400 neon-border bg-gray-400 hover:bg-gray-300 text-slate-950">
+              <Button variant="outline" size="sm" onClick={() => navigate('/library')} className="border-accent text-xs bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground">
                 <Music className="w-3 h-3 mr-1" />
                 LIBRARY
               </Button>
               <KeyboardShortcutsHelp />
-              <Button variant="outline" size="sm" onClick={() => setDisplayMode('sequencer')} className="border-gray-600 text-xs neon-border bg-gray-400 hover:bg-gray-300 text-slate-950">
+              <Button variant="outline" size="sm" onClick={() => setDisplayMode('sequencer')} className="border-accent text-xs bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground">
                 SEQUENCER
               </Button>
             </div>
