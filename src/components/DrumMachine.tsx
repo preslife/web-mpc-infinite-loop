@@ -1436,8 +1436,8 @@ const DrumMachine = () => {
       }
     }
   });
-  return <div className="min-h-screen p-2 font-mono bg-zinc-200">
-      <div className="max-w-7xl mx-auto bg-zinc-200">
+  return <div className="min-h-screen p-2 font-mono bg-background">
+      <div className="max-w-7xl mx-auto bg-background">
         {/* Top Control Bar */}
         <div className="p-2 mb-2 rounded border border-gray-700 mx-[15px] bg-zinc-100">
           <div className="flex items-center justify-between bg-gray-300">
@@ -1456,14 +1456,14 @@ const DrumMachine = () => {
         </div>
 
         {/* Main Display Area */}
-        <div className="p-4 mb-2 rounded border border-gray-700 h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[15px] bg-zinc-200">
+        <div className="p-4 mb-2 rounded border border-border h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[15px] bg-card">
           {/* Neon glass effect overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
           
           {/* Toggle buttons */}
           <div className="flex gap-2 mb-4 relative z-10">
-            <Button onClick={() => setDisplayMode('sequencer')} variant={displayMode === 'sequencer' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'sequencer' ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-lg shadow-cyan-500/25' : 'bg-gray-800 border-gray-600 text-gray-300'}`}>
+            <Button onClick={() => setDisplayMode('sequencer')} variant={displayMode === 'sequencer' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'sequencer' ? 'bg-accent text-accent-foreground border-accent shadow-lg' : 'bg-card border-border text-foreground'}`}>
               SEQUENCER
             </Button>
             <Button onClick={() => {
@@ -1472,19 +1472,19 @@ const DrumMachine = () => {
             if (selectedTrack !== null) {
               setEditingSample(selectedTrack);
             }
-          }} variant={displayMode === 'editor' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'editor' ? 'bg-pink-500/20 border-pink-400 text-pink-300 shadow-lg shadow-pink-500/25' : 'bg-gray-800 border-gray-600 text-gray-300'}`}>
+          }} variant={displayMode === 'editor' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'editor' ? 'bg-accent text-accent-foreground border-accent shadow-lg' : 'bg-card border-border text-foreground'}`}>
               EDITOR
             </Button>
-            <Button onClick={() => setDisplayMode('patterns')} variant={displayMode === 'patterns' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'patterns' ? 'bg-purple-500/20 border-purple-400 text-purple-300 shadow-lg shadow-purple-500/25' : 'bg-gray-800 border-gray-600 text-gray-300'}`}>
+            <Button onClick={() => setDisplayMode('patterns')} variant={displayMode === 'patterns' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'patterns' ? 'bg-accent text-accent-foreground border-accent shadow-lg' : 'bg-card border-border text-foreground'}`}>
               PATTERNS
             </Button>
-            <Button onClick={() => setDisplayMode('export')} variant={displayMode === 'export' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'export' ? 'bg-orange-500/20 border-orange-400 text-orange-300 shadow-lg shadow-orange-500/25' : 'bg-gray-800 border-gray-600 text-gray-300'}`}>
+            <Button onClick={() => setDisplayMode('export')} variant={displayMode === 'export' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'export' ? 'bg-accent text-accent-foreground border-accent shadow-lg' : 'bg-card border-border text-foreground'}`}>
               EXPORT
             </Button>
-            <Button onClick={() => setDisplayMode('song')} variant={displayMode === 'song' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'song' ? 'bg-yellow-500/20 border-yellow-400 text-yellow-300 shadow-lg shadow-yellow-500/25' : 'bg-gray-800 border-gray-600 text-gray-300'}`}>
+            <Button onClick={() => setDisplayMode('song')} variant={displayMode === 'song' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'song' ? 'bg-accent text-accent-foreground border-accent shadow-lg' : 'bg-card border-border text-foreground'}`}>
               SONG
             </Button>
-            <Button onClick={() => setDisplayMode('neural')} variant={displayMode === 'neural' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'neural' ? 'bg-purple-500/20 border-purple-400 text-purple-300 shadow-lg shadow-purple-500/25' : 'bg-gray-800 border-gray-600 text-gray-300'}`}>
+            <Button onClick={() => setDisplayMode('neural')} variant={displayMode === 'neural' ? 'default' : 'outline'} size="sm" className={`text-xs transition-all duration-300 ${displayMode === 'neural' ? 'bg-accent text-accent-foreground border-accent shadow-lg' : 'bg-card border-border text-foreground'}`}>
               <Sparkles className="w-3 h-3 mr-1" />
               AI
             </Button>
@@ -1496,7 +1496,7 @@ const DrumMachine = () => {
                 <div className="flex justify-between items-center mb-4">
                   <div className="text-center flex-1">
                     <h2 className="text-xl font-bold text-cyan-300 mb-2 text-shadow-glow">SEQUENCER</h2>
-                    <p className="text-gray-300 text-sm">{currentPatternName}</p>
+                    <p className="text-foreground text-sm">{currentPatternName}</p>
                   </div>
                   
                   <div className="flex items-center gap-2">
@@ -1698,7 +1698,7 @@ const DrumMachine = () => {
 
 
         {/* Transport Controls */}
-        <div className="backdrop-blur-md p-4 mb-2 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden mx-[13px] px-[25px] bg-zinc-200">
+        <div className="backdrop-blur-md p-4 mb-2 rounded-lg border border-accent shadow-lg relative overflow-hidden mx-[13px] px-[25px] bg-card">
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
           <div className="relative z-10">
             <div className="flex items-center justify-center gap-6">
