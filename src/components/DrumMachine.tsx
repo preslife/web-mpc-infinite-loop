@@ -1436,7 +1436,8 @@ const DrumMachine = () => {
       }
     }
   });
-  return <div className="min-h-screen p-2 font-mono bg-zinc-200">
+  return (
+    <div className="min-h-screen p-2 font-mono bg-zinc-200">
       <div className="max-w-7xl mx-auto bg-zinc-200">
         {/* Top Control Bar */}
         <div className="neon-panel animate-glow p-2 mb-2 rounded border border-gray-700 mx-[15px]">
@@ -1514,13 +1515,13 @@ const DrumMachine = () => {
                     </div>
                     
                     {/* MIDI Control Button */}
-                    <Button variant="outline" size="sm" onClick={() => setShowMidiPanel(true)} className="bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30 transition-all duration-200">
+                    <Button variant="outline" size="sm" onClick={() => setShowMidiPanel(true)} className="glass-strong bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30 transition-all duration-200">
                       <span className="text-xs font-medium">MIDI MAP</span>
                     </Button>
                     <div className={`w-2 h-2 rounded-full ${midiEnabled ? 'bg-green-400' : 'bg-red-400'}`}></div>
                     
                     {/* Neural Generate Button */}
-                    <Button onClick={generateSequence} disabled={isGenerating} title={neuralEnabled ? `Generate AI patterns for ${getOperationDescription()}` : 'Neural engine not available'} className="h-8 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 my-0 px-[20px] py-0">
+                    <Button onClick={generateSequence} disabled={isGenerating} title={neuralEnabled ? `Generate AI patterns for ${getOperationDescription()}` : 'Neural engine not available'} className="glass-strong h-8 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 my-0 px-[20px] py-0">
                       {isGenerating ? <RefreshCw className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
                       {isGenerating ? 'Generating...' : 'Generate'}
                     </Button>
@@ -1548,7 +1549,7 @@ const DrumMachine = () => {
                         {/* Track label on the left - clickable with context menu */}
                         <ContextMenu>
                           <ContextMenuTrigger asChild>
-                            <button onClick={() => handleTrackLabelClick(padIndex)} className={`w-14 flex-shrink-0 text-xs truncate transition-all duration-200 rounded px-1 py-0.5 ${selectedTrack === padIndex ? 'bg-cyan-600/30 border border-cyan-400/50 text-cyan-300 shadow-md shadow-cyan-500/30' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-300'}`} title={`${selectedTrack === padIndex ? 'Double-click to unselect' : 'Click to select'} track ${padIndex + 1}. Right-click for fill options.`}>
+                            <button onClick={() => handleTrackLabelClick(padIndex)} className={`glass w-14 flex-shrink-0 text-xs truncate transition-all duration-200 rounded px-1 py-0.5 ${selectedTrack === padIndex ? 'bg-cyan-600/30 border border-cyan-400/50 text-cyan-300 shadow-md shadow-cyan-500/30' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-300'}`} title={`${selectedTrack === padIndex ? 'Double-click to unselect' : 'Click to select'} track ${padIndex + 1}. Right-click for fill options.`}>
                               {samples[padIndex]?.name || `T${padIndex + 1}`}
                             </button>
                           </ContextMenuTrigger>
@@ -1592,14 +1593,14 @@ const DrumMachine = () => {
                       const newMutes = [...trackMutes];
                       newMutes[padIndex] = !newMutes[padIndex];
                       setTrackMutes(newMutes);
-                    }} className={`w-6 h-6 rounded text-xs font-bold transition-all duration-200 ${trackMutes[padIndex] ? 'bg-red-600 border border-red-500 text-white shadow-md shadow-red-500/50' : 'bg-gray-700/50 border border-gray-600 text-gray-400 hover:bg-gray-600/70'}`} title={`Mute track ${padIndex + 1}`}>
+                    }} className={`glass w-6 h-6 rounded text-xs font-bold transition-all duration-200 ${trackMutes[padIndex] ? 'bg-red-600 border border-red-500 text-white shadow-md shadow-red-500/50' : 'bg-gray-700/50 border border-gray-600 text-gray-400 hover:bg-gray-600/70'}`} title={`Mute track ${padIndex + 1}`}>
                             M
                           </button>
                           <button onClick={() => {
                       const newSolos = [...trackSolos];
                       newSolos[padIndex] = !newSolos[padIndex];
                       setTrackSolos(newSolos);
-                    }} className={`w-6 h-6 rounded text-xs font-bold transition-all duration-200 ${trackSolos[padIndex] ? 'bg-yellow-600 border border-yellow-500 text-white shadow-md shadow-yellow-500/50' : 'bg-gray-700/50 border border-gray-600 text-gray-400 hover:bg-gray-600/70'}`} title={`Solo track ${padIndex + 1}`}>
+                    }} className={`glass w-6 h-6 rounded text-xs font-bold transition-all duration-200 ${trackSolos[padIndex] ? 'bg-yellow-600 border border-yellow-500 text-white shadow-md shadow-yellow-500/50' : 'bg-gray-700/50 border border-gray-600 text-gray-400 hover:bg-gray-600/70'}`} title={`Solo track ${padIndex + 1}`}>
                             S
                           </button>
                         </div>
@@ -1608,7 +1609,7 @@ const DrumMachine = () => {
                         {Array.from({
                     length: sequencerLength
                   }, (_, stepIndex) => <button key={stepIndex} onClick={() => toggleStep(padIndex, stepIndex)} className={`
-                              w-6 h-5 rounded flex-shrink-0 transition-all duration-200
+                              glass w-6 h-5 rounded flex-shrink-0 transition-all duration-200
                               ${patterns[padIndex][stepIndex]?.active ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-md shadow-cyan-500/50' : 'bg-gray-600/50 hover:bg-gray-500/70 backdrop-blur-sm'}
                               ${currentStep === stepIndex && patterns[padIndex][stepIndex]?.active ? 'ring-2 ring-red-400 ring-opacity-75' : ''}
                             `} title={`Track ${padIndex + 1} (${samples[padIndex]?.name || 'Empty'}), Step ${stepIndex + 1}`} />)}
@@ -1699,19 +1700,26 @@ const DrumMachine = () => {
                       </div>}
                   </>}
               </div>}
+            </div>
           </div>
         </div>
 
 
         {/* Transport Controls */}
-        <div className="glass-strong p-4 mb-2 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden mx-[13px] px-[25px]">
-          <div className="relative z-10">
+        <div className="neon-panel p-4 mb-2 relative overflow-hidden mx-[13px] px-[25px]">
+          <div className="shine"></div>
+          <div className="shine shine-bottom"></div>
+          <div className="glow"></div>
+          <div className="glow glow-bottom"></div>
+          <div className="glow-bright"></div>
+          <div className="glow-bright glow-bottom"></div>
+          <div className="inner">
             <div className="flex items-center justify-center gap-6">
               {/* Transport Buttons */}
               <div className="flex items-center gap-4">
                 {/* Play/Pause Button */}
                 <div className="text-center">
-                  <Button onClick={isPlaying ? handlePause : handlePlay} variant="outline" size="lg" className={`h-14 w-14 rounded-full ${isPlaying ? 'bg-orange-600/20 border-orange-500/50 text-orange-300' : 'bg-green-600/20 border-green-500/50 text-green-300'} hover:scale-110 transition-all duration-200 shadow-lg`} title={isPlaying ? 'Pause sequencer' : 'Start sequencer'}>
+                  <Button onClick={isPlaying ? handlePause : handlePlay} variant="outline" size="lg" className={`glass-strong h-14 w-14 rounded-full ${isPlaying ? 'bg-orange-600/20 border-orange-500/50 text-orange-300' : 'bg-green-600/20 border-green-500/50 text-green-300'} hover:scale-110 transition-all duration-200 shadow-lg`} title={isPlaying ? 'Pause sequencer' : 'Start sequencer'}>
                     {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
                   </Button>
                   <div className="text-xs text-gray-400 mt-1 font-medium">
@@ -1721,7 +1729,7 @@ const DrumMachine = () => {
                 
                 {/* Stop Button */}
                 <div className="text-center">
-                  <Button onClick={handleStop} variant="outline" size="lg" className="h-14 w-14 rounded-full bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30 hover:scale-110 transition-all duration-200 shadow-lg" title="Stop sequencer and reset to beginning">
+                  <Button onClick={handleStop} variant="outline" size="lg" className="glass-strong h-14 w-14 rounded-full bg-red-600/20 border-red-500/50 text-red-300 hover:bg-red-600/30 hover:scale-110 transition-all duration-200 shadow-lg" title="Stop sequencer and reset to beginning">
                     <Square className="h-7 w-7" />
                   </Button>
                   <div className="text-xs text-red-400 mt-1 font-medium">
@@ -1731,7 +1739,7 @@ const DrumMachine = () => {
                 
                 {/* Pattern Record Button */}
                 <div className="text-center">
-                  <Button onClick={() => setIsPatternRecording(!isPatternRecording)} variant="outline" size="lg" className={`h-14 w-14 rounded-full ${isPatternRecording ? 'bg-red-600/30 border-red-500 text-red-200 animate-pulse shadow-lg shadow-red-500/30' : 'bg-gray-600/20 border-gray-500/50 text-gray-300'} hover:scale-110 transition-all duration-200 shadow-lg`} title={isPatternRecording ? 'Stop pattern recording' : 'Start pattern recording (press pads while sequencer plays to record)'}>
+                  <Button onClick={() => setIsPatternRecording(!isPatternRecording)} variant="outline" size="lg" className={`glass-strong h-14 w-14 rounded-full ${isPatternRecording ? 'bg-red-600/30 border-red-500 text-red-200 animate-pulse shadow-lg shadow-red-500/30' : 'bg-gray-600/20 border-gray-500/50 text-gray-300'} hover:scale-110 transition-all duration-200 shadow-lg`} title={isPatternRecording ? 'Stop pattern recording' : 'Start pattern recording (press pads while sequencer plays to record)'}>
                     <Mic className="h-7 w-7" />
                   </Button>
                   <div className={`text-xs mt-1 font-medium ${isPatternRecording ? 'text-red-400 animate-pulse' : 'text-gray-400'}`}>
@@ -1750,7 +1758,7 @@ const DrumMachine = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-400 w-12">Steps</span>
                   <Select value={sequencerLength.toString()} onValueChange={value => setSequencerLength(parseInt(value))}>
-                    <SelectTrigger className="w-16 h-6 text-xs bg-gray-800/50 border-gray-600">
+                    <SelectTrigger className="glass w-16 h-6 text-xs bg-gray-800/50 border-gray-600">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -2402,6 +2410,9 @@ const DrumMachine = () => {
       
       {/* Visual Feedback Overlay */}
       <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
-    </div>;
+    </div>
+  );
 };
+
+export default DrumMachine;
 export default DrumMachine;
