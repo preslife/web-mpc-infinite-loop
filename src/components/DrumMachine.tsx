@@ -1803,14 +1803,26 @@ const DrumMachine = () => {
           {/* Left Control Panel */}
           <div className="space-y-2">
             {/* Volume & Main Controls */}
-            <div className="glass-strong p-3 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden flex justify-center">
-              <div className="relative z-10">
+            <div className="neon-panel p-3 rounded-lg relative overflow-hidden flex justify-center">
+              <div className="shine"></div>
+              <div className="shine shine-bottom"></div>
+              <div className="glow"></div>
+              <div className="glow glow-bottom"></div>
+              <div className="glow-bright"></div>
+              <div className="glow-bright glow-bottom"></div>
+              <div className="inner relative z-10">
                 <VolumeKnob value={masterVolume * 100} onChange={value => setMasterVolume(value / 100)} size="lg" label="MASTER VOLUME" />
               </div>
             </div>
 
-            <div className="glass-strong p-2 rounded-lg border border-blue-500/30 shadow-lg shadow-blue-500/20 relative overflow-hidden py-[9px] px-[10px]">
-              <div className="relative z-10">
+            <div className="neon-panel p-2 rounded-lg relative overflow-hidden py-[9px] px-[10px]">
+              <div className="shine"></div>
+              <div className="shine shine-bottom"></div>
+              <div className="glow"></div>
+              <div className="glow glow-bottom"></div>
+              <div className="glow-bright"></div>
+              <div className="glow-bright glow-bottom"></div>
+              <div className="inner relative z-10">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 px-[11px] mx-[2px] my-[19px] py-[8px]">
                     <span className="text-xs text-gray-400 w-12">Swing</span>
@@ -1822,9 +1834,14 @@ const DrumMachine = () => {
             </div>
 
             {/* Quantization Settings */}
-            <div className="bg-gray-900/80 backdrop-blur-md p-2 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden px-[10px] py-[3px]">
-              <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-red-500/10 rounded-lg pointer-events-none"></div>
-              <div className="relative z-10">
+            <div className="neon-panel p-2 rounded-lg relative overflow-hidden px-[10px] py-[3px]">
+              <div className="shine"></div>
+              <div className="shine shine-bottom"></div>
+              <div className="glow"></div>
+              <div className="glow glow-bottom"></div>
+              <div className="glow-bright"></div>
+              <div className="glow-bright glow-bottom"></div>
+              <div className="inner relative z-10">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-yellow-400 font-medium">QUANTIZE</span>
@@ -1850,14 +1867,20 @@ const DrumMachine = () => {
                         <Slider value={[quantizeStrength]} onValueChange={([value]) => setQuantizeStrength(value)} min={0} max={100} step={1} className="flex-1" />
                         <span className="text-xs text-gray-300 w-8">{quantizeStrength}%</span>
                       </div>
-                    </>}
+                  </>}
                 </div>
               </div>
             </div>
 
             {/* Pattern Controls */}
-            <div className="glass-strong p-2 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden px-[10px] py-[11px]">
-              <div className="relative z-10">
+            <div className="neon-panel p-2 rounded-lg relative overflow-hidden px-[10px] py-[11px]">
+              <div className="shine"></div>
+              <div className="shine shine-bottom"></div>
+              <div className="glow"></div>
+              <div className="glow glow-bottom"></div>
+              <div className="glow-bright"></div>
+              <div className="glow-bright glow-bottom"></div>
+              <div className="inner relative z-10">
                 <div className="space-y-2">
                   <Button onClick={savePattern} variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">
                     SAVE
@@ -1922,11 +1945,17 @@ const DrumMachine = () => {
         </div>
 
         {/* Bottom Row - Effects Panel */}
-        <div className="flex gap-4 bg-zinc-200">
+        <div className="flex gap-4">
           {/* Effects Panel */}
-          <div className="flex-1 glass-strong p-4 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden my-[9px] mx-[11px] bg-fuchsia-950">
-            <div className="relative z-10">
-              <div className="text-xs text-gray-400 mb-2 bg-zinc-200">AUDIO EFFECTS</div>
+          <div className="flex-1 neon-panel p-4 rounded-lg relative overflow-hidden my-[9px] mx-[11px]">
+            <div className="shine"></div>
+            <div className="shine shine-bottom"></div>
+            <div className="glow"></div>
+            <div className="glow glow-bottom"></div>
+            <div className="glow-bright"></div>
+            <div className="glow-bright glow-bottom"></div>
+            <div className="inner relative z-10">
+              <div className="text-xs text-gray-400 mb-2">AUDIO EFFECTS</div>
               
               {/* Track selector */}
               <div className="mb-3">
@@ -2269,10 +2298,15 @@ const DrumMachine = () => {
         <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileLoad} className="hidden" />
 
         {/* MIDI Status Panel */}
-        <div className="mt-4 p-3 rounded border border-gray-700 relative overflow-hidden mx-[15px] bg-zinc-200">
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded pointer-events-none"></div>
+        <div className="mt-4 neon-panel p-3 rounded relative overflow-hidden mx-[15px]">
+          <div className="shine"></div>
+          <div className="shine shine-bottom"></div>
+          <div className="glow"></div>
+          <div className="glow glow-bottom"></div>
+          <div className="glow-bright"></div>
+          <div className="glow-bright glow-bottom"></div>
           
-          <div className="relative z-10">
+          <div className="inner relative z-10">
             <div className="text-xs text-gray-400 mb-2">MIDI STATUS</div>
             <div className="space-y-2">
               <div className={`px-2 py-1 rounded text-xs ${midiEnabled ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'}`}>
