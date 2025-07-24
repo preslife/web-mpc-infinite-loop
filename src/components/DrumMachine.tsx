@@ -1456,7 +1456,7 @@ const DrumMachine = () => {
         </div>
 
         {/* Main Display Area */}
-        <div className="p-4 mb-2 rounded border border-gray-700 h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[15px] bg-zinc-200">
+        <div className="glass-strong p-4 mb-2 rounded border border-gray-700 h-[32rem] relative overflow-hidden px-[6px] my-[7px] mx-[15px] bg-zinc-200">
           {/* Neon glass effect overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded pointer-events-none"></div>
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded pointer-events-none"></div>
@@ -2396,7 +2396,9 @@ const DrumMachine = () => {
         </div>}
       
       {/* Visual Feedback Overlay */}
-      <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
-    </div>;
+      <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={parameters} />
+    </div>
+  );
 };
+
 export default DrumMachine;

@@ -27,6 +27,14 @@
     --ring: 263 85% 65%;
     --radius: 0.75rem;
 
+    /* Enhanced glassmorphism effects */
+    --glass-background: 0 0% 0%;
+    --glass-background-alpha: 0.4;
+    --glass-border: 255 255 255;
+    --glass-border-alpha: 0.2;
+    --glass-shadow: 0 0 0;
+    --glass-shadow-alpha: 0.3;
+
     /* Glass Effect Variables */
     --glass-hue1: 263;
     --glass-hue2: 322;
@@ -104,6 +112,14 @@
     --accent-foreground: 220 10% 5%;
     --border: 220 13% 15%;
     --input: 220 13% 10%;
+
+    /* Enhanced glassmorphism effects for dark mode */
+    --glass-background: 0 0% 0%;
+    --glass-background-alpha: 0.4;
+    --glass-border: 255 255 255;
+    --glass-border-alpha: 0.2;
+    --glass-shadow: 0 0 0;
+    --glass-shadow-alpha: 0.3;
 
     /* Enhanced glass effects for dark mode */
     --gradient-glass: linear-gradient(135deg, 
@@ -342,4 +358,234 @@
   box-shadow: 0px 0px 10px 0px #000000 inset, 0px 0px 100px -40px #335564 inset, 0px 0px 30px 0px #8edbff;
   text-shadow: 0px 0px 2px #2196f3, 0px 0px 2px #2196f3, 0px 0px 2px #23759b, 0px 0px 20px #144054, 0px 0px 25px #39c1ff;
   color: #c7eaff;
+}
+
+@layer utilities {
+  /* Enhanced Glass Effects with Browser Prefixes */
+  .glass {
+    background: hsla(var(--glass-background) / var(--glass-background-alpha));
+    /* Add webkit prefix for Safari support */
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid hsla(var(--glass-border) / var(--glass-border-alpha));
+    box-shadow: 0 8px 32px hsla(var(--glass-shadow) / var(--glass-shadow-alpha));
+  }
+  
+  .glass-strong {
+    background: hsla(var(--glass-background) / calc(var(--glass-background-alpha) * 1.2));
+    /* Add webkit prefix for Safari support */
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+    border: 1px solid hsla(var(--glass-border) / calc(var(--glass-border-alpha) * 1.2));
+    box-shadow: 0 12px 40px hsla(var(--glass-shadow) / calc(var(--glass-shadow-alpha) * 1.2));
+  }
+
+  /* Simplified Neon Glass Panel Effect for Better Browser Compatibility */
+  .neon-panel {
+    --hue1: 222;
+    --hue2: 255;
+    --border: 1px;
+    --border-color: hsl(var(--hue2), 12%, 20%);
+    --radius: 22px;
+    --ease: cubic-bezier(0.5, 1, 0.89, 1);
+    
+    position: relative;
+    border-radius: var(--radius);
+    border: var(--border) solid var(--border-color);
+    
+    /* Simplified background with fallback */
+    background: hsl(220, 25%, 5%);
+    background: linear-gradient(135deg, 
+      hsla(var(--hue1), 50%, 8%, 0.9) 0%,
+      hsla(var(--hue2), 50%, 6%, 0.8) 50%,
+      hsla(220, 25%, 4%, 0.7) 100%);
+    
+    /* Add webkit prefix for Safari */
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    
+    box-shadow: 
+      hsla(var(--hue2), 50%, 2%, 0.8) 0px 10px 16px -8px, 
+      hsla(var(--hue2), 50%, 4%, 0.6) 0px 20px 36px -14px;
+    
+    transition: all 0.3s ease;
+    overflow: hidden;
+    color: #737985;
+  }
+
+  /* Fallback for browsers that don't support backdrop-filter */
+  @supports not (backdrop-filter: blur(12px)) {
+    .neon-panel {
+      background: hsl(220, 25%, 3%);
+      background: linear-gradient(135deg, 
+        hsla(var(--hue1), 50%, 6%, 0.95) 0%,
+        hsla(var(--hue2), 50%, 4%, 0.9) 50%,
+        hsla(220, 25%, 2%, 0.85) 100%);
+    }
+  }
+
+  .neon-panel .shine,
+  .neon-panel .glow {
+    pointer-events: none;
+    position: absolute;
+    z-index: 1;
+  }
+
+  /* Simplified shine effect for better compatibility */
+  .neon-panel .shine {
+    --hue: var(--hue1);
+    border-top-right-radius: inherit;
+    border-bottom-left-radius: inherit;
+    border: 1px solid transparent;
+    width: 75%;
+    aspect-ratio: 1;
+    right: calc(var(--border) * -1);
+    top: calc(var(--border) * -1);
+    
+    /* Simplified gradient using standard syntax */
+    background: radial-gradient(ellipse at top right, 
+      hsla(var(--hue), 80%, 60%, 0.3) 0%,
+      hsla(var(--hue), 70%, 50%, 0.1) 30%,
+      transparent 70%);
+    
+    /* Fallback mask using standard properties */
+    -webkit-mask: linear-gradient(transparent), linear-gradient(black);
+    mask: linear-gradient(transparent), linear-gradient(black);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-clip: padding-box, border-box;
+    mask-clip: padding-box, border-box;
+    -webkit-mask-composite: subtract;
+    mask-composite: subtract;
+  }
+
+  .neon-panel .shine::before,
+  .neon-panel .shine::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    -webkit-mask: none;
+    mask: none;
+  }
+
+  .neon-panel .shine::after { 
+    z-index: 2;
+    background: radial-gradient(ellipse at top right, 
+      hsla(var(--hue), 80%, 85%, 0.2) 0%,
+      hsla(var(--hue), 70%, 70%, 0.05) 25%,
+      transparent 50%);
+  }
+
+  .neon-panel .shine-bottom {
+    --hue: var(--hue2);
+    top: auto;
+    bottom: calc(var(--border) * -1);
+    left: calc(var(--border) * -1);
+    right: auto;
+    background: radial-gradient(ellipse at bottom left, 
+      hsla(var(--hue), 80%, 60%, 0.3) 0%,
+      hsla(var(--hue), 70%, 50%, 0.1) 30%,
+      transparent 70%);
+  }
+
+  /* Simplified glow effect */
+  .neon-panel .glow {
+    --hue: var(--hue1);
+    border-top-right-radius: calc(var(--radius) * 2.5);
+    border-bottom-left-radius: calc(var(--radius) * 2.5);
+    border: calc(var(--radius) * 1.25) solid transparent;
+    inset: calc(var(--radius) * -2);
+    width: 75%;
+    aspect-ratio: 1;
+    left: auto;
+    bottom: auto;
+    opacity: 1;
+    filter: blur(12px) saturate(1.25) brightness(0.5);
+    mix-blend-mode: plus-lighter;
+    z-index: 3;
+  }
+
+  .neon-panel .glow::before, 
+  .neon-panel .glow::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: inherit;
+    border-radius: inherit;
+    
+    /* Simplified radial gradient for better compatibility */
+    background: radial-gradient(ellipse at center, 
+      hsla(var(--hue), 95%, 60%, 0.6) 0%,
+      hsla(var(--hue), 85%, 50%, 0.3) 40%,
+      transparent 70%);
+    
+    -webkit-mask: linear-gradient(transparent), linear-gradient(black);
+    mask: linear-gradient(transparent), linear-gradient(black);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-clip: padding-box, border-box;
+    mask-clip: padding-box, border-box;
+    -webkit-mask-composite: subtract;
+    mask-composite: subtract;
+    filter: saturate(2) brightness(1);
+  }
+
+  .neon-panel .glow::after {
+    border-width: calc(var(--radius) * 1.75);
+    border-radius: calc(var(--radius) * 2.75);
+    inset: calc(var(--radius) * -0.25);
+    z-index: 4;
+    opacity: 0.75;
+    background: radial-gradient(ellipse at center, 
+      hsla(var(--hue), 100%, 70%, 0.4) 0%,
+      hsla(var(--hue), 90%, 60%, 0.2) 35%,
+      transparent 65%);
+  }
+
+  .neon-panel .glow-bottom {
+    --hue: var(--hue2);
+    inset: calc(var(--radius) * -2);
+    top: auto;
+    right: auto;
+  }
+
+  .neon-panel .glow-bright {
+    border-width: 5px;
+    border-radius: calc(var(--radius) + 2px);
+    inset: -7px;
+    left: auto;
+    filter: blur(2px) brightness(0.66);
+    background: radial-gradient(ellipse at center, 
+      hsla(var(--hue), 100%, 80%, 0.5) 0%,
+      hsla(var(--hue), 90%, 70%, 0.2) 30%,
+      transparent 60%);
+  }
+
+  .neon-panel .glow-bright::after {
+    content: none;
+  }
+
+  .neon-panel .glow-bright.glow-bottom {
+    inset: -7px;
+    right: auto;
+    top: auto;
+  }
+
+  .neon-panel .inner {
+    position: relative;
+    z-index: 10;
+  }
+
+  @keyframes neon-glow {
+    0% { opacity: 0; }
+    3% { opacity: 1; }
+    10% { opacity: 0; }
+    12% { opacity: 0.7; }
+    16% { opacity: 0.3; animation-timing-function: var(--ease); }
+    100% { opacity: 1; animation-timing-function: var(--ease); }
+  }
+
+  .neon-panel.animate-glow {
+    animation: neon-glow 1.5s var(--ease) both;
+  }
 }
