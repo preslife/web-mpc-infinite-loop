@@ -1439,8 +1439,14 @@ const DrumMachine = () => {
   return <div className="min-h-screen p-2 font-mono bg-zinc-200">
       <div className="max-w-7xl mx-auto bg-zinc-200">
         {/* Top Control Bar */}
-        <div className="p-2 mb-2 rounded border border-gray-700 mx-[15px] bg-zinc-100">
-          <div className="flex items-center justify-between bg-gray-300">
+        <div className="neon-panel animate-glow p-2 mb-2 rounded border border-gray-700 mx-[15px]">
+          <div className="shine"></div>
+          <div className="shine shine-bottom"></div>
+          <div className="glow"></div>
+          <div className="glow glow-bottom"></div>
+          <div className="glow-bright"></div>
+          <div className="glow-bright glow-bottom"></div>
+          <div className="inner flex items-center justify-between">
             <img src="/lovable-uploads/8172f0a9-66b9-4449-b322-0291dc32073c.png" alt="XBEAT Studio" className="h-20 w-auto" />
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => navigate('/library')} className="border-gray-600 text-xs hover:border-purple-400 neon-border bg-gray-400 hover:bg-gray-300 text-slate-950">
@@ -1698,8 +1704,7 @@ const DrumMachine = () => {
 
 
         {/* Transport Controls */}
-        <div className="backdrop-blur-md p-4 mb-2 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden mx-[13px] px-[25px] bg-zinc-200">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
+        <div className="glass-strong p-4 mb-2 rounded-lg border border-green-500/30 shadow-lg shadow-green-500/20 relative overflow-hidden mx-[13px] px-[25px]">
           <div className="relative z-10">
             <div className="flex items-center justify-center gap-6">
               {/* Transport Buttons */}
@@ -1797,15 +1802,13 @@ const DrumMachine = () => {
           {/* Left Control Panel */}
           <div className="space-y-2">
             {/* Volume & Main Controls */}
-            <div className="backdrop-blur-md p-3 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden flex justify-center bg-zinc-200">
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
+            <div className="glass-strong p-3 rounded-lg border border-cyan-500/30 shadow-lg shadow-cyan-500/20 relative overflow-hidden flex justify-center">
               <div className="relative z-10">
                 <VolumeKnob value={masterVolume * 100} onChange={value => setMasterVolume(value / 100)} size="lg" label="MASTER VOLUME" />
               </div>
             </div>
 
-            <div className="backdrop-blur-md p-2 rounded-lg border border-blue-500/30 shadow-lg shadow-blue-500/20 relative overflow-hidden py-[9px] px-[10px] bg-zinc-200">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-cyan-500/5 to-purple-500/10 rounded-lg pointer-events-none"></div>
+            <div className="glass-strong p-2 rounded-lg border border-blue-500/30 shadow-lg shadow-blue-500/20 relative overflow-hidden py-[9px] px-[10px]">
               <div className="relative z-10">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 px-[11px] mx-[2px] my-[19px] py-[8px]">
@@ -1852,8 +1855,7 @@ const DrumMachine = () => {
             </div>
 
             {/* Pattern Controls */}
-            <div className="backdrop-blur-md p-2 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden px-[10px] py-[11px] bg-zinc-200">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
+            <div className="glass-strong p-2 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden px-[10px] py-[11px]">
               <div className="relative z-10">
               <div className="space-y-2">
                 <Button onClick={savePattern} variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">
@@ -1873,11 +1875,15 @@ const DrumMachine = () => {
           </div>
 
           {/* Right Drum Pads */}
-          <div className="backdrop-blur-md p-4 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden bg-zinc-200">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
+          <div className="neon-panel animate-glow p-4 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden">
+            <div className="shine"></div>
+            <div className="shine shine-bottom"></div>
+            <div className="glow"></div>
+            <div className="glow glow-bottom"></div>
+            <div className="glow-bright"></div>
+            <div className="glow-bright glow-bottom"></div>
             
-            <div className="grid grid-cols-4 gap-2 relative z-10">
+            <div className="inner grid grid-cols-4 gap-2 relative z-10">
               {Array.from({
               length: 16
             }, (_, i) => <ContextMenu key={i}>
@@ -1918,8 +1924,7 @@ const DrumMachine = () => {
         {/* Bottom Row - Effects Panel */}
         <div className="flex gap-4 bg-zinc-200">
           {/* Effects Panel */}
-          <div className="flex-1 backdrop-blur-md p-4 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden my-[9px] mx-[11px] bg-zinc-200">
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-red-500/10 rounded-lg pointer-events-none"></div>
+          <div className="flex-1 glass-strong p-4 rounded-lg border border-yellow-500/30 shadow-lg shadow-yellow-500/20 relative overflow-hidden my-[9px] mx-[11px]">
             <div className="relative z-10">
               <div className="text-xs text-gray-400 mb-2 bg-zinc-200">AUDIO EFFECTS</div>
               
