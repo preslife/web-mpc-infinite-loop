@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import * as mm from '@magenta/music';
 import useKeyboardShortcuts from '@/hooks/useKeyboardShortcuts';
 import { SampleGenerator, defaultSampleConfigs } from '@/utils/sampleGenerator';
+
 interface Sample {
   buffer: AudioBuffer | null;
   name: string;
@@ -29,10 +30,12 @@ interface Sample {
   reverse: boolean;
   volume: number; // 0 to 1
 }
+
 interface PatternStep {
   active: boolean;
   velocity: number; // 0 to 127 (MIDI standard)
 }
+
 interface Pattern {
   name: string;
   steps: PatternStep[][];
@@ -40,11 +43,13 @@ interface Pattern {
   swing: number;
   length: number; // pattern length in steps
 }
+
 interface Song {
   name: string;
   patterns: string[]; // array of pattern names
   currentPatternIndex: number;
 }
+
 const DrumMachine = () => {
   const navigate = useNavigate();
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -680,14 +685,11 @@ const DrumMachine = () => {
     }
   }, []);
 
-  // Load saved patterns from localStorage on component mount
-
   // Save patterns to localStorage whenever savedPatterns changes
   useEffect(() => {
     localStorage.setItem('savedPatterns', JSON.stringify(savedPatterns));
   }, [savedPatterns]);
 
-  // Function to generate a drum sequence using Magenta's MusicRNN
   // Helper function to count loaded samples
   const getLoadedSamplesCount = () => samples.filter(sample => sample?.buffer).length;
 
@@ -727,6 +729,7 @@ const DrumMachine = () => {
       return `track ${targetTrack + 1}`;
     }
   };
+
   const generateSequence = async () => {
     if (!neuralEnabled) {
       toast.error('Neural drum engine not initialized.');
@@ -801,6 +804,7 @@ const DrumMachine = () => {
       setIsGenerating(false);
     }
   };
+
   const clearPattern = () => {
     const newPatterns = patterns.map(pattern => pattern.map(step => ({
       ...step,
@@ -809,6 +813,7 @@ const DrumMachine = () => {
     setPatterns(newPatterns);
     toast.info('Cleared current pattern');
   };
+
   const randomizePattern = () => {
     // Check target tracks based on mode
     let targetTracks: number[] = [];
@@ -845,6 +850,7 @@ const DrumMachine = () => {
     const targetDescription = patternTarget === 'all' ? `${targetTracks.length} loaded tracks` : `pad ${selectedPad! + 1}`;
     toast.info(`Randomized patterns for ${targetDescription}!`);
   };
+
   const fillPattern = (trackIndex: number, fillType: string) => {
     if (!samples[trackIndex]?.buffer) {
       toast.error(`Track ${trackIndex + 1} has no sample loaded.`);
@@ -904,6 +910,7 @@ const DrumMachine = () => {
     setPatterns(newPatterns);
     toast.success(`Filled track ${trackIndex + 1} with ${fillType} pattern`);
   };
+
   const savePattern = () => {
     const newPattern = {
       name: currentPatternName,
@@ -915,6 +922,7 @@ const DrumMachine = () => {
     setSavedPatterns([...savedPatterns, newPattern]);
     toast.success(`Saved pattern as "${currentPatternName}"`);
   };
+
   const loadPattern = (pattern: Pattern) => {
     setPatterns(pattern.steps);
     setBpm([pattern.bpm]);
@@ -922,6 +930,7 @@ const DrumMachine = () => {
     setCurrentPatternName(pattern.name);
     toast.success(`Loaded pattern "${pattern.name}"`);
   };
+
   const deletePattern = (patternToDelete: Pattern) => {
     setSavedPatterns(savedPatterns.filter(pattern => pattern !== patternToDelete));
     toast.success(`Deleted pattern "${patternToDelete.name}"`);
@@ -969,6 +978,7 @@ const DrumMachine = () => {
       }
     };
   }, [isPlaying, bpm, patterns, samples, sequencerLength, swing, trackMutes, trackSolos]);
+
   const playPad = useCallback((padIndex: number, velocity: number = 80, forceGateMode?: boolean) => {
     if (!audioContextRef.current || !samples[padIndex]?.buffer) return;
 
@@ -1077,6 +1087,7 @@ const DrumMachine = () => {
       }
     });
   }, [masterVolume, trackVolumes, playingGainNodes]);
+
   const startRecording = async (padIndex: number) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -1118,6 +1129,7 @@ const DrumMachine = () => {
       toast.error('Microphone access denied');
     }
   };
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
@@ -1125,6 +1137,7 @@ const DrumMachine = () => {
       setSelectedPad(null);
     }
   };
+
   const loadSample = async (file: File, padIndex: number) => {
     try {
       const arrayBuffer = await file.arrayBuffer();
@@ -1153,6 +1166,7 @@ const DrumMachine = () => {
       toast.error('Failed to load sample');
     }
   };
+
   const handlePadPress = (padIndex: number) => {
     // Handle audio recording mode (for sample recording)
     if (isRecording && selectedPad === padIndex) {
@@ -1206,6 +1220,7 @@ const DrumMachine = () => {
       fileInputRef.current?.click();
     }
   };
+
   const handlePadRelease = (padIndex: number) => {
     if (samples[padIndex]?.gateMode) {
       const currentSource = playingSources.get(padIndex);
@@ -1219,6 +1234,7 @@ const DrumMachine = () => {
       }
     }
   };
+
   const handleFileLoad = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && selectedPad !== null) {
@@ -1230,6 +1246,7 @@ const DrumMachine = () => {
       fileInputRef.current.value = '';
     }
   };
+
   const toggleStep = (padIndex: number, stepIndex: number) => {
     const newPatterns = [...patterns];
     newPatterns[padIndex] = [...newPatterns[padIndex]];
@@ -1327,16 +1344,19 @@ const DrumMachine = () => {
       });
     }
   }, [handleMIDIMessage, midiDevices, midiLearning]);
+
   const handlePlay = () => {
     if (audioContextRef.current?.state === 'suspended') {
       audioContextRef.current.resume();
     }
     setIsPlaying(true);
   };
+
   const handlePause = () => {
     setIsPlaying(false);
     // Keep current step position when pausing
   };
+
   const handleStop = () => {
     setIsPlaying(false);
     setCurrentStep(-1);
@@ -1357,6 +1377,7 @@ const DrumMachine = () => {
     });
     setPlayingSources(new Map());
   };
+
   const handleTrackLabelClick = (trackIndex: number) => {
     const currentTime = Date.now();
     const lastClickTime = lastTrackClickTime[trackIndex] || 0;
@@ -1383,6 +1404,7 @@ const DrumMachine = () => {
     const colors = ['bg-yellow-600', 'bg-blue-500', 'bg-cyan-500', 'bg-pink-500', 'bg-purple-600', 'bg-blue-400', 'bg-green-500', 'bg-pink-400', 'bg-yellow-500', 'bg-orange-500', 'bg-cyan-400', 'bg-blue-600', 'bg-red-500', 'bg-yellow-400', 'bg-blue-300', 'bg-red-400'];
     return colors[index] || 'bg-gray-600';
   };
+
   const updateSample = (updatedSample: Sample) => {
     if (pendingSample) {
       // Update pending sample
@@ -1399,12 +1421,14 @@ const DrumMachine = () => {
       }
     }
   };
+
   const confirmPendingSample = () => {
     if (pendingSample) {
       handleSampleConfirm(pendingSample.sample, pendingSample.padIndex);
       toast.success(`Sample confirmed and loaded to pad ${pendingSample.padIndex + 1}!`);
     }
   };
+
   const cancelPendingSample = () => {
     if (pendingSample) {
       handleSampleReject();
@@ -1436,6 +1460,7 @@ const DrumMachine = () => {
       }
     }
   });
+
   return (
     <div className="min-h-screen p-2 font-mono bg-zinc-200">
       <div className="max-w-7xl mx-auto bg-zinc-200">
@@ -1499,7 +1524,8 @@ const DrumMachine = () => {
 
           {/* Display Content */}
           <div className="bg-black/30 backdrop-blur-sm h-full rounded border border-gray-600/50 p-4 relative z-10 shadow-inner">
-            {displayMode === 'sequencer' ? <div className="h-full">
+            {displayMode === 'sequencer' ? (
+              <div className="h-full">
                 <div className="flex justify-between items-center mb-4">
                   <div className="text-center flex-1">
                     <h2 className="text-xl font-bold text-cyan-300 mb-2 text-shadow-glow">SEQUENCER</h2>
@@ -1528,24 +1554,23 @@ const DrumMachine = () => {
                   </div>
                 </div>
                 
-                <div className="h-80 overflow-y-auto">  {/* Added scroll for all tracks */}
+                <div className="h-80 overflow-y-auto">
                   {/* Step numbers row */}
-                  <div className="flex gap-1 mb-2 ml-[134px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 6 (volume) + 6 (pan) + 12 (mute/solo) + 4 (gaps) = 134px */}
-                    {Array.from({
-                  length: sequencerLength
-                }, (_, stepIndex) => <div key={stepIndex} className={`
+                  <div className="flex gap-1 mb-2 ml-[134px] overflow-x-auto">
+                    {Array.from({ length: sequencerLength }, (_, stepIndex) => (
+                      <div key={stepIndex} className={`
                         w-6 h-5 rounded text-xs flex items-center justify-center flex-shrink-0 transition-all duration-300
                         ${currentStep === stepIndex ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/50 scale-110' : 'bg-gray-700/50 text-gray-400 backdrop-blur-sm'}
                       `}>
                         {stepIndex + 1}
-                      </div>)}
+                      </div>
+                    ))}
                   </div>
                   
                   {/* Track rows with labels */}
-                  <div className="space-y-0">  {/* Removed spacing between track rows */}
-                    {Array.from({
-                  length: 16
-                }, (_, padIndex) => <div key={padIndex} className="flex items-center gap-1 overflow-x-auto">
+                  <div className="space-y-0">
+                    {Array.from({ length: 16 }, (_, padIndex) => (
+                      <div key={padIndex} className="flex items-center gap-1 overflow-x-auto">
                         {/* Track label on the left - clickable with context menu */}
                         <ContextMenu>
                           <ContextMenuTrigger asChild>
@@ -1572,138 +1597,156 @@ const DrumMachine = () => {
                         {/* Volume knob */}
                         <div className="flex-shrink-0 w-6">
                           <SimpleKnob value={trackVolumes[padIndex]} onChange={value => {
-                      const newVolumes = [...trackVolumes];
-                      newVolumes[padIndex] = value;
-                      setTrackVolumes(newVolumes);
-                    }} size={20} color="hsl(var(--primary))" />
+                            const newVolumes = [...trackVolumes];
+                            newVolumes[padIndex] = value;
+                            setTrackVolumes(newVolumes);
+                          }} size={20} color="hsl(var(--primary))" />
                         </div>
                         
                         {/* Pan knob */}
                         <div className="flex-shrink-0 w-6">
                           <SimpleKnob value={trackPans[padIndex]} onChange={value => {
-                      const newPans = [...trackPans];
-                      newPans[padIndex] = value;
-                      setTrackPans(newPans);
-                    }} size={20} color="hsl(var(--accent))" />
+                            const newPans = [...trackPans];
+                            newPans[padIndex] = value;
+                            setTrackPans(newPans);
+                          }} size={20} color="hsl(var(--accent))" />
                         </div>
                         
                         {/* Mute/Solo buttons */}
                         <div className="flex gap-1 flex-shrink-0">
                           <button onClick={() => {
-                      const newMutes = [...trackMutes];
-                      newMutes[padIndex] = !newMutes[padIndex];
-                      setTrackMutes(newMutes);
-                    }} className={`glass w-6 h-6 rounded text-xs font-bold transition-all duration-200 ${trackMutes[padIndex] ? 'bg-red-600 border border-red-500 text-white shadow-md shadow-red-500/50' : 'bg-gray-700/50 border border-gray-600 text-gray-400 hover:bg-gray-600/70'}`} title={`Mute track ${padIndex + 1}`}>
+                            const newMutes = [...trackMutes];
+                            newMutes[padIndex] = !newMutes[padIndex];
+                            setTrackMutes(newMutes);
+                          }} className={`glass w-6 h-6 rounded text-xs font-bold transition-all duration-200 ${trackMutes[padIndex] ? 'bg-red-600 border border-red-500 text-white shadow-md shadow-red-500/50' : 'bg-gray-700/50 border border-gray-600 text-gray-400 hover:bg-gray-600/70'}`} title={`Mute track ${padIndex + 1}`}>
                             M
                           </button>
                           <button onClick={() => {
-                      const newSolos = [...trackSolos];
-                      newSolos[padIndex] = !newSolos[padIndex];
-                      setTrackSolos(newSolos);
-                    }} className={`glass w-6 h-6 rounded text-xs font-bold transition-all duration-200 ${trackSolos[padIndex] ? 'bg-yellow-600 border border-yellow-500 text-white shadow-md shadow-yellow-500/50' : 'bg-gray-700/50 border border-gray-600 text-gray-400 hover:bg-gray-600/70'}`} title={`Solo track ${padIndex + 1}`}>
+                            const newSolos = [...trackSolos];
+                            newSolos[padIndex] = !newSolos[padIndex];
+                            setTrackSolos(newSolos);
+                          }} className={`glass w-6 h-6 rounded text-xs font-bold transition-all duration-200 ${trackSolos[padIndex] ? 'bg-yellow-600 border border-yellow-500 text-white shadow-md shadow-yellow-500/50' : 'bg-gray-700/50 border border-gray-600 text-gray-400 hover:bg-gray-600/70'}`} title={`Solo track ${padIndex + 1}`}>
                             S
                           </button>
                         </div>
                         
                         {/* Step buttons */}
-                        {Array.from({
-                    length: sequencerLength
-                  }, (_, stepIndex) => <button key={stepIndex} onClick={() => toggleStep(padIndex, stepIndex)} className={`
-                              glass w-6 h-5 rounded flex-shrink-0 transition-all duration-200
-                              ${patterns[padIndex][stepIndex]?.active ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-md shadow-cyan-500/50' : 'bg-gray-600/50 hover:bg-gray-500/70 backdrop-blur-sm'}
-                              ${currentStep === stepIndex && patterns[padIndex][stepIndex]?.active ? 'ring-2 ring-red-400 ring-opacity-75' : ''}
-                            `} title={`Track ${padIndex + 1} (${samples[padIndex]?.name || 'Empty'}), Step ${stepIndex + 1}`} />)}
-                      </div>)}
+                        {Array.from({ length: sequencerLength }, (_, stepIndex) => (
+                          <button key={stepIndex} onClick={() => toggleStep(padIndex, stepIndex)} className={`
+                            glass w-6 h-5 rounded flex-shrink-0 transition-all duration-200
+                            ${patterns[padIndex][stepIndex]?.active ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-md shadow-cyan-500/50' : 'bg-gray-600/50 hover:bg-gray-500/70 backdrop-blur-sm'}
+                            ${currentStep === stepIndex && patterns[padIndex][stepIndex]?.active ? 'ring-2 ring-red-400 ring-opacity-75' : ''}
+                          `} title={`Track ${padIndex + 1} (${samples[padIndex]?.name || 'Empty'}), Step ${stepIndex + 1}`} />
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div> : displayMode === 'patterns' ? <div className="h-full overflow-auto">
+              </div>
+            ) : displayMode === 'patterns' ? (
+              <div className="h-full overflow-auto">
                 <PatternManager currentPattern={patterns} currentBpm={bpm[0]} currentSwing={swing[0]} onLoadPattern={pattern => {
-              setPatterns(pattern.steps);
-              setBpm([pattern.bpm]);
-              setSwing([pattern.swing]);
-              setCurrentPatternName(pattern.name);
-              toast.success(`Loaded pattern "${pattern.name}"`);
-            }} onSavePattern={(name, description, genre) => {
-              const newPattern = {
-                id: Date.now().toString(),
-                name,
-                description,
-                steps: patterns,
-                bpm: bpm[0],
-                swing: swing[0],
-                length: sequencerLength,
-                genre,
-                author: 'User',
-                createdAt: new Date().toISOString().split('T')[0],
-                trackCount: patterns.filter(track => track.some(step => step.active)).length
-              };
-              setSavedPatterns([...savedPatterns, newPattern]);
-              setCurrentPatternName(name);
-              toast.success(`Saved pattern "${name}"`);
-            }} />
-              </div> : displayMode === 'song' ? <div className="h-full">
+                  setPatterns(pattern.steps);
+                  setBpm([pattern.bpm]);
+                  setSwing([pattern.swing]);
+                  setCurrentPatternName(pattern.name);
+                  toast.success(`Loaded pattern "${pattern.name}"`);
+                }} onSavePattern={(name, description, genre) => {
+                  const newPattern = {
+                    id: Date.now().toString(),
+                    name,
+                    description,
+                    steps: patterns,
+                    bpm: bpm[0],
+                    swing: swing[0],
+                    length: sequencerLength,
+                    genre,
+                    author: 'User',
+                    createdAt: new Date().toISOString().split('T')[0],
+                    trackCount: patterns.filter(track => track.some(step => step.active)).length
+                  };
+                  setSavedPatterns([...savedPatterns, newPattern]);
+                  setCurrentPatternName(name);
+                  toast.success(`Saved pattern "${name}"`);
+                }} />
+              </div>
+            ) : displayMode === 'song' ? (
+              <div className="h-full">
                 <SongMode patterns={savedPatterns} songs={songs} currentSong={currentSong} isPlaying={isPlaying} isPatternChaining={isPatternChaining} onCreateSong={song => setSongs([...songs, song])} onDeleteSong={songIndex => {
-              const newSongs = songs.filter((_, index) => index !== songIndex);
-              setSongs(newSongs);
-              if (currentSong === songs[songIndex]) {
-                setCurrentSong(null);
-              }
-            }} onSelectSong={song => setCurrentSong(song)} onPlaySong={() => {
-              if (currentSong && currentSong.patterns.length > 0) {
-                setIsPatternChaining(true);
-                handlePlay();
-              }
-            }} onStopSong={() => {
-              setIsPatternChaining(false);
-              handleStop();
-            }} onAddPatternToSong={(songIndex, patternName) => {
-              const newSongs = [...songs];
-              newSongs[songIndex].patterns.push(patternName);
-              setSongs(newSongs);
-            }} onRemovePatternFromSong={(songIndex, patternIndex) => {
-              const newSongs = [...songs];
-              newSongs[songIndex].patterns.splice(patternIndex, 1);
-              setSongs(newSongs);
-            }} onMovePattern={(songIndex, fromIndex, toIndex) => {
-              if (toIndex < 0 || toIndex >= songs[songIndex].patterns.length) return;
-              const newSongs = [...songs];
-              const [movedPattern] = newSongs[songIndex].patterns.splice(fromIndex, 1);
-              newSongs[songIndex].patterns.splice(toIndex, 0, movedPattern);
-              setSongs(newSongs);
-            }} />
-              </div> : displayMode === 'export' ? <div className="h-full overflow-auto p-4">
+                  const newSongs = songs.filter((_, index) => index !== songIndex);
+                  setSongs(newSongs);
+                  if (currentSong === songs[songIndex]) {
+                    setCurrentSong(null);
+                  }
+                }} onSelectSong={song => setCurrentSong(song)} onPlaySong={() => {
+                  if (currentSong && currentSong.patterns.length > 0) {
+                    setIsPatternChaining(true);
+                    handlePlay();
+                  }
+                }} onStopSong={() => {
+                  setIsPatternChaining(false);
+                  handleStop();
+                }} onAddPatternToSong={(songIndex, patternName) => {
+                  const newSongs = [...songs];
+                  newSongs[songIndex].patterns.push(patternName);
+                  setSongs(newSongs);
+                }} onRemovePatternFromSong={(songIndex, patternIndex) => {
+                  const newSongs = [...songs];
+                  newSongs[songIndex].patterns.splice(patternIndex, 1);
+                  setSongs(newSongs);
+                }} onMovePattern={(songIndex, fromIndex, toIndex) => {
+                  if (toIndex < 0 || toIndex >= songs[songIndex].patterns.length) return;
+                  const newSongs = [...songs];
+                  const [movedPattern] = newSongs[songIndex].patterns.splice(fromIndex, 1);
+                  newSongs[songIndex].patterns.splice(toIndex, 0, movedPattern);
+                  setSongs(newSongs);
+                }} />
+              </div>
+            ) : displayMode === 'export' ? (
+              <div className="h-full overflow-auto p-4">
                 <AudioExporter patterns={patterns} samples={samples} bpm={bpm[0]} sequencerLength={sequencerLength} trackVolumes={trackVolumes} trackMutes={trackMutes} trackSolos={trackSolos} masterVolume={masterVolume} swing={swing[0]} />
-              </div> : displayMode === 'neural' ? <div className="h-full overflow-auto p-4">
+              </div>
+            ) : displayMode === 'neural' ? (
+              <div className="h-full overflow-auto p-4">
                 <NeuralDrumGenerator patterns={patterns} onPatternGenerated={setPatterns} bpm={bpm[0]} sequencerLength={sequencerLength} />
-              </div> : <div className="h-full overflow-auto">
-                {pendingSample ? <div className="h-full overflow-auto p-2">
+              </div>
+            ) : (
+              <div className="h-full overflow-auto">
+                {pendingSample ? (
+                  <div className="h-full overflow-auto p-2">
                     <WaveformEditor sample={pendingSample.sample} onSampleUpdate={updateSample} onConfirm={confirmPendingSample} showConfirm={true} onClose={cancelPendingSample} audioContext={audioContextRef.current} />
-                  </div> : <>
+                  </div>
+                ) : (
+                  <>
                     <div className="text-center mb-2">
                       <p className="text-gray-300 text-sm">
                         {selectedPad !== null && samples[selectedPad]?.buffer ? `Editing: ${samples[selectedPad].name}` : 'Select a pad to edit or upload a new sample to edit'}
                       </p>
                     </div>
                     
-                    {selectedPad !== null && samples[selectedPad]?.buffer ? <div className="h-full overflow-auto p-2">
+                    {selectedPad !== null && samples[selectedPad]?.buffer ? (
+                      <div className="h-full overflow-auto p-2">
                         <WaveformEditor sample={samples[selectedPad]} onSampleUpdate={updatedSample => {
-                  const newSamples = [...samples];
-                  newSamples[selectedPad] = updatedSample;
-                  setSamples(newSamples);
-                  toast.success('Sample settings saved!');
-                }} onClose={() => setSelectedPad(null)} audioContext={audioContextRef.current} />
-                      </div> : <div className="flex items-center justify-center h-48">
+                          const newSamples = [...samples];
+                          newSamples[selectedPad] = updatedSample;
+                          setSamples(newSamples);
+                          toast.success('Sample settings saved!');
+                        }} onClose={() => setSelectedPad(null)} audioContext={audioContextRef.current} />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-48">
                         <div className="text-center text-gray-400">
                           <Edit className="w-12 h-12 mx-auto mb-4 opacity-50" />
                           <p>Click on a drum pad to edit its sample or upload a new sample</p>
                         </div>
-                      </div>}
-                  </>}
-              </div>}
-            </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
-
 
         {/* Transport Controls */}
         <div className="neon-panel p-4 mb-2 relative overflow-hidden mx-[13px] px-[25px]">
@@ -1788,7 +1831,6 @@ const DrumMachine = () => {
                 </div>
               </div>
 
-
               {/* Quick Actions */}
               <div className="flex items-center gap-3">
                 <Button onClick={clearPattern} variant="outline" size="sm" className="bg-yellow-600/20 border-yellow-500/50 text-yellow-300 hover:bg-yellow-600/30 transition-all duration-200">
@@ -1824,6 +1866,7 @@ const DrumMachine = () => {
                     <Slider value={swing} onValueChange={setSwing} min={0} max={100} step={1} className="flex-1" />
                     <span className="text-xs text-gray-300 w-8">{swing[0]}%</span>
                   </div>
+                </div>
               </div>
             </div>
 
@@ -1836,7 +1879,8 @@ const DrumMachine = () => {
                     <span className="text-xs text-yellow-400 font-medium">QUANTIZE</span>
                     <input type="checkbox" checked={quantizeEnabled} onChange={e => setQuantizeEnabled(e.target.checked)} className="w-3 h-3" />
                   </div>
-                  {quantizeEnabled && <>
+                  {quantizeEnabled && (
+                    <>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-400 w-12">Grid</span>
                         <Select value={quantizeGrid} onValueChange={(value: '1/16' | '1/8' | '1/4' | '1/2') => setQuantizeGrid(value)}>
@@ -1856,30 +1900,29 @@ const DrumMachine = () => {
                         <Slider value={[quantizeStrength]} onValueChange={([value]) => setQuantizeStrength(value)} min={0} max={100} step={1} className="flex-1" />
                         <span className="text-xs text-gray-300 w-8">{quantizeStrength}%</span>
                       </div>
-                    </>}
+                    </>
+                  )}
                 </div>
-              </div>
               </div>
             </div>
 
             {/* Pattern Controls */}
             <div className="glass-strong p-2 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden px-[10px] py-[11px]">
               <div className="relative z-10">
-              <div className="space-y-2">
-                <Button onClick={savePattern} variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">
-                  SAVE
-                </Button>
-                
-                <Button onClick={randomizePattern} disabled={!canPerformPatternOperations()} variant="outline" size="sm" className={`w-full text-xs ${!canPerformPatternOperations() ? 'bg-gray-700/50 border-gray-600/50 text-gray-500 cursor-not-allowed' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`} title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : `Randomize patterns for ${getOperationDescription()}`}>
-                  RANDOM
-                </Button>
-                <Button onClick={clearPattern} variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">
-                  CLEAR
-                </Button>
-              </div>
+                <div className="space-y-2">
+                  <Button onClick={savePattern} variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">
+                    SAVE
+                  </Button>
+                  
+                  <Button onClick={randomizePattern} disabled={!canPerformPatternOperations()} variant="outline" size="sm" className={`w-full text-xs ${!canPerformPatternOperations() ? 'bg-gray-700/50 border-gray-600/50 text-gray-500 cursor-not-allowed' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`} title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : `Randomize patterns for ${getOperationDescription()}`}>
+                    RANDOM
+                  </Button>
+                  <Button onClick={clearPattern} variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">
+                    CLEAR
+                  </Button>
+                </div>
               </div>
             </div>
-
           </div>
 
           {/* Right Drum Pads */}
@@ -1892,9 +1935,8 @@ const DrumMachine = () => {
             <div className="glow-bright glow-bottom"></div>
             
             <div className="inner grid grid-cols-4 gap-2 relative z-10">
-              {Array.from({
-              length: 16
-            }, (_, i) => <ContextMenu key={i}>
+              {Array.from({ length: 16 }, (_, i) => (
+                <ContextMenu key={i}>
                   <ContextMenuTrigger asChild>
                     <button onClick={() => setSelectedPad(i)} onMouseDown={() => handlePadPress(i)} onMouseUp={() => handlePadRelease(i)} onMouseLeave={() => handlePadRelease(i)} onTouchStart={() => handlePadPress(i)} onTouchEnd={() => handlePadRelease(i)} className={`
                         h-28 w-28 rounded-lg text-sm font-bold transition-all duration-150 active:scale-95 border backdrop-blur-sm relative overflow-hidden
@@ -1905,26 +1947,29 @@ const DrumMachine = () => {
                       {samples[i]?.buffer ? samples[i].name.split(' ')[1] || (i + 1).toString() : isRecording && selectedPad === i ? 'REC' : i + 1}
                     </button>
                   </ContextMenuTrigger>
-                  {samples[i]?.buffer && <ContextMenuContent>
+                  {samples[i]?.buffer && (
+                    <ContextMenuContent>
                       <ContextMenuItem onClick={() => {
-                  setSelectedPad(i);
-                  fileInputRef.current?.click();
-                }}>
+                        setSelectedPad(i);
+                        fileInputRef.current?.click();
+                      }}>
                         Replace Sample
                       </ContextMenuItem>
                       <ContextMenuItem onClick={() => {
-                  const newSamples = [...samples];
-                  newSamples[i] = null;
-                  setSamples(newSamples);
-                  toast.success(`Cleared sample from pad ${i + 1}`);
-                }}>
+                        const newSamples = [...samples];
+                        newSamples[i] = null;
+                        setSamples(newSamples);
+                        toast.success(`Cleared sample from pad ${i + 1}`);
+                      }}>
                         Clear Sample
                       </ContextMenuItem>
                       <ContextMenuItem onClick={() => setSelectedPad(i)}>
                         Edit Sample
                       </ContextMenuItem>
-                    </ContextMenuContent>}
-                </ContextMenu>)}
+                    </ContextMenuContent>
+                  )}
+                </ContextMenu>
+              ))}
             </div>
           </div>
         </div>
@@ -1939,11 +1984,11 @@ const DrumMachine = () => {
               {/* Track selector */}
               <div className="mb-3">
                 <div className="grid grid-cols-8 gap-1">
-                  {Array.from({
-                  length: 16
-                }, (_, i) => <Button key={i} onClick={() => setSelectedEffectTrack(i)} variant="outline" size="sm" className={`h-6 w-8 text-xs p-0 ${selectedEffectTrack === i ? 'bg-yellow-600/30 border-yellow-500 text-yellow-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
+                  {Array.from({ length: 16 }, (_, i) => (
+                    <Button key={i} onClick={() => setSelectedEffectTrack(i)} variant="outline" size="sm" className={`h-6 w-8 text-xs p-0 ${selectedEffectTrack === i ? 'bg-yellow-600/30 border-yellow-500 text-yellow-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
                       {i + 1}
-                    </Button>)}
+                    </Button>
+                  ))}
                 </div>
               </div>
 
@@ -1951,221 +1996,227 @@ const DrumMachine = () => {
               <div className="mb-3">
                 <div className="grid grid-cols-4 gap-2">
                   <Button onClick={() => {
-                  if (selectedEffectTrack !== null) {
-                    const newEffects = [...trackEffects];
-                    newEffects[selectedEffectTrack] = {
-                      ...newEffects[selectedEffectTrack],
-                      reverb: {
-                        ...newEffects[selectedEffectTrack].reverb,
-                        enabled: !newEffects[selectedEffectTrack].reverb.enabled
-                      }
-                    };
-                    setTrackEffects(newEffects);
-                  }
-                }} variant="outline" size="sm" disabled={selectedEffectTrack === null} className={`text-xs ${selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.reverb?.enabled ? 'bg-green-600/30 border-green-500 text-green-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
+                    if (selectedEffectTrack !== null) {
+                      const newEffects = [...trackEffects];
+                      newEffects[selectedEffectTrack] = {
+                        ...newEffects[selectedEffectTrack],
+                        reverb: {
+                          ...newEffects[selectedEffectTrack].reverb,
+                          enabled: !newEffects[selectedEffectTrack].reverb.enabled
+                        }
+                      };
+                      setTrackEffects(newEffects);
+                    }
+                  }} variant="outline" size="sm" disabled={selectedEffectTrack === null} className={`text-xs ${selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.reverb?.enabled ? 'bg-green-600/30 border-green-500 text-green-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
                     REVERB
                   </Button>
                   <Button onClick={() => {
-                  if (selectedEffectTrack !== null) {
-                    const newEffects = [...trackEffects];
-                    newEffects[selectedEffectTrack] = {
-                      ...newEffects[selectedEffectTrack],
-                      delay: {
-                        ...newEffects[selectedEffectTrack].delay,
-                        enabled: !newEffects[selectedEffectTrack].delay.enabled
-                      }
-                    };
-                    setTrackEffects(newEffects);
-                  }
-                }} variant="outline" size="sm" disabled={selectedEffectTrack === null} className={`text-xs ${selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.delay?.enabled ? 'bg-blue-600/30 border-blue-500 text-blue-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
+                    if (selectedEffectTrack !== null) {
+                      const newEffects = [...trackEffects];
+                      newEffects[selectedEffectTrack] = {
+                        ...newEffects[selectedEffectTrack],
+                        delay: {
+                          ...newEffects[selectedEffectTrack].delay,
+                          enabled: !newEffects[selectedEffectTrack].delay.enabled
+                        }
+                      };
+                      setTrackEffects(newEffects);
+                    }
+                  }} variant="outline" size="sm" disabled={selectedEffectTrack === null} className={`text-xs ${selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.delay?.enabled ? 'bg-blue-600/30 border-blue-500 text-blue-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
                     DELAY
                   </Button>
                   <Button onClick={() => {
-                  if (selectedEffectTrack !== null) {
-                    const newEffects = [...trackEffects];
-                    newEffects[selectedEffectTrack] = {
-                      ...newEffects[selectedEffectTrack],
-                      filter: {
-                        ...newEffects[selectedEffectTrack].filter,
-                        enabled: !newEffects[selectedEffectTrack].filter.enabled
-                      }
-                    };
-                    setTrackEffects(newEffects);
-                  }
-                }} variant="outline" size="sm" disabled={selectedEffectTrack === null} className={`text-xs ${selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.filter?.enabled ? 'bg-purple-600/30 border-purple-500 text-purple-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
+                    if (selectedEffectTrack !== null) {
+                      const newEffects = [...trackEffects];
+                      newEffects[selectedEffectTrack] = {
+                        ...newEffects[selectedEffectTrack],
+                        filter: {
+                          ...newEffects[selectedEffectTrack].filter,
+                          enabled: !newEffects[selectedEffectTrack].filter.enabled
+                        }
+                      };
+                      setTrackEffects(newEffects);
+                    }
+                  }} variant="outline" size="sm" disabled={selectedEffectTrack === null} className={`text-xs ${selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.filter?.enabled ? 'bg-purple-600/30 border-purple-500 text-purple-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
                     FILTER
                   </Button>
                   <Button onClick={() => {
-                  if (selectedEffectTrack !== null) {
-                    const newEffects = [...trackEffects];
-                    newEffects[selectedEffectTrack] = {
-                      ...newEffects[selectedEffectTrack],
-                      eq: {
-                        ...newEffects[selectedEffectTrack].eq,
-                        enabled: !newEffects[selectedEffectTrack].eq.enabled
-                      }
-                    };
-                    setTrackEffects(newEffects);
-                  }
-                }} variant="outline" size="sm" disabled={selectedEffectTrack === null} className={`text-xs ${selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.eq?.enabled ? 'bg-orange-600/30 border-orange-500 text-orange-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
+                    if (selectedEffectTrack !== null) {
+                      const newEffects = [...trackEffects];
+                      newEffects[selectedEffectTrack] = {
+                        ...newEffects[selectedEffectTrack],
+                        eq: {
+                          ...newEffects[selectedEffectTrack].eq,
+                          enabled: !newEffects[selectedEffectTrack].eq.enabled
+                        }
+                      };
+                      setTrackEffects(newEffects);
+                    }
+                  }} variant="outline" size="sm" disabled={selectedEffectTrack === null} className={`text-xs ${selectedEffectTrack !== null && trackEffects[selectedEffectTrack]?.eq?.enabled ? 'bg-orange-600/30 border-orange-500 text-orange-300' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`}>
                     EQ
                   </Button>
                 </div>
               </div>
 
-              {selectedEffectTrack !== null && <div className="space-y-2">
+              {selectedEffectTrack !== null && (
+                <div className="space-y-2">
                   {/* Reverb */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <input type="checkbox" checked={trackEffects[selectedEffectTrack]?.reverb?.enabled} onChange={e => {
-                    const newEffects = [...trackEffects];
-                    newEffects[selectedEffectTrack] = {
-                      ...newEffects[selectedEffectTrack],
-                      reverb: {
-                        ...newEffects[selectedEffectTrack].reverb,
-                        enabled: e.target.checked
-                      }
-                    };
-                    setTrackEffects(newEffects);
-                  }} className="w-3 h-3" />
+                        const newEffects = [...trackEffects];
+                        newEffects[selectedEffectTrack] = {
+                          ...newEffects[selectedEffectTrack],
+                          reverb: {
+                            ...newEffects[selectedEffectTrack].reverb,
+                            enabled: e.target.checked
+                          }
+                        };
+                        setTrackEffects(newEffects);
+                      }} className="w-3 h-3" />
                       <span className="text-xs text-gray-300">Reverb</span>
                     </div>
-                    {trackEffects[selectedEffectTrack]?.reverb?.enabled && <div className="grid grid-cols-3 gap-1 text-xs">
+                    {trackEffects[selectedEffectTrack]?.reverb?.enabled && (
+                      <div className="grid grid-cols-3 gap-1 text-xs">
                         <div>
                           <span className="text-gray-400">Room</span>
                           <Slider value={[trackEffects[selectedEffectTrack]?.reverb?.roomSize * 100]} onValueChange={([value]) => {
-                      const newEffects = [...trackEffects];
-                      newEffects[selectedEffectTrack] = {
-                        ...newEffects[selectedEffectTrack],
-                        reverb: {
-                          ...newEffects[selectedEffectTrack].reverb,
-                          roomSize: value / 100
-                        }
-                      };
-                      setTrackEffects(newEffects);
-                    }} min={0} max={100} className="h-4" />
+                            const newEffects = [...trackEffects];
+                            newEffects[selectedEffectTrack] = {
+                              ...newEffects[selectedEffectTrack],
+                              reverb: {
+                                ...newEffects[selectedEffectTrack].reverb,
+                                roomSize: value / 100
+                              }
+                            };
+                            setTrackEffects(newEffects);
+                          }} min={0} max={100} className="h-4" />
                         </div>
                         <div>
                           <span className="text-gray-400">Decay</span>
                           <Slider value={[trackEffects[selectedEffectTrack]?.reverb?.decay]} onValueChange={([value]) => {
-                      const newEffects = [...trackEffects];
-                      newEffects[selectedEffectTrack] = {
-                        ...newEffects[selectedEffectTrack],
-                        reverb: {
-                          ...newEffects[selectedEffectTrack].reverb,
-                          decay: value
-                        }
-                      };
-                      setTrackEffects(newEffects);
-                    }} min={0.1} max={5} step={0.1} className="h-4" />
+                            const newEffects = [...trackEffects];
+                            newEffects[selectedEffectTrack] = {
+                              ...newEffects[selectedEffectTrack],
+                              reverb: {
+                                ...newEffects[selectedEffectTrack].reverb,
+                                decay: value
+                              }
+                            };
+                            setTrackEffects(newEffects);
+                          }} min={0.1} max={5} step={0.1} className="h-4" />
                         </div>
                         <div>
                           <span className="text-gray-400">Wet</span>
                           <Slider value={[trackEffects[selectedEffectTrack]?.reverb?.wet * 100]} onValueChange={([value]) => {
-                      const newEffects = [...trackEffects];
-                      newEffects[selectedEffectTrack] = {
-                        ...newEffects[selectedEffectTrack],
-                        reverb: {
-                          ...newEffects[selectedEffectTrack].reverb,
-                          wet: value / 100
-                        }
-                      };
-                      setTrackEffects(newEffects);
-                    }} min={0} max={100} className="h-4" />
+                            const newEffects = [...trackEffects];
+                            newEffects[selectedEffectTrack] = {
+                              ...newEffects[selectedEffectTrack],
+                              reverb: {
+                                ...newEffects[selectedEffectTrack].reverb,
+                                wet: value / 100
+                              }
+                            };
+                            setTrackEffects(newEffects);
+                          }} min={0} max={100} className="h-4" />
                         </div>
-                      </div>}
+                      </div>
+                    )}
                   </div>
 
                   {/* Delay */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <input type="checkbox" checked={trackEffects[selectedEffectTrack]?.delay?.enabled} onChange={e => {
-                    const newEffects = [...trackEffects];
-                    newEffects[selectedEffectTrack] = {
-                      ...newEffects[selectedEffectTrack],
-                      delay: {
-                        ...newEffects[selectedEffectTrack].delay,
-                        enabled: e.target.checked
-                      }
-                    };
-                    setTrackEffects(newEffects);
-                  }} className="w-3 h-3" />
+                        const newEffects = [...trackEffects];
+                        newEffects[selectedEffectTrack] = {
+                          ...newEffects[selectedEffectTrack],
+                          delay: {
+                            ...newEffects[selectedEffectTrack].delay,
+                            enabled: e.target.checked
+                          }
+                        };
+                        setTrackEffects(newEffects);
+                      }} className="w-3 h-3" />
                       <span className="text-xs text-gray-300">Delay</span>
                     </div>
-                    {trackEffects[selectedEffectTrack]?.delay?.enabled && <div className="grid grid-cols-3 gap-1 text-xs">
+                    {trackEffects[selectedEffectTrack]?.delay?.enabled && (
+                      <div className="grid grid-cols-3 gap-1 text-xs">
                         <div>
                           <span className="text-gray-400">Time</span>
                           <Slider value={[trackEffects[selectedEffectTrack]?.delay?.time * 1000]} onValueChange={([value]) => {
-                      const newEffects = [...trackEffects];
-                      newEffects[selectedEffectTrack] = {
-                        ...newEffects[selectedEffectTrack],
-                        delay: {
-                          ...newEffects[selectedEffectTrack].delay,
-                          time: value / 1000
-                        }
-                      };
-                      setTrackEffects(newEffects);
-                    }} min={10} max={1000} className="h-4" />
+                            const newEffects = [...trackEffects];
+                            newEffects[selectedEffectTrack] = {
+                              ...newEffects[selectedEffectTrack],
+                              delay: {
+                                ...newEffects[selectedEffectTrack].delay,
+                                time: value / 1000
+                              }
+                            };
+                            setTrackEffects(newEffects);
+                          }} min={10} max={1000} className="h-4" />
                         </div>
                         <div>
                           <span className="text-gray-400">Feedback</span>
                           <Slider value={[trackEffects[selectedEffectTrack]?.delay?.feedback * 100]} onValueChange={([value]) => {
-                      const newEffects = [...trackEffects];
-                      newEffects[selectedEffectTrack] = {
-                        ...newEffects[selectedEffectTrack],
-                        delay: {
-                          ...newEffects[selectedEffectTrack].delay,
-                          feedback: value / 100
-                        }
-                      };
-                      setTrackEffects(newEffects);
-                    }} min={0} max={90} className="h-4" />
+                            const newEffects = [...trackEffects];
+                            newEffects[selectedEffectTrack] = {
+                              ...newEffects[selectedEffectTrack],
+                              delay: {
+                                ...newEffects[selectedEffectTrack].delay,
+                                feedback: value / 100
+                              }
+                            };
+                            setTrackEffects(newEffects);
+                          }} min={0} max={90} className="h-4" />
                         </div>
                         <div>
                           <span className="text-gray-400">Wet</span>
                           <Slider value={[trackEffects[selectedEffectTrack]?.delay?.wet * 100]} onValueChange={([value]) => {
-                      const newEffects = [...trackEffects];
-                      newEffects[selectedEffectTrack] = {
-                        ...newEffects[selectedEffectTrack],
-                        delay: {
-                          ...newEffects[selectedEffectTrack].delay,
-                          wet: value / 100
-                        }
-                      };
-                      setTrackEffects(newEffects);
-                    }} min={0} max={100} className="h-4" />
+                            const newEffects = [...trackEffects];
+                            newEffects[selectedEffectTrack] = {
+                              ...newEffects[selectedEffectTrack],
+                              delay: {
+                                ...newEffects[selectedEffectTrack].delay,
+                                wet: value / 100
+                              }
+                            };
+                            setTrackEffects(newEffects);
+                          }} min={0} max={100} className="h-4" />
                         </div>
-                      </div>}
+                      </div>
+                    )}
                   </div>
 
                   {/* Filter */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <input type="checkbox" checked={trackEffects[selectedEffectTrack]?.filter?.enabled} onChange={e => {
-                    const newEffects = [...trackEffects];
-                    newEffects[selectedEffectTrack] = {
-                      ...newEffects[selectedEffectTrack],
-                      filter: {
-                        ...newEffects[selectedEffectTrack].filter,
-                        enabled: e.target.checked
-                      }
-                    };
-                    setTrackEffects(newEffects);
-                  }} className="w-3 h-3" />
+                        const newEffects = [...trackEffects];
+                        newEffects[selectedEffectTrack] = {
+                          ...newEffects[selectedEffectTrack],
+                          filter: {
+                            ...newEffects[selectedEffectTrack].filter,
+                            enabled: e.target.checked
+                          }
+                        };
+                        setTrackEffects(newEffects);
+                      }} className="w-3 h-3" />
                       <span className="text-xs text-gray-300">Filter</span>
                     </div>
-                    {trackEffects[selectedEffectTrack]?.filter?.enabled && <div className="space-y-1">
+                    {trackEffects[selectedEffectTrack]?.filter?.enabled && (
+                      <div className="space-y-1">
                         <Select value={trackEffects[selectedEffectTrack]?.filter?.type} onValueChange={(value: 'lowpass' | 'highpass' | 'bandpass') => {
-                    const newEffects = [...trackEffects];
-                    newEffects[selectedEffectTrack] = {
-                      ...newEffects[selectedEffectTrack],
-                      filter: {
-                        ...newEffects[selectedEffectTrack].filter,
-                        type: value
-                      }
-                    };
-                    setTrackEffects(newEffects);
-                  }}>
+                          const newEffects = [...trackEffects];
+                          newEffects[selectedEffectTrack] = {
+                            ...newEffects[selectedEffectTrack],
+                            filter: {
+                              ...newEffects[selectedEffectTrack].filter,
+                              type: value
+                            }
+                          };
+                          setTrackEffects(newEffects);
+                        }}>
                           <SelectTrigger className="h-5 text-xs bg-gray-800 border-gray-600">
                             <SelectValue />
                           </SelectTrigger>
@@ -2179,104 +2230,104 @@ const DrumMachine = () => {
                           <div>
                             <span className="text-gray-400">Freq</span>
                             <Slider value={[trackEffects[selectedEffectTrack]?.filter?.frequency]} onValueChange={([value]) => {
-                        const newEffects = [...trackEffects];
-                        newEffects[selectedEffectTrack] = {
-                          ...newEffects[selectedEffectTrack],
-                          filter: {
-                            ...newEffects[selectedEffectTrack].filter,
-                            frequency: value
-                          }
-                        };
-                        setTrackEffects(newEffects);
-                      }} min={20} max={20000} className="h-4" />
+                              const newEffects = [...trackEffects];
+                              newEffects[selectedEffectTrack] = {
+                                ...newEffects[selectedEffectTrack],
+                                filter: {
+                                  ...newEffects[selectedEffectTrack].filter,
+                                  frequency: value
+                                }
+                              };
+                              setTrackEffects(newEffects);
+                            }} min={20} max={20000} className="h-4" />
                           </div>
                           <div>
                             <span className="text-gray-400">Res</span>
                             <Slider value={[trackEffects[selectedEffectTrack]?.filter?.resonance]} onValueChange={([value]) => {
-                        const newEffects = [...trackEffects];
-                        newEffects[selectedEffectTrack] = {
-                          ...newEffects[selectedEffectTrack],
-                          filter: {
-                            ...newEffects[selectedEffectTrack].filter,
-                            resonance: value
-                          }
-                        };
-                        setTrackEffects(newEffects);
-                      }} min={0.1} max={20} step={0.1} className="h-4" />
+                              const newEffects = [...trackEffects];
+                              newEffects[selectedEffectTrack] = {
+                                ...newEffects[selectedEffectTrack],
+                                filter: {
+                                  ...newEffects[selectedEffectTrack].filter,
+                                  resonance: value
+                                }
+                              };
+                              setTrackEffects(newEffects);
+                            }} min={0.1} max={20} step={0.1} className="h-4" />
                           </div>
                         </div>
-                      </div>}
+                      </div>
+                    )}
                   </div>
 
                   {/* EQ */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <input type="checkbox" checked={trackEffects[selectedEffectTrack]?.eq?.enabled} onChange={e => {
-                    const newEffects = [...trackEffects];
-                    newEffects[selectedEffectTrack] = {
-                      ...newEffects[selectedEffectTrack],
-                      eq: {
-                        ...newEffects[selectedEffectTrack].eq,
-                        enabled: e.target.checked
-                      }
-                    };
-                    setTrackEffects(newEffects);
-                  }} className="w-3 h-3" />
+                        const newEffects = [...trackEffects];
+                        newEffects[selectedEffectTrack] = {
+                          ...newEffects[selectedEffectTrack],
+                          eq: {
+                            ...newEffects[selectedEffectTrack].eq,
+                            enabled: e.target.checked
+                          }
+                        };
+                        setTrackEffects(newEffects);
+                      }} className="w-3 h-3" />
                       <span className="text-xs text-gray-300">EQ</span>
                     </div>
-                    {trackEffects[selectedEffectTrack]?.eq?.enabled && <div className="grid grid-cols-3 gap-1 text-xs">
+                    {trackEffects[selectedEffectTrack]?.eq?.enabled && (
+                      <div className="grid grid-cols-3 gap-1 text-xs">
                         <div>
                           <span className="text-gray-400">Low</span>
                           <Slider value={[trackEffects[selectedEffectTrack]?.eq?.low]} onValueChange={([value]) => {
-                      const newEffects = [...trackEffects];
-                      newEffects[selectedEffectTrack] = {
-                        ...newEffects[selectedEffectTrack],
-                        eq: {
-                          ...newEffects[selectedEffectTrack].eq,
-                          low: value
-                        }
-                      };
-                      setTrackEffects(newEffects);
-                    }} min={-12} max={12} step={0.1} className="h-4" />
+                            const newEffects = [...trackEffects];
+                            newEffects[selectedEffectTrack] = {
+                              ...newEffects[selectedEffectTrack],
+                              eq: {
+                                ...newEffects[selectedEffectTrack].eq,
+                                low: value
+                              }
+                            };
+                            setTrackEffects(newEffects);
+                          }} min={-12} max={12} step={0.1} className="h-4" />
                         </div>
                         <div>
                           <span className="text-gray-400">Mid</span>
                           <Slider value={[trackEffects[selectedEffectTrack]?.eq?.mid]} onValueChange={([value]) => {
-                      const newEffects = [...trackEffects];
-                      newEffects[selectedEffectTrack] = {
-                        ...newEffects[selectedEffectTrack],
-                        eq: {
-                          ...newEffects[selectedEffectTrack].eq,
-                          mid: value
-                        }
-                      };
-                      setTrackEffects(newEffects);
-                    }} min={-12} max={12} step={0.1} className="h-4" />
+                            const newEffects = [...trackEffects];
+                            newEffects[selectedEffectTrack] = {
+                              ...newEffects[selectedEffectTrack],
+                              eq: {
+                                ...newEffects[selectedEffectTrack].eq,
+                                mid: value
+                              }
+                            };
+                            setTrackEffects(newEffects);
+                          }} min={-12} max={12} step={0.1} className="h-4" />
                         </div>
                         <div>
                           <span className="text-gray-400">High</span>
                           <Slider value={[trackEffects[selectedEffectTrack]?.eq?.high]} onValueChange={([value]) => {
-                      const newEffects = [...trackEffects];
-                      newEffects[selectedEffectTrack] = {
-                        ...newEffects[selectedEffectTrack],
-                        eq: {
-                          ...newEffects[selectedEffectTrack].eq,
-                          high: value
-                        }
-                      };
-                      setTrackEffects(newEffects);
-                    }} min={-12} max={12} step={0.1} className="h-4" />
+                            const newEffects = [...trackEffects];
+                            newEffects[selectedEffectTrack] = {
+                              ...newEffects[selectedEffectTrack],
+                              eq: {
+                                ...newEffects[selectedEffectTrack].eq,
+                                high: value
+                              }
+                            };
+                            setTrackEffects(newEffects);
+                          }} min={-12} max={12} step={0.1} className="h-4" />
                         </div>
-                      </div>}
+                      </div>
+                    )}
                   </div>
-                </div>}
+                </div>
+              )}
             </div>
           </div>
-
         </div>
-
-        </div>
-
 
         <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileLoad} className="hidden" />
 
@@ -2290,129 +2341,147 @@ const DrumMachine = () => {
               <div className={`px-2 py-1 rounded text-xs ${midiEnabled ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'}`}>
                 {midiEnabled ? `✓ ${midiDevices.length} device(s)` : '✗ Not available'}
               </div>
-              {midiDevices.length > 0 && <div className="max-h-20 overflow-y-auto">
-                  {midiDevices.map((device, index) => <div key={index} className="text-xs text-gray-500 truncate">
+              {midiDevices.length > 0 && (
+                <div className="max-h-20 overflow-y-auto">
+                  {midiDevices.map((device, index) => (
+                    <div key={index} className="text-xs text-gray-500 truncate">
                       {device.name || `Device ${index + 1}`}
-                    </div>)}
-                </div>}
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="text-xs text-gray-500">
                 Notes 36-51 → Pads 1-16
               </div>
             </div>
+          </div>
         </div>
-      </div>
 
-      {/* MIDI Mapping Overlay Panel */}
-      {showMidiPanel && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-gray-900/90 backdrop-blur-md border border-green-500/30 shadow-2xl shadow-green-500/20 rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto relative">
-            {/* Glassmorphism effects */}
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
-            
-            {/* Panel content */}
-            <div className="relative z-10">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white">MIDI Mapping</h2>
-                <Button variant="outline" size="sm" onClick={() => {
-              setShowMidiPanel(false);
-              setMidiLearning(null);
-            }} className="h-8 w-8 p-0 bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50">
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* MIDI Status */}
-              <div className="mb-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
-                <div className={`flex items-center gap-2 text-sm ${midiEnabled ? 'text-green-400' : 'text-red-400'}`}>
-                  <div className={`w-3 h-3 rounded-full ${midiEnabled ? 'bg-green-400' : 'bg-red-400'}`}></div>
-                  {midiEnabled ? `${midiDevices.length} device(s) connected` : 'MIDI not available'}
+        {/* MIDI Mapping Overlay Panel */}
+        {showMidiPanel && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-gray-900/90 backdrop-blur-md border border-green-500/30 shadow-2xl shadow-green-500/20 rounded-lg p-6 w-96 max-h-[80vh] overflow-y-auto relative">
+              {/* Glassmorphism effects */}
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-cyan-500/5 to-blue-500/10 rounded-lg pointer-events-none"></div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent rounded-lg pointer-events-none"></div>
+              
+              {/* Panel content */}
+              <div className="relative z-10">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-white">MIDI Mapping</h2>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setShowMidiPanel(false);
+                    setMidiLearning(null);
+                  }} className="h-8 w-8 p-0 bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50">
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                {midiEnabled && midiDevices.length > 0 && <div className="mt-2 space-y-1">
-                    {midiDevices.map((device, index) => <div key={index} className="text-xs text-gray-400 truncate">
-                        • {device.name || `Device ${index + 1}`}
-                      </div>)}
-                  </div>}
-              </div>
 
-              {midiEnabled && <div className="space-y-4">
-                  {/* MIDI Learn */}
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-gray-300">MIDI Learn Mode</h3>
-                    <p className="text-xs text-gray-400">Click a pad button below, then hit a MIDI note to map it</p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {Array.from({
-                  length: 16
-                }, (_, i) => <Button key={i} variant="outline" size="sm" onClick={() => setMidiLearning(midiLearning === i ? null : i)} className={`h-8 text-xs transition-all duration-200 ${midiLearning === i ? 'bg-green-600 border-green-500 text-white shadow-lg shadow-green-500/30' : 'bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:border-green-500/50'}`}>
-                          {midiLearning === i ? 'LEARN' : `P${i + 1}`}
-                        </Button>)}
-                    </div>
-                    {midiLearning !== null && <div className="text-xs text-yellow-400 animate-pulse p-2 bg-yellow-900/20 rounded border border-yellow-500/30">
-                        🎹 Hit a MIDI note to map to Pad {midiLearning + 1}
-                      </div>}
+                {/* MIDI Status */}
+                <div className="mb-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                  <div className={`flex items-center gap-2 text-sm ${midiEnabled ? 'text-green-400' : 'text-red-400'}`}>
+                    <div className={`w-3 h-3 rounded-full ${midiEnabled ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                    {midiEnabled ? `${midiDevices.length} device(s) connected` : 'MIDI not available'}
                   </div>
+                  {midiEnabled && midiDevices.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {midiDevices.map((device, index) => (
+                        <div key={index} className="text-xs text-gray-400 truncate">
+                          • {device.name || `Device ${index + 1}`}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-                  {/* Current Mapping Display */}
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-gray-300">Current Mapping</h3>
-                    <div className="bg-gray-800/50 rounded-lg border border-gray-700/50 p-3 max-h-40 overflow-y-auto">
-                      <div className="space-y-2">
-                        {Object.entries(midiMapping).map(([note, pad]) => <div key={note} className="flex justify-between items-center text-xs">
-                            <span className="text-gray-400">Note {note}</span>
-                            <span className="text-gray-300">→ Pad {pad + 1}</span>
-                          </div>)}
+                {midiEnabled && (
+                  <div className="space-y-4">
+                    {/* MIDI Learn */}
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium text-gray-300">MIDI Learn Mode</h3>
+                      <p className="text-xs text-gray-400">Click a pad button below, then hit a MIDI note to map it</p>
+                      <div className="grid grid-cols-4 gap-2">
+                        {Array.from({ length: 16 }, (_, i) => (
+                          <Button key={i} variant="outline" size="sm" onClick={() => setMidiLearning(midiLearning === i ? null : i)} className={`h-8 text-xs transition-all duration-200 ${midiLearning === i ? 'bg-green-600 border-green-500 text-white shadow-lg shadow-green-500/30' : 'bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:border-green-500/50'}`}>
+                            {midiLearning === i ? 'LEARN' : `P${i + 1}`}
+                          </Button>
+                        ))}
+                      </div>
+                      {midiLearning !== null && (
+                        <div className="text-xs text-yellow-400 animate-pulse p-2 bg-yellow-900/20 rounded border border-yellow-500/30">
+                          🎹 Hit a MIDI note to map to Pad {midiLearning + 1}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Current Mapping Display */}
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium text-gray-300">Current Mapping</h3>
+                      <div className="bg-gray-800/50 rounded-lg border border-gray-700/50 p-3 max-h-40 overflow-y-auto">
+                        <div className="space-y-2">
+                          {Object.entries(midiMapping).map(([note, pad]) => (
+                            <div key={note} className="flex justify-between items-center text-xs">
+                              <span className="text-gray-400">Note {note}</span>
+                              <span className="text-gray-300">→ Pad {pad + 1}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-3">
-                    <Button variant="outline" size="sm" onClick={() => {
-                setMidiMapping({
-                  36: 0,
-                  37: 1,
-                  38: 2,
-                  39: 3,
-                  40: 4,
-                  41: 5,
-                  42: 6,
-                  43: 7,
-                  44: 8,
-                  45: 9,
-                  46: 10,
-                  47: 11,
-                  48: 12,
-                  49: 13,
-                  50: 14,
-                  51: 15
-                });
-                toast.success('MIDI mapping reset to default');
-              }} className="flex-1 bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50">
-                      Reset to Default
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setShowMidiPanel(false)} className="bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30">
-                      Done
-                    </Button>
+                    {/* Actions */}
+                    <div className="flex gap-3">
+                      <Button variant="outline" size="sm" onClick={() => {
+                        setMidiMapping({
+                          36: 0,
+                          37: 1,
+                          38: 2,
+                          39: 3,
+                          40: 4,
+                          41: 5,
+                          42: 6,
+                          43: 7,
+                          44: 8,
+                          45: 9,
+                          46: 10,
+                          47: 11,
+                          48: 12,
+                          49: 13,
+                          50: 14,
+                          51: 15
+                        });
+                        toast.success('MIDI mapping reset to default');
+                      }} className="flex-1 bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50">
+                        Reset to Default
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setShowMidiPanel(false)} className="bg-green-600/20 border-green-500/50 text-green-300 hover:bg-green-600/30">
+                        Done
+                      </Button>
+                    </div>
                   </div>
-                </div>}
+                )}
 
-              {!midiEnabled && <div className="text-center py-8">
-                  <div className="text-gray-400 text-sm">
-                    MIDI is not available in this browser or device.
+                {!midiEnabled && (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400 text-sm">
+                      MIDI is not available in this browser or device.
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                      Try using Chrome, Edge, or Firefox with a MIDI controller connected.
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500 mt-2">
-                    Try using Chrome, Edge, or Firefox with a MIDI controller connected.
-                  </div>
-                </div>}
+                )}
+              </div>
             </div>
           </div>
-        </div>}
+        )}
       
-      {/* Visual Feedback Overlay */}
-      <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
+        {/* Visual Feedback Overlay */}
+        <VisualFeedback isPlaying={isPlaying} currentStep={currentStep} bpm={bpm[0]} sequencerLength={sequencerLength} patterns={patterns} />
+      </div>
     </div>
   );
 };
 
-export default DrumMachine;
 export default DrumMachine;
