@@ -1850,18 +1850,17 @@ const DrumMachine = () => {
             </div>
 
             {/* Pattern Controls */}
-            <div className="backdrop-blur-md p-2 rounded-lg border border-purple-500/30 shadow-lg shadow-purple-500/20 relative overflow-hidden px-[10px] py-[11px] bg-zinc-200">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-cyan-500/10 rounded-lg pointer-events-none"></div>
+            <div className="backdrop-blur-md p-2 rounded-lg border border-accent shadow-lg relative overflow-hidden px-[10px] py-[11px] bg-card">
               <div className="relative z-10">
               <div className="space-y-2">
-                <Button onClick={savePattern} variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">
+                <Button onClick={savePattern} variant="outline" size="sm" className="w-full bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground text-xs">
                   SAVE
                 </Button>
                 
-                <Button onClick={randomizePattern} disabled={!canPerformPatternOperations()} variant="outline" size="sm" className={`w-full text-xs ${!canPerformPatternOperations() ? 'bg-gray-700/50 border-gray-600/50 text-gray-500 cursor-not-allowed' : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'}`} title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : `Randomize patterns for ${getOperationDescription()}`}>
+                <Button onClick={randomizePattern} disabled={!canPerformPatternOperations()} variant="outline" size="sm" className={`w-full text-xs ${!canPerformPatternOperations() ? 'bg-card/50 border-border/50 text-muted-foreground cursor-not-allowed' : 'bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground'}`} title={!canPerformPatternOperations() ? `Load samples first (${getOperationDescription()})` : `Randomize patterns for ${getOperationDescription()}`}>
                   RANDOM
                 </Button>
-                <Button onClick={clearPattern} variant="outline" size="sm" className="w-full bg-gray-800 border-gray-600 text-gray-300 text-xs">
+                <Button onClick={clearPattern} variant="outline" size="sm" className="w-full bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground text-xs">
                   CLEAR
                 </Button>
               </div>
@@ -2263,21 +2262,19 @@ const DrumMachine = () => {
         <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileLoad} className="hidden" />
 
         {/* MIDI Status Panel */}
-        <div className="mt-4 p-3 rounded border border-gray-700 relative overflow-hidden mx-[15px] bg-zinc-200">
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-pink-500/5 rounded pointer-events-none"></div>
-          
+        <div className="mt-4 p-3 rounded border border-accent relative overflow-hidden mx-[15px] bg-card">
           <div className="relative z-10">
-            <div className="text-xs text-gray-400 mb-2">MIDI STATUS</div>
+            <div className="text-xs text-foreground mb-2">MIDI STATUS</div>
             <div className="space-y-2">
               <div className={`px-2 py-1 rounded text-xs ${midiEnabled ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'}`}>
                 {midiEnabled ? `✓ ${midiDevices.length} device(s)` : '✗ Not available'}
               </div>
               {midiDevices.length > 0 && <div className="max-h-20 overflow-y-auto">
-                  {midiDevices.map((device, index) => <div key={index} className="text-xs text-gray-500 truncate">
+                  {midiDevices.map((device, index) => <div key={index} className="text-xs text-muted-foreground truncate">
                       {device.name || `Device ${index + 1}`}
                     </div>)}
                 </div>}
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-muted-foreground">
                 Notes 36-51 → Pads 1-16
               </div>
             </div>
