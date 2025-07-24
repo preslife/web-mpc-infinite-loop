@@ -1523,7 +1523,7 @@ const DrumMachine = () => {
                 
                 <div className="h-80 overflow-y-auto">  {/* Added scroll for all tracks */}
                   {/* Step numbers row */}
-                  <div className="flex gap-1 mb-2 ml-[150px] overflow-x-auto"> {/* Adjusted alignment */}
+                  <div className="flex gap-1 mb-2 ml-[172px] overflow-x-auto"> {/* Aligned with track content: 14 (label) + 6 (volume) + 6 (pan) + 6 (mute) + 6 (solo) + 4 (mute/solo gap) + 16 (section gaps) = 172px */}
                     {Array.from({
                   length: sequencerLength
                 }, (_, stepIndex) => <div key={stepIndex} className={`
